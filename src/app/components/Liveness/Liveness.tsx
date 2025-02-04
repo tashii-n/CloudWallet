@@ -54,6 +54,7 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose }) => {
         customization: {
           cameraScreenSectorActive: "#5AC894",
           cameraScreenStrokeNormal: "#5AC894",
+          processingScreenProgress: "#5AC894",
           fontFamily: "Inter, sans-serif",
         },
         url: "https://qaregula.bhutanndi.com",

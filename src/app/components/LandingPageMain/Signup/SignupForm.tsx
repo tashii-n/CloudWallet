@@ -21,6 +21,8 @@ import CustomNumberInput from "../../Common/customnumberinput";
 import dzongkhagData from "../../../lib/address.json";
 import { useState } from "react";
 import React from "react";
+import { Dayjs } from "dayjs";
+import { onboardingValidateAPI } from "@/app/lib/api_utils/onboardingAPI";
 
 const modalStyle = {
   position: "absolute",
@@ -35,13 +37,11 @@ const modalStyle = {
 
 interface Gewog {
   gewogSerialNo: number;
-  gewogId: string;
   gewogName: string;
 }
 
 interface Dzongkhag {
   dzongkhagSerialNo: number;
-  dzongkhagId: string;
   dzongkhagName: string;
   gewogs: Gewog[];
 }
@@ -49,19 +49,30 @@ interface Dzongkhag {
 export default function SignupForm() {
   const dzongkhags: Dzongkhag[] = dzongkhagData.dzongkhags;
 
+  const [fullname, setFullname] = useState<string>("");
   const [selectedDzongkhag, setSelectedDzongkhag] = useState<string>("");
   const [gewogs, setGewogs] = useState<Gewog[]>([]);
   const [selectedGewog, setSelectedGewog] = useState<string>("");
+  const [selectedGender, setSelectedGender] = useState<string>("");
+  const [selectedCitizenship, setSelectedCitizenship] =
+    useState<string>("Bhutanese");
+  const [selectedIDType, setSelectedIDType] = useState<string>("Citizenship");
+  const [cidNumber, setCidNumber] = useState<string>("");
+  const [dob, setDob] = useState<Dayjs | null>(null);
+  const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
 
-  // const [open, setOpen] = React.useState(false);
-  // const handleOpen = () => setOpen(true);
-  // const handleClose = () => setOpen(false);
+  // Handlers
+  const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFullname(event.target.value);
+  };
 
   const handleDzongkhagChange = (event: SelectChangeEvent<string>) => {
-    const dzongkhagId = event.target.value;
-    setSelectedDzongkhag(dzongkhagId);
+    const dzongkhagName = event.target.value;
+    setSelectedDzongkhag(dzongkhagName);
 
-    const dzongkhag = dzongkhags.find((dz) => dz.dzongkhagId === dzongkhagId);
+    const dzongkhag = dzongkhags.find(
+      (dz) => dz.dzongkhagName === dzongkhagName
+    );
     if (dzongkhag) {
       setGewogs(dzongkhag.gewogs);
       setSelectedGewog(""); // Reset gewog selection
@@ -70,6 +81,62 @@ export default function SignupForm() {
 
   const handleGewogChange = (event: SelectChangeEvent<string>) => {
     setSelectedGewog(event.target.value);
+  };
+
+  const handleGenderChange = (event: SelectChangeEvent<string>) => {
+    setSelectedGender(event.target.value);
+  };
+
+  const handleCitizenshipChange = (event: SelectChangeEvent<string>) => {
+    setSelectedCitizenship(event.target.value);
+  };
+
+  const handleIDTypeChange = (event: SelectChangeEvent<string>) => {
+    setSelectedIDType(event.target.value);
+  };
+
+  const handleCidNumberChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setCidNumber(event.target.value);
+  };
+
+  const handleDobChange = (date: Dayjs | null) => {
+    setDob(date);
+  };
+
+  const handleAgreeToTermsChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setAgreeToTerms(event.target.checked);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const formData = {
+      fullName: fullname,
+      gender: selectedGender,
+      citizenship: selectedCitizenship,
+      idType: selectedIDType,
+      idNumber: cidNumber,
+      dzongkhagName: selectedDzongkhag,
+      gewogName: selectedGewog,
+    };
+
+    // console.log("Form Data:", formData);
+
+    try {
+      // Call the API with the form data
+      const response = await onboardingValidateAPI(formData);
+      
+
+      // Handle the API response as needed
+      console.log("API Response:", response);
+    } catch (error) {
+      console.error("API call failed:", error);
+      throw new Error("An unexpected error occurred. Please try again.");
+    }
   };
 
   return (
@@ -85,6 +152,7 @@ export default function SignupForm() {
       <Box
         component="form"
         // noValidate
+        onSubmit={handleSubmit}
         action={"/"}
         method="POST"
         autoComplete="off"
@@ -110,6 +178,8 @@ export default function SignupForm() {
               label="Full Name"
               variant="outlined"
               name="fullname"
+              value={fullname}
+              onChange={handleFullNameChange}
               required
             />
           </Grid2>
@@ -118,12 +188,11 @@ export default function SignupForm() {
               <InputLabel id="gender-select">Gender</InputLabel>
 
               <Select
-                required
                 id="gender-select"
-                fullWidth
+                value={selectedGender}
+                onChange={handleGenderChange}
                 label="Gender"
-                variant="outlined"
-                name="lastName"
+                name="gender"
               >
                 <MenuItem value={"Male"}>Male</MenuItem>
                 <MenuItem value={"Female"}>Female</MenuItem>
@@ -138,6 +207,9 @@ export default function SignupForm() {
                 name="dob"
                 label="Date of Birth"
                 sx={{ width: "100%" }}
+                format="DD/MM/YYYY"
+                value={dob}
+                onChange={handleDobChange}
               />
             </LocalizationProvider>
           </Grid2>
@@ -151,6 +223,10 @@ export default function SignupForm() {
                 label="Select Citizenship"
                 variant="outlined"
                 name="citizenship"
+                disabled
+                value={selectedCitizenship}
+                onChange={handleCitizenshipChange}
+                // value={"Bhutanese"}
               >
                 <MenuItem value={"Bhutanese"}>Bhutanese</MenuItem>
                 <MenuItem value={"Non Bhutanese"}>Non Bhutanese</MenuItem>
@@ -169,17 +245,22 @@ export default function SignupForm() {
                 label="Select ID Type"
                 variant="outlined"
                 name="idtype"
+                value={selectedIDType}
+                onChange={handleIDTypeChange}
+                disabled
               >
-                <MenuItem value={"Bhutanese"}>Bhutanese</MenuItem>
-                <MenuItem value={"Non Bhutanese"}>Non Bhutanese</MenuItem>
+                <MenuItem value={"Citizenship"}>National ID Card</MenuItem>
               </Select>
             </FormControl>
           </Grid2>
+
           <Grid2 size={6}>
             <CustomNumberInput
               id="cidnumber"
               name="cidnumber"
               label="Citizenship ID Number"
+              value={cidNumber}
+              onChange={handleCidNumberChange}
             />
           </Grid2>
 
@@ -195,8 +276,8 @@ export default function SignupForm() {
               >
                 {dzongkhags.map((dzongkhag) => (
                   <MenuItem
-                    key={dzongkhag.dzongkhagId}
-                    value={dzongkhag.dzongkhagId}
+                    key={dzongkhag.dzongkhagSerialNo}
+                    value={dzongkhag.dzongkhagName}
                   >
                     {dzongkhag.dzongkhagName}
                   </MenuItem>
@@ -217,7 +298,7 @@ export default function SignupForm() {
                 disabled={!gewogs.length} // Disable if no gewogs available
               >
                 {gewogs.map((gewog) => (
-                  <MenuItem key={gewog.gewogId} value={gewog.gewogId}>
+                  <MenuItem key={gewog.gewogName} value={gewog.gewogName}>
                     {gewog.gewogName}
                   </MenuItem>
                 ))}
@@ -227,7 +308,14 @@ export default function SignupForm() {
         </Grid2>
 
         <FormControlLabel
-          control={<Checkbox color="primary" required />}
+          control={
+            <Checkbox
+              color="primary"
+              required
+              checked={agreeToTerms}
+              onChange={handleAgreeToTermsChange}
+            />
+          }
           label={
             <>
               I agree to the{" "}
@@ -251,7 +339,7 @@ export default function SignupForm() {
           <Button
             type="submit"
             // onClick={handleOpen}
-
+            disabled={!agreeToTerms}
             variant="contained"
             sx={{
               minWidth: "200px",
@@ -278,7 +366,6 @@ export default function SignupForm() {
             Login
           </Button>
         </Stack>
-
 
         {/* <Modal
           open={open}

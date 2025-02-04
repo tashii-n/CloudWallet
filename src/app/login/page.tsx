@@ -1,10 +1,25 @@
+"use client";
+
 import Header from "../components/LandingPageMain/Header/Header";
 import { Box, Typography, TextField, Button, InputLabel } from "@mui/material";
 import Image from "next/image";
-import styles from "./page.module.css";
 import Link from "next/link";
+import { getAuthData } from "../lib/auth/auth";
 
 export default function LoginPage() {
+  const handleFacialRecognitionLogin = async () => {
+    try {
+      const authData = await getAuthData(); // Attempt to retrieve the authentication data
+
+      console.log("Authentication successful:", authData);
+
+      // Add your logic after successful authentication (e.g., redirect, show dashboard, etc.)
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      // Handle error (e.g., show error message to user)
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -139,14 +154,14 @@ export default function LoginPage() {
                     color: "#ffffff", // Placeholder color
                   },
                   "& input[type=number]": {
-                    "MozAppearance": "textfield",
+                    MozAppearance: "textfield",
                   },
                   "& input[type=number]::-webkit-outer-spin-button": {
-                    "WebkitAppearance": "none",
+                    WebkitAppearance: "none",
                     margin: 0,
                   },
                   "& input[type=number]::-webkit-inner-spin-button": {
-                    "WebkitAppearance": "none",
+                    WebkitAppearance: "none",
                     margin: 0,
                   },
                 }}
@@ -162,6 +177,7 @@ export default function LoginPage() {
                 color: "#ffffffee",
                 marginBottom: 2,
               }}
+              onClick={handleFacialRecognitionLogin} // Attach the onClick handler
             >
               Facial Recognition Log In
             </Button>
