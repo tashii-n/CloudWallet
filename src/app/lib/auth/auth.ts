@@ -32,7 +32,7 @@ const getAuthData = async () => {
 
     const { accessToken, secretKey, expiresIn } = response.data;
 
-    storeAuthData(accessToken, secretKey, expiresIn);
+    await storeAuthData(accessToken, secretKey, expiresIn);
     return response.data; 
   } catch (error) {
     console.error("Authentication failed:", error);

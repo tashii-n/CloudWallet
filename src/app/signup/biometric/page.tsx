@@ -6,6 +6,7 @@ import { Box, Button, Grid2, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 const FaceLivenessDynamic = dynamic(
   () => import("@/app/components/Liveness/Liveness"),
@@ -13,8 +14,28 @@ const FaceLivenessDynamic = dynamic(
 );
 
 export default function BiometricPage() {
+  const router = useRouter();
+
   const [showLiveness, setShowLiveness] = useState(false);
 
+  const handleLivenessSuccess = async (livenessResponse: any) => {
+    try {
+        console.log("Liveness successful:", livenessResponse);
+        
+        const imageData = livenessResponse?.images?.[0];
+
+        if (!imageData) {
+            throw new Error("No image data found in liveness response");
+        }
+
+        sessionStorage.setItem("imageData",imageData)
+
+        router.push("/signup/validate");
+    } catch (error) {
+        console.error("Error verifying face:", error);
+    }
+
+};
   return (
     <Box
       display="flex"
@@ -130,7 +151,10 @@ export default function BiometricPage() {
               alignItems={"center"}
             >
               {showLiveness ? (
-                <FaceLivenessDynamic onClose={() => setShowLiveness(false)} />
+                <FaceLivenessDynamic
+                  onClose={() => setShowLiveness(false)}
+                  onLivenessSuccess={handleLivenessSuccess}
+                />
               ) : (
                 <>
                   <Typography

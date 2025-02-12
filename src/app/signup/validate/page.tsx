@@ -1,12 +1,96 @@
+"use client";
+
 import Directions from "@/app/components/LandingPageMain/Directions/Directions";
 import Footer from "@/app/components/LandingPageMain/Footer/footer";
 import Header from "@/app/components/LandingPageMain/Header/Header";
-import {Box, Checkbox, Grid2, Typography } from "@mui/material";
+import { Box, Checkbox, Grid2, Typography } from "@mui/material";
 import Image from "next/image";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import { useEffect, useState, useRef } from "react";
+import { secureGet, secureStore } from "@/app/lib/storage/storage";
+import { onboardingBiometricAPI } from "@/app/lib/api_utils/onboardingAPI";
+import { useRouter } from "next/navigation";
 
-export default function BiometricPage() {
+export default function BiometricValidatePage() {
+  const [validateSuccess, setValidateSuccess] = useState(false);
+  const [newUser, setNewUser] = useState(false);
+
+  const apiCalled = useRef(false);
+  const maxRetries = 3; // Maximum number of retry attempts
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchBiometricValidation = async (attempt = 1) => {
+      if (apiCalled.current) return; // Prevent duplicate API calls in Strict Mode
+
+      try {
+        const onboardingDataString = await secureGet("onboardingData");
+        const onboardingData = onboardingDataString
+          ? JSON.parse(onboardingDataString)
+          : null;
+
+        if (!onboardingData) {
+          throw new Error("No onboarding data found in session storage");
+        }
+
+        const imageData = sessionStorage.getItem("imageData") || "";
+
+        const requestData = {
+          idNumber: onboardingData["ID Number"],
+          idType: onboardingData["ID Type"],
+          onboardingUniqueId: onboardingData["onboardingUniqueId"],
+          image: imageData,
+        };
+
+        console.log(`Attempt ${attempt}: Calling Biometric API`, requestData);
+
+        const response = await onboardingBiometricAPI(requestData);
+        console.log("API Response:", response);
+
+        const scenario = response.scenario;
+
+        apiCalled.current = true;
+        // Check if scenario is 'NEW_PERSON_ONBOARDING' in the response
+        setTimeout(() => {
+          setValidateSuccess(true);
+        }, 2000);
+        if (response && scenario === "NEW_USER_ONBOARDING") {
+          setNewUser(true);
+          const pid = response?.personId;
+          await secureStore("personId", pid);
+
+          // Mark as called **only after success**
+
+          setTimeout(() => {
+            router.push("/signup/review");
+          }, 3000);
+        } else {
+          console.log(
+            "Scenario is not 'NEW_PERSON_ONBOARDING'. Redirect not triggered."
+          );
+          setNewUser(false);
+          // Handle other scenarios if needed
+        }
+      } catch (error) {
+        console.error(`Error on attempt ${attempt}:`, error);
+
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`Retrying in ${delay / 1000} seconds...`);
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
+          fetchBiometricValidation(attempt + 1);
+        } else {
+          console.error("Max retries reached. API call failed.");
+        }
+      }
+    };
+
+    fetchBiometricValidation();
+  }, []);
+
   return (
     <Box
       display="flex"
@@ -68,8 +152,15 @@ export default function BiometricPage() {
                   <Typography variant="caption">
                     <Checkbox
                       size="small"
-                      disabled
-                      checked={true}
+                      checked={true} // Always checked
+                      sx={{
+                        cursor: "default", // Removes pointer cursor
+                        pointerEvents: "none", // Completely disables interaction
+                        color: "grey.500", // Default gray color
+                        "&.Mui-checked": {
+                          color: validateSuccess ? "primary.main" : "grey.500", // Green if validated, otherwise gray
+                        },
+                      }}
                       icon={<RadioButtonUncheckedIcon />}
                       checkedIcon={<CheckCircleIcon />}
                     />
@@ -80,8 +171,15 @@ export default function BiometricPage() {
                   <Typography variant="caption">
                     <Checkbox
                       size="small"
-                      disabled
-                      checked={true}
+                      checked={true} // Always checked
+                      sx={{
+                        cursor: "default", // Removes pointer cursor
+                        pointerEvents: "none", // Completely disables interaction
+                        color: "grey.500", // Default gray color
+                        "&.Mui-checked": {
+                          color: validateSuccess ? "primary.main" : "grey.500", // Green if validated, otherwise gray
+                        },
+                      }}
                       icon={<RadioButtonUncheckedIcon />}
                       checkedIcon={<CheckCircleIcon />}
                     />
@@ -89,26 +187,86 @@ export default function BiometricPage() {
                   </Typography>
                 </Grid2>
               </Grid2>
+
+              {/* Main Content */}
               <Box
                 textAlign="center"
                 mt={4}
                 py={2}
                 bgcolor="white"
                 borderRadius={5}
-                pb={10}
+                pb={validateSuccess ? 8 : 10}
               >
-                <Typography variant="h6" component="h2" gutterBottom>
-                  Validating your photo
-                </Typography>
-                <Typography variant="body2" mb={5}>
-                  Please wait while your photo is being validated with DCRC
-                </Typography>
-                <Image
-                  src="/images/spinner.gif"
-                  width={170}
-                  height={170}
-                  alt={""}
-                />
+                {!validateSuccess ? (
+                  <Box>
+                    <Typography variant="h6" component="h2" gutterBottom>
+                      Validating your photo
+                    </Typography>
+                    <Typography variant="body2" mb={5}>
+                      Please wait while your photo is being validated with DCRC
+                    </Typography>
+                    <Image
+                      src="/images/spinner.gif"
+                      width={170}
+                      height={170}
+                      alt={""}
+                    />
+                  </Box>
+                ) : (
+                  <Box>
+                    {newUser ? (
+                      <>
+                        <Typography
+                          variant="h5"
+                          component="h2"
+                          mt={1}
+                          fontWeight={600}
+                          color="primary.main"
+                        >
+                          SUCCESSFULL
+                        </Typography>
+                        <Image
+                          src="/images/validate_success.svg"
+                          width={270}
+                          height={200}
+                          alt={"Validation Success Image"}
+                        />
+                        <Grid2 size={8} mx="auto">
+                          <Typography variant="body1" color="grey">
+                            <span className="ndigreen">
+                              <b>Congratulations</b>
+                            </span>
+                            , you have been successfully authenticated.
+                          </Typography>
+                        </Grid2>
+                      </>
+                    ) : (
+                      <>
+                        <Typography
+                          variant="h5"
+                          component="h2"
+                          mt={1}
+                          fontWeight={600}
+                          color="primary.main"
+                        >
+                          Invalid
+                        </Typography>
+                        <Image
+                          src="/images/validate_success.svg"
+                          width={270}
+                          height={200}
+                          alt={"Validation Success Image"}
+                        />
+                        <Grid2 size={8} mx="auto">
+                          <Typography variant="body1" color="grey">
+                            It seems you already have an account.
+                          </Typography>
+                        </Grid2>
+                      </>
+                    )}
+                    {/* Success */}
+                  </Box>
+                )}
               </Box>
             </Box>
           </Grid2>
@@ -124,9 +282,10 @@ export default function BiometricPage() {
           color="#e6b944"
         >
           Note : Do not refresh, close or click the back button in this page as
-          validation process may get canceled.
+          the validation process may get cancelled.
         </Typography>
       </Box>
+
       <Footer />
     </Box>
   );

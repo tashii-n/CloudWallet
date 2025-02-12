@@ -1,19 +1,17 @@
 "use client";
-import {
-  Box,
-} from "@mui/material";
-import Footer from "../components/LandingPageMain/Footer/footer";
-import Header from "../components/LandingPageMain/Header/Header";
+import { Box } from "@mui/material";
+import Footer from "../../components/LandingPageMain/Footer/footer";
+import Header from "../../components/LandingPageMain/Header/Header";
 import Image from "next/image";
-import SignupForm from "../components/LandingPageMain/Signup/SignupForm";
+import SignupReview from "@/app/components/LandingPageMain/Signup/SignupReview";
 
-export default function SignUpPage() {
+export default function DataReviewPage() {
   return (
     <>
       <Box
         sx={{
           width: "100vw",
-          height: "100vh",
+          height: "88vh",
           display: "flex",
           flexDirection: "column",
         }}
@@ -34,10 +32,10 @@ export default function SignUpPage() {
               flexDirection: "column",
               //   justifyContent: "center",
               paddingX: 10,
-              paddingY: 8,
+              paddingY: 5,
             }}
           >
-            <SignupForm />
+            <SignupReview />
           </Box>
 
           {/* Right half */}
@@ -57,8 +55,8 @@ export default function SignUpPage() {
             />
           </Box>
         </Box>
-        <Footer />
       </Box>
+      <Footer />
     </>
   );
 }

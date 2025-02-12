@@ -25,7 +25,8 @@
     "next": "15.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sha3": "^2.1.4"
+    "sha3": "^2.1.4",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",

@@ -13,6 +13,7 @@ import {
   Button,
   SelectChangeEvent,
   Modal,
+  Backdrop,
 } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -23,6 +24,9 @@ import { useState } from "react";
 import React from "react";
 import { Dayjs } from "dayjs";
 import { onboardingValidateAPI } from "@/app/lib/api_utils/onboardingAPI";
+import { secureStore } from "@/app/lib/storage/storage";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const modalStyle = {
   position: "absolute",
@@ -47,6 +51,8 @@ interface Dzongkhag {
 }
 
 export default function SignupForm() {
+
+  const router = useRouter();
   const dzongkhags: Dzongkhag[] = dzongkhagData.dzongkhags;
 
   const [fullname, setFullname] = useState<string>("");
@@ -60,6 +66,7 @@ export default function SignupForm() {
   const [cidNumber, setCidNumber] = useState<string>("");
   const [dob, setDob] = useState<Dayjs | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Handlers
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,16 +131,16 @@ export default function SignupForm() {
       gewogName: selectedGewog,
     };
 
-    // console.log("Form Data:", formData);
-
     try {
-      // Call the API with the form data
+      setIsLoading(true);
       const response = await onboardingValidateAPI(formData);
-      
-
+      secureStore("onboardingData", JSON.stringify(response));
+      router.push("/signup/biometric"); 
+      setIsLoading(false);
       // Handle the API response as needed
-      console.log("API Response:", response);
+      // console.log("API Response:", response);
     } catch (error) {
+      setIsLoading(false);
       console.error("API call failed:", error);
       throw new Error("An unexpected error occurred. Please try again.");
     }
@@ -141,6 +148,29 @@ export default function SignupForm() {
 
   return (
     <>
+      <Backdrop open={isLoading} sx={{ color: "#fff", zIndex: 1301 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            padding: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Image
+            src="/images/spinner.gif"
+            width={150}
+            height={150}
+            alt="Loading..."
+            unoptimized
+          />
+          {/* <Typography variant="h5" color="black" mt={2} textAlign={'center'}>
+            Validating...
+          </Typography> */}
+        </Box>
+      </Backdrop>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         Start <span className="ndigreen">Onboarding</span> with Us!
       </Typography>

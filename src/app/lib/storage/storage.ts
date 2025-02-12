@@ -134,7 +134,7 @@ const storeAuthData = async (
 
   if (!encryptionKey) {
     console.error("Encryption key is not defined in the config.");
-    return null; // Handle missing encryption key
+    return null; 
   }
 
   const encryptedAccessToken = await encryptData(accessToken, encryptionKey);
