@@ -14,8 +14,13 @@ import { useEffect, useState } from "react";
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { secureGet } from "@/app/lib/storage/storage";
-import { onboardingRegisterAPI } from "@/app/lib/api_utils/onboardingAPI";
+import { secureGet, secureStore } from "@/app/lib/storage/storage";
+import {
+  onboardingDIDAPI,
+  onboardingInitialCredentialsAPI,
+  onboardingRegisterAPI,
+  onboardingWalletCreationAPI,
+} from "@/app/lib/api_utils/onboardingAPI";
 
 const modalStyle = {
   position: "absolute",
@@ -52,30 +57,83 @@ export default function SignupForm() {
   const handleClose = () => setOpen(false);
 
   const handleConfirm = async () => {
-    setIsLoading(true); // Show loading backdrop
+    setIsLoading(true);
     try {
+      // Retrieve onboarding data from session storage
       const storedData = await secureGet("onboardingData");
-      if (!storedData) {
-        throw new Error("No onboarding data found.");
-      }
+      if (!storedData) throw new Error("No onboarding data found.");
 
       const parsedData = JSON.parse(storedData);
-      const onboardingUniqueId = parsedData.onboardingUniqueId;
-
-      if (!onboardingUniqueId) {
-        throw new Error("Missing onboardingUniqueId.");
-      }
-
+      const { onboardingUniqueId } = parsedData;
+      if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
+      const holderdid = secureGet("holderDID");
+      // Step 1: Register and get access token
       const response = await onboardingRegisterAPI({ onboardingUniqueId });
+      const cloudAccessToken = response.access_token;
+      await secureStore("cloudAccessToken", cloudAccessToken);
 
-      console.log("API Response:", response);
-      // Redirect to the next step if needed
-      router.push("/next-step"); // Change this route accordingly
+      // Step 2: Create Wallet
+      const walletResponse = await onboardingWalletCreationAPI({
+        label: "Credential Wallet",
+      });
+      console.log("Wallet Created:", walletResponse);
+
+      // Step 3: Create DID
+      const didResponse = await onboardingDIDAPI();
+      console.log("DID Created:", didResponse);
+      const holderDID = didResponse.did;
+      console.log("Holder DID:", holderDID)
+      // Store holderDID for later use
+      await secureStore("holderDID", holderDID);
+
+      // Step 4: Issue Credentials
+      const credentialsResponse = await onboardingInitialCredentialsAPI({
+        ...parsedData,
+        credentialType: "jsonId", // Always "jsonId"
+        holderDID: holderDID, // Retrieve holderDID from previous step
+      });
+      console.log("Credentials Issued:", credentialsResponse);
+
+      alert("Onboarding completed successfully!");
+      // router.push("/next-step"); // Navigate to the next step if needed
     } catch (error) {
-      console.error("Error during registration:", error);
+      console.error("Error during onboarding:", error);
       alert("An error occurred. Please try again.");
     } finally {
-      setIsLoading(false); // Hide loading backdrop
+      setIsLoading(false);
+    }
+  };
+
+  const testhandleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      // Retrieve onboarding data from session storage
+      const storedData = await secureGet("onboardingData");
+      if (!storedData) throw new Error("No onboarding data found.");
+
+      const parsedData = JSON.parse(storedData);
+      const { onboardingUniqueId } = parsedData;
+      if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
+
+      const holderdid = secureGet("holderDID");
+      console.log("holderdid:", holderdid);
+      // Step 1: Register and get access token
+
+      // Step 4: Issue Credentials
+      const credentialsResponse = await onboardingInitialCredentialsAPI({
+        ...parsedData,
+        holderDID: holderdid, // Retrieve holderDID from previous step
+        credentialType: "jsonId", // Always "jsonId"
+      });
+      console.log("Credentials Issued:", credentialsResponse);
+
+      alert("Onboarding completed successfully!");
+      // router.push("/next-step"); // Navigate to the next step if needed
+    } catch (error) {
+      console.error("Error during onboarding:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -232,10 +290,10 @@ export default function SignupForm() {
               Data Mismatch
             </Typography>
             <Image
-              src="/images/validate_deny.svg"
+              src="/images/error.svg"
               width={150}
               height={110}
-              alt="Success"
+              alt="Error"
             />
 
             <Typography id="modal-modal-description" mt={2}>

@@ -19,6 +19,7 @@
     "@mui/x-date-pickers": "^7.23.2",
     "@regulaforensics/facesdk-webclient": "^6.4.85",
     "@regulaforensics/vp-frontend-face-components": "^6.4.1506",
+    "@toolpad/core": "^0.12.0",
     "buffer": "^6.0.3",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",

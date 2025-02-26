@@ -189,6 +189,11 @@ const clearAuthData = () => {
   sessionStorage.removeItem("expirationTime");
 };
 
+
+
+
+// GENERAL STORAGE
+
 const secureStore = async (key: string, data: string) => {
   const encryptionKey = CONFIG.ENCRYPTION_KEY;
 

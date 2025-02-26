@@ -31,7 +31,6 @@ const getAuthData = async () => {
     );
 
     const { accessToken, secretKey, expiresIn } = response.data;
-
     await storeAuthData(accessToken, secretKey, expiresIn);
     return response.data; 
   } catch (error) {

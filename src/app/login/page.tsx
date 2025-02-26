@@ -4,19 +4,27 @@ import Header from "../components/LandingPageMain/Header/Header";
 import { Box, Typography, TextField, Button, InputLabel } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-import { getAuthData } from "../lib/auth/auth";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { secureStore } from "../lib/storage/storage";
 
 export default function LoginPage() {
+  const [idNumber, setIdNumber] = useState("");
+  const router = useRouter();
+
   const handleFacialRecognitionLogin = async () => {
     try {
-      const authData = await getAuthData(); // Attempt to retrieve the authentication data
+      if (!idNumber) {
+        alert("Please enter your Citizenship ID Number");
+        return;
+      }
 
-      console.log("Authentication successful:", authData);
-
-      // Add your logic after successful authentication (e.g., redirect, show dashboard, etc.)
+      // Save ID Number in session storage
+      await secureStore("idNumber", idNumber);
+      // Navigate to the next page (replace '/dashboard' with your route)
+      router.push("login/biometric");
     } catch (error) {
       console.error("Authentication failed:", error);
-      // Handle error (e.g., show error message to user)
     }
   };
 
@@ -30,12 +38,7 @@ export default function LoginPage() {
       }}
     >
       <Header />
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-        }}
-      >
+      <Box sx={{ flex: 1, display: "flex" }}>
         {/* Left half */}
         <Box
           sx={{
@@ -48,16 +51,12 @@ export default function LoginPage() {
           }}
         >
           <Typography variant="h3" fontWeight={600} component="h1" gutterBottom>
-            Bhutan{" "}
-            <span className="ndigreen">
-              NDI <br />
-              <i>Cloud</i>{" "}
-            </span>{" "}
-            <i>Wallet</i>
+            Bhutan <span className="ndigreen">NDI</span> <br />
+            <i>Cloud</i> <i>Wallet</i>
           </Typography>
 
           <Image
-            src="images/loginimage.svg"
+            src="/images/loginimage.svg"
             alt="Login Image"
             width={400}
             height={450}
@@ -78,7 +77,7 @@ export default function LoginPage() {
         >
           <Box
             sx={{
-              width: "50%", // Content width
+              width: "50%",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -86,7 +85,7 @@ export default function LoginPage() {
             }}
           >
             <Image
-              src="images/ndilogo.svg"
+              src="/images/ndilogo.svg"
               alt="NDI Logo"
               width={80}
               height={80}
@@ -134,28 +133,18 @@ export default function LoginPage() {
                 variant="outlined"
                 fullWidth
                 placeholder="xxxxxxxxxxx"
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value)}
                 sx={{
                   marginBottom: 6,
                   "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderColor: "primary.main", // Custom border color
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "primary.main", // Border color on hover
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#63dca1", // Border color on focus
-                    },
+                    "& fieldset": { borderColor: "primary.main" },
+                    "&:hover fieldset": { borderColor: "primary.main" },
+                    "&.Mui-focused fieldset": { borderColor: "#63dca1" },
                   },
-                  "& .MuiInputBase-input": {
-                    color: "#ffffffbe", // Text color
-                  },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "#ffffff", // Placeholder color
-                  },
-                  "& input[type=number]": {
-                    MozAppearance: "textfield",
-                  },
+                  "& .MuiInputBase-input": { color: "#ffffffbe" },
+                  "& .MuiInputBase-input::placeholder": { color: "#ffffff" },
+                  "& input[type=number]": { MozAppearance: "textfield" },
                   "& input[type=number]::-webkit-outer-spin-button": {
                     WebkitAppearance: "none",
                     margin: 0,
@@ -167,6 +156,7 @@ export default function LoginPage() {
                 }}
               />
             </Box>
+
             <Button
               variant="contained"
               fullWidth
@@ -177,14 +167,15 @@ export default function LoginPage() {
                 color: "#ffffffee",
                 marginBottom: 2,
               }}
-              onClick={handleFacialRecognitionLogin} // Attach the onClick handler
+              onClick={handleFacialRecognitionLogin}
             >
               Facial Recognition Log In
             </Button>
+
             <Typography variant="caption" color="#ffffffbe">
               Don't have an account?{" "}
               <span className="ndigreen">
-                <Link href={"/signup"}>Sign Up</Link>
+                <Link href="/signup">Sign Up</Link>
               </span>
             </Typography>
           </Box>

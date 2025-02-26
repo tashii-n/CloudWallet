@@ -8,7 +8,7 @@ import Image from "next/image";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { useEffect, useState, useRef } from "react";
-import { secureGet, secureStore } from "@/app/lib/storage/storage";
+import { secureClear, secureGet, secureStore } from "@/app/lib/storage/storage";
 import { onboardingBiometricAPI } from "@/app/lib/api_utils/onboardingAPI";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +17,7 @@ export default function BiometricValidatePage() {
   const [newUser, setNewUser] = useState(false);
 
   const apiCalled = useRef(false);
-  const maxRetries = 3; // Maximum number of retry attempts
+  const maxRetries = 4; // Maximum number of retry attempts
   const router = useRouter();
 
   useEffect(() => {
@@ -43,15 +43,19 @@ export default function BiometricValidatePage() {
           image: imageData,
         };
 
-        console.log(`Attempt ${attempt}: Calling Biometric API`, requestData);
+        console.log(onboardingData["onboardingUniqueId"])
+
+        // console.log(`Attempt ${attempt}: Calling Biometric API`, requestData);
 
         const response = await onboardingBiometricAPI(requestData);
-        console.log("API Response:", response);
+        // console.log("API Response:", response);
 
         const scenario = response.scenario;
 
         apiCalled.current = true;
-        // Check if scenario is 'NEW_PERSON_ONBOARDING' in the response
+
+        await secureClear("imageData")
+        
         setTimeout(() => {
           setValidateSuccess(true);
         }, 2000);
@@ -60,17 +64,17 @@ export default function BiometricValidatePage() {
           const pid = response?.personId;
           await secureStore("personId", pid);
 
-          // Mark as called **only after success**
-
           setTimeout(() => {
             router.push("/signup/review");
           }, 3000);
         } else {
-          console.log(
-            "Scenario is not 'NEW_PERSON_ONBOARDING'. Redirect not triggered."
-          );
+          // console.log(
+          //   "Scenario is not 'NEW_PERSON_ONBOARDING'. Redirect not triggered."
+          // );
           setNewUser(false);
-          // Handle other scenarios if needed
+          setTimeout(() => {
+            router.push("/");
+          }, 4000);
         }
       } catch (error) {
         console.error(`Error on attempt ${attempt}:`, error);
@@ -195,7 +199,7 @@ export default function BiometricValidatePage() {
                 py={2}
                 bgcolor="white"
                 borderRadius={5}
-                pb={validateSuccess ? 8 : 10}
+                pb={validateSuccess ? 6 : 10}
               >
                 {!validateSuccess ? (
                   <Box>
@@ -206,6 +210,7 @@ export default function BiometricValidatePage() {
                       Please wait while your photo is being validated with DCRC
                     </Typography>
                     <Image
+                      unoptimized
                       src="/images/spinner.gif"
                       width={170}
                       height={170}
@@ -252,14 +257,15 @@ export default function BiometricValidatePage() {
                           Invalid
                         </Typography>
                         <Image
-                          src="/images/validate_success.svg"
-                          width={270}
+                          src="/images/error.svg"
+                          width={200}
                           height={200}
                           alt={"Validation Success Image"}
                         />
                         <Grid2 size={8} mx="auto">
                           <Typography variant="body1" color="grey">
-                            It seems you already have an account.
+                            It seems you already have an account. You will be
+                            redirected to the home page shortly.
                           </Typography>
                         </Grid2>
                       </>
