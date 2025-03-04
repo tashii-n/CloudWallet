@@ -18,6 +18,7 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose, onLivenessSuccess 
 
   const listener = (data: CustomEvent<FaceLivenessDetailType>) => {
     if (data.detail?.action === "PROCESS_FINISHED") {
+      console.log("regula log:  ", data.detail)
       if (data.detail.data?.status === 1 && data.detail.data.response?.code === 0) {
         console.log(data.detail.data.status)
         console.log("Face Liveness Response:", data.detail.data.response);
@@ -43,10 +44,14 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose, onLivenessSuccess 
     };
   }, []);
 
+  const generateRandomTag = () => {
+    return Math.random().toString(36).substring(2, 12).toUpperCase();
+  };
+
   React.useEffect(() => {
     if (componentRef.current) {
       componentRef.current.settings = {
-        tag: "123243",
+        tag: generateRandomTag(),
         livenessType: 1,
         recordingProcess: 2,
         startScreen: false,

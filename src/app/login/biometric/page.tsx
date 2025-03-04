@@ -7,7 +7,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { secureGet } from "@/app/lib/storage/storage";
+import { secureGet, secureStore } from "@/app/lib/storage/storage";
 import { loginAPI } from "@/app/lib/api_utils/onboardingAPI";
 
 const FaceLivenessDynamic = dynamic(
@@ -23,52 +23,54 @@ export default function BiometricPage() {
 
   const maxRetries = 3; // Maximum number of retries
 
-const handleLivenessSuccess = async (livenessResponse: any, attempt = 1) => {
-  try {
-    console.log("Liveness successful:", livenessResponse);
+  const handleLivenessSuccess = async (livenessResponse: any, attempt = 1) => {
+    try {
+      console.log("Liveness successful:", livenessResponse);
 
-    const imageData = livenessResponse?.images?.[0]; // Base64 encoded image
-    if (!imageData) {
-      throw new Error("No image data found in liveness response");
+      const imageData = livenessResponse?.images?.[0]; // Base64 encoded image
+      if (!imageData) {
+        throw new Error("No image data found in liveness response");
+      }
+
+      const idNumber = await secureGet("idNumber");
+      if (!idNumber) {
+        throw new Error("ID Number is missing from session storage");
+      }
+
+      setIsLoading(true); // Show loading spinner
+
+      // Prepare data for API
+      const jsonData = {
+        idNumber,
+        image: imageData,
+      };
+
+      // ✅ Call login API
+      const apiResponse = await loginAPI(jsonData);
+      console.log("API Response:", apiResponse);
+
+      const cloudAccessToken = apiResponse.access_token;
+      await secureStore("cloudAccessToken", cloudAccessToken);
+
+      // Navigate to validation page after success
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(`Error on attempt ${attempt}:`, error);
+
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff (2^attempt seconds)
+        console.log(`Retrying in ${delay / 1000} seconds...`);
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        handleLivenessSuccess(livenessResponse, attempt + 1); // Retry
+      } else {
+        console.error("Max retries reached. API call failed.");
+      }
+    } finally {
+      setIsLoading(false); // Hide loading spinner
     }
-
-    const idNumber = await secureGet("idNumber");
-    if (!idNumber) {
-      throw new Error("ID Number is missing from session storage");
-    }
-
-    setIsLoading(true); // Show loading spinner
-
-    // Prepare data for API
-    const jsonData = {
-      idNumber,
-      image: imageData,
-    };
-
-    // ✅ Call login API
-    const apiResponse = await loginAPI(jsonData);
-    console.log("API Response:", apiResponse);
-
-    // Navigate to validation page after success
-    router.push("/dashboard");
-
-  } catch (error) {
-    console.error(`Error on attempt ${attempt}:`, error);
-
-    if (attempt < maxRetries) {
-      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff (2^attempt seconds)
-      console.log(`Retrying in ${delay / 1000} seconds...`);
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      handleLivenessSuccess(livenessResponse, attempt + 1); // Retry
-    } else {
-      console.error("Max retries reached. API call failed.");
-    }
-  } finally {
-    setIsLoading(false); // Hide loading spinner
-  }
-};
+  };
   return (
     <Box
       display="flex"

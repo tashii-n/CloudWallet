@@ -16,7 +16,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { secureGet, secureStore } from "@/app/lib/storage/storage";
 import {
+  acceptCredentialAPI,
+  getCredentialListAPI,
+  getRevocationCredentialAPI,
   onboardingDIDAPI,
+  onboardingGetDIDAPI,
   onboardingInitialCredentialsAPI,
   onboardingRegisterAPI,
   onboardingWalletCreationAPI,
@@ -59,76 +63,99 @@ export default function SignupForm() {
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
-      // Retrieve onboarding data from session storage
+      // Retrieve onboarding data
       const storedData = await secureGet("onboardingData");
       if (!storedData) throw new Error("No onboarding data found.");
-
+  
       const parsedData = JSON.parse(storedData);
       const { onboardingUniqueId } = parsedData;
       if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
-      const holderdid = secureGet("holderDID");
+  
       // Step 1: Register and get access token
       const response = await onboardingRegisterAPI({ onboardingUniqueId });
       const cloudAccessToken = response.access_token;
       await secureStore("cloudAccessToken", cloudAccessToken);
-
+  
       // Step 2: Create Wallet
-      const walletResponse = await onboardingWalletCreationAPI({
-        label: "Credential Wallet",
-      });
+      const walletResponse = await onboardingWalletCreationAPI({ label: "Credential Wallet" });
       console.log("Wallet Created:", walletResponse);
-
+  
       // Step 3: Create DID
       const didResponse = await onboardingDIDAPI();
-      console.log("DID Created:", didResponse);
       const holderDID = didResponse.did;
-      console.log("Holder DID:", holderDID)
-      // Store holderDID for later use
+      console.log("Holder DID:", holderDID);
       await secureStore("holderDID", holderDID);
-
+  
       // Step 4: Issue Credentials
       const credentialsResponse = await onboardingInitialCredentialsAPI({
         ...parsedData,
-        credentialType: "jsonId", // Always "jsonId"
-        holderDID: holderDID, // Retrieve holderDID from previous step
+        credentialType: "jsonId",
+        holderDID,
       });
       console.log("Credentials Issued:", credentialsResponse);
-
-      alert("Onboarding completed successfully!");
-      // router.push("/next-step"); // Navigate to the next step if needed
-    } catch (error) {
-      console.error("Error during onboarding:", error);
-      alert("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const testhandleConfirm = async () => {
-    setIsLoading(true);
-    try {
-      // Retrieve onboarding data from session storage
-      const storedData = await secureGet("onboardingData");
-      if (!storedData) throw new Error("No onboarding data found.");
-
-      const parsedData = JSON.parse(storedData);
-      const { onboardingUniqueId } = parsedData;
-      if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
-
-      const holderdid = secureGet("holderDID");
-      console.log("holderdid:", holderdid);
-      // Step 1: Register and get access token
-
-      // Step 4: Issue Credentials
-      const credentialsResponse = await onboardingInitialCredentialsAPI({
-        ...parsedData,
-        holderDID: holderdid, // Retrieve holderDID from previous step
-        credentialType: "jsonId", // Always "jsonId"
+  
+      // Step 5: Accept Each Initial Credential
+      if (credentialsResponse?.length) {
+        for (const credential of credentialsResponse) {
+          console.log(`Accepting credential: ${credential.name}`);
+  
+          try {
+            const acceptResponse = await acceptCredentialAPI({
+              invitationUrl: credential.url,
+            });
+  
+            console.log(`✅ Credential ${credential.name} accepted:`, acceptResponse);
+          } catch (error) {
+            console.error(`❌ Error accepting credential ${credential.name}:`, error);
+          }
+        }
+      }
+  
+      // Step 6: Get Tenant ID
+      const getDidResponse = await onboardingGetDIDAPI();
+      const responseTenantId = getDidResponse.hashTenantID;
+      console.log("Tenant ID:", responseTenantId);
+  
+      // Step 7: Get Credential List
+      const credentialList = await getCredentialListAPI({
+        tenantId: responseTenantId,
+        take: 10,
+        skip: 0,
       });
-      console.log("Credentials Issued:", credentialsResponse);
-
+      console.log("Credential List:", credentialList);
+  
+      // Step 8: Call Revocation API and Accept Each Revocation Credential
+      if (credentialList?.length) {
+        for (const credential of credentialList) {
+          if (credential.revocationId) {
+            console.log(`Calling revocation API for: ${credential.name}`);
+  
+            try {
+              const revocationResponse = await getRevocationCredentialAPI({
+                holderDID,
+                revocationId: credential.revocationId,
+              });
+  
+              console.log(`✅ Revocation Credential for ${credential.name}:`, revocationResponse);
+  
+              const invitationUrl = revocationResponse?.credInviteURL; // Correct URL from API response
+              if (invitationUrl) {
+                const acceptResponse = await acceptCredentialAPI({
+                  invitationUrl,
+                });
+  
+                console.log(`✅ Revocation Credential Accepted: ${credential.name}`, acceptResponse);
+              } else {
+                console.error(`❌ Missing credInviteURL for ${credential.name}`);
+              }
+            } catch (error) {
+              console.error(`❌ Error with Revocation Credential for ${credential.name}:`, error);
+            }
+          }
+        }
+      }
+  
       alert("Onboarding completed successfully!");
-      // router.push("/next-step"); // Navigate to the next step if needed
     } catch (error) {
       console.error("Error during onboarding:", error);
       alert("An error occurred. Please try again.");
@@ -147,10 +174,13 @@ export default function SignupForm() {
           // Filter only the required fields
           const filteredData = Object.keys(parsedData)
             .filter((key) => requiredFields.includes(key))
-            .reduce((obj, key) => {
-              obj[key] = parsedData[key];
-              return obj;
-            }, {} as Record<string, string>);
+            .reduce(
+              (obj, key) => {
+                obj[key] = parsedData[key];
+                return obj;
+              },
+              {} as Record<string, string>
+            );
 
           setFormData(filteredData);
         }
