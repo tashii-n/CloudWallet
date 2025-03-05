@@ -25,6 +25,7 @@ import {
   onboardingRegisterAPI,
   onboardingWalletCreationAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
+import { retryAPI } from "@/app/lib/api_utils/helperFunction";
 
 const modalStyle = {
   position: "absolute",
@@ -60,102 +61,216 @@ export default function SignupForm() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  // const testconfirm = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Retrieve onboarding data
+  //     const storedData = await secureGet("onboardingData");
+  //     if (!storedData) throw new Error("No onboarding data found.");
+
+  //     const parsedData = JSON.parse(storedData);
+  //     const { onboardingUniqueId } = parsedData;
+  //     if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
+  //     const responseTenantId = await secureGet("tenantId");
+  //     if (!responseTenantId) throw new Error("Missing onboardingUniqueId.");
+  //     const holderDID = await secureGet("holderDID")
+  //     if (!holderDID) throw new Error("Missing onboardingUniqueId.");
+
+  //     console.log("Tenant ID:", responseTenantId);
+
+  //     // Step 7: Get Credential List
+  //     const credentialList = await getCredentialListAPI({
+  //       tenantId: responseTenantId,
+  //       take: 10,
+  //       skip: 0,
+  //     });
+  //     console.log("Credential List:", credentialList);
+
+  //     // Step 8: Call Revocation API and Accept Each Revocation Credential
+  //     if (credentialList?.length) {
+  //       for (const credential of credentialList) {
+  //         if (credential.revocationId) {
+  //           console.log(`Calling revocation API for: ${credential.name}`);
+
+  //           try {
+  //             const revocationResponse = await getRevocationCredentialAPI({
+  //               holderDID,
+  //               revocationId: credential.revocationId,
+  //             });
+
+  //             console.log(
+  //               `✅ Revocation Credential for ${credential.name}:`,
+  //               revocationResponse
+  //             );
+
+  //             const invitationUrl = revocationResponse?.credInviteURL; // Correct URL from API response
+  //             if (invitationUrl) {
+  //               const acceptResponse = await acceptCredentialAPI({
+  //                 invitationUrl,
+  //               });
+
+  //               console.log(
+  //                 `✅ Revocation Credential Accepted: ${credential.name}`,
+  //                 acceptResponse
+  //               );
+  //             } else {
+  //               console.error(
+  //                 `❌ Missing credInviteURL for ${credential.name}`
+  //               );
+  //             }
+  //           } catch (error) {
+  //             console.error(
+  //               `❌ Error with Revocation Credential for ${credential.name}:`,
+  //               error
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     alert("Onboarding completed successfully!");
+  //   } catch (error) {
+  //     console.error("Error during onboarding:", error);
+  //     alert("An error occurred. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
-      // Retrieve onboarding data
+      // Step 1: Retrieve onboarding data
       const storedData = await secureGet("onboardingData");
       if (!storedData) throw new Error("No onboarding data found.");
-  
+
       const parsedData = JSON.parse(storedData);
       const { onboardingUniqueId } = parsedData;
       if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
-  
-      // Step 1: Register and get access token
-      const response = await onboardingRegisterAPI({ onboardingUniqueId });
+
+      // Step 2: Register and Get Token
+      const response = await retryAPI(onboardingRegisterAPI, {
+        onboardingUniqueId,
+      });
       const cloudAccessToken = response.access_token;
       await secureStore("cloudAccessToken", cloudAccessToken);
-  
-      // Step 2: Create Wallet
-      const walletResponse = await onboardingWalletCreationAPI({ label: "Credential Wallet" });
-      console.log("Wallet Created:", walletResponse);
-  
-      // Step 3: Create DID
-      const didResponse = await onboardingDIDAPI();
-      const holderDID = didResponse.did;
-      console.log("Holder DID:", holderDID);
-      await secureStore("holderDID", holderDID);
-  
-      // Step 4: Issue Credentials
-      const credentialsResponse = await onboardingInitialCredentialsAPI({
-        ...parsedData,
-        credentialType: "jsonId",
-        holderDID,
+
+      // Step 3: Create Wallet
+      const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
+        label: "Credential Wallet",
       });
-      console.log("Credentials Issued:", credentialsResponse);
-  
-      // Step 5: Accept Each Initial Credential
+      console.log("✅ Wallet Created:", walletResponse);
+
+      // Step 4: Create DID
+      const didResponse = await retryAPI(onboardingDIDAPI, {});
+      const holderDID = didResponse.did;
+      console.log("✅ Holder DID:", holderDID);
+      await secureStore("holderDID", holderDID);
+
+      // Step 5: Issue Credentials
+      const credentialsResponse = await retryAPI(
+        onboardingInitialCredentialsAPI,
+        {
+          ...parsedData,
+          credentialType: "jsonId",
+          holderDID,
+        }
+      );
+      console.log("✅ Credentials Issued:", credentialsResponse);
+
       if (credentialsResponse?.length) {
         for (const credential of credentialsResponse) {
           console.log(`Accepting credential: ${credential.name}`);
-  
           try {
-            const acceptResponse = await acceptCredentialAPI({
+            const acceptResponse = await retryAPI(acceptCredentialAPI, {
               invitationUrl: credential.url,
             });
-  
-            console.log(`✅ Credential ${credential.name} accepted:`, acceptResponse);
+            console.log(
+              `✅ Credential ${credential.name} Accepted:`,
+              acceptResponse
+            );
           } catch (error) {
-            console.error(`❌ Error accepting credential ${credential.name}:`, error);
+            console.error(`❌ Error Accepting ${credential.name}:`, error);
           }
         }
       }
-  
+
       // Step 6: Get Tenant ID
-      const getDidResponse = await onboardingGetDIDAPI();
+      const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
       const responseTenantId = getDidResponse.hashTenantID;
-      console.log("Tenant ID:", responseTenantId);
-  
+      console.log("✅ Tenant ID:", responseTenantId);
+
       // Step 7: Get Credential List
-      const credentialList = await getCredentialListAPI({
-        tenantId: responseTenantId,
-        take: 10,
-        skip: 0,
-      });
+      const fetchCredentialList = async (tenantId: string) => {
+        let attempts = 0;
+
+        while (attempts < 10) {
+          console.log(`⏳ Fetching Credential List... Attempt ${attempts + 1}`);
+          const credentialList = await getCredentialListAPI({
+            tenantId,
+            take: 10,
+            skip: 0,
+          });
+
+          if (credentialList?.length) {
+            console.log("✅ Credential List Found:", credentialList);
+            return credentialList; // Break out if credentials are found
+          }
+
+          attempts++;
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+        }
+
+        console.error("❌ Credential List still empty after 10 attempts");
+        return [];
+      };
+
+      const credentialList = await fetchCredentialList(responseTenantId);
       console.log("Credential List:", credentialList);
-  
+
       // Step 8: Call Revocation API and Accept Each Revocation Credential
       if (credentialList?.length) {
         for (const credential of credentialList) {
           if (credential.revocationId) {
-            console.log(`Calling revocation API for: ${credential.name}`);
-  
+            console.log(`Calling Revocation API for: ${credential.name}`);
             try {
-              const revocationResponse = await getRevocationCredentialAPI({
-                holderDID,
-                revocationId: credential.revocationId,
-              });
-  
-              console.log(`✅ Revocation Credential for ${credential.name}:`, revocationResponse);
-  
-              const invitationUrl = revocationResponse?.credInviteURL; // Correct URL from API response
+              const revocationResponse = await retryAPI(
+                getRevocationCredentialAPI,
+                {
+                  holderDID,
+                  revocationId: credential.revocationId,
+                }
+              );
+
+              console.log(
+                `✅ Revocation Credential for ${credential.name}:`,
+                revocationResponse
+              );
+
+              const invitationUrl = revocationResponse?.credInviteURL;
               if (invitationUrl) {
-                const acceptResponse = await acceptCredentialAPI({
+                const acceptResponse = await retryAPI(acceptCredentialAPI, {
                   invitationUrl,
                 });
-  
-                console.log(`✅ Revocation Credential Accepted: ${credential.name}`, acceptResponse);
+                console.log(
+                  `✅ Revocation Credential Accepted: ${credential.name}`,
+                  acceptResponse
+                );
               } else {
-                console.error(`❌ Missing credInviteURL for ${credential.name}`);
+                console.error(
+                  `❌ Missing credInviteURL for ${credential.name}`
+                );
               }
             } catch (error) {
-              console.error(`❌ Error with Revocation Credential for ${credential.name}:`, error);
+              console.error(
+                `❌ Error with Revocation Credential for ${credential.name}:`,
+                error
+              );
             }
           }
         }
       }
-  
-      alert("Onboarding completed successfully!");
+
+      router.push("/dashboard");
     } catch (error) {
       console.error("Error during onboarding:", error);
       alert("An error occurred. Please try again.");

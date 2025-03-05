@@ -1,31 +1,26 @@
 "use client";
-import * as React from "react";
-import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
-import { DashboardLayout } from "@toolpad/core/DashboardLayout";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import ThemeProviderWrapper from "./theme-provider"; // Import the wrapper
 
-const NAVIGATION: Navigation = [
-  { kind: "header", title: "" },
-  { segment: "page", title: "Test", icon: <DashboardIcon /> },
-];
+import Box from "@mui/material/Box";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 
-export default function DashboardLayoutWrapper({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProviderWrapper>
-      <AppProvider
-        navigation={NAVIGATION}
-        branding={{
-          logo: <img src="/images/ndilogodark.svg" alt="Bhutan NDI logo" />,
-          title: "NDI Cloud Wallet",
-        }}
-      >
-        <DashboardLayout>{children}</DashboardLayout>
-      </AppProvider>
-    </ThemeProviderWrapper>
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      <Sidebar />
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        <Header />
+        <Box
+          sx={{
+            padding: 3,
+            flexGrow: 1,
+            overflowY: "auto",
+            backgroundColor: "#F4F6F8",
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    </Box>
   );
 }

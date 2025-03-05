@@ -63,8 +63,8 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
     const responsePayload = response?.data.data;
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
-    console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData)
-    
+    console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
+
     return decryptedData;
   } catch (error) {
     console.error("API call failed:", error);
@@ -119,7 +119,6 @@ export const onboardingBiometricAPI = async (jsonData: Record<string, any>) => {
       data: { data: encryptedData },
     };
 
-
     // Make the API call
     const response = await axios(config);
 
@@ -152,6 +151,10 @@ export const onboardingRegisterAPI = async (jsonData: Record<string, any>) => {
     const transformedData = {
       onboardingUniqueId: jsonData.onboardingUniqueId || "",
     };
+    console.log(
+      "🚀 ~ onboardingRegisterAPI ~ transformedData:",
+      transformedData
+    );
 
     // Construct headers with bearer token
     const headers = {
@@ -166,7 +169,6 @@ export const onboardingRegisterAPI = async (jsonData: Record<string, any>) => {
       headers: headers,
       data: transformedData,
     };
-
 
     // Make the API call
     const response = await axios(config);
@@ -217,7 +219,6 @@ export const onboardingWalletCreationAPI = async (
       data: transformedData,
     };
 
-
     // Make the API call
     const response = await axios(config);
 
@@ -252,7 +253,6 @@ export const onboardingDIDAPI = async () => {
       headers,
     };
 
-
     // Make the API call
     const { data } = await axios(config);
 
@@ -283,7 +283,6 @@ export const onboardingGetDIDAPI = async () => {
       url: `${apiUrl}/cloud-wallet/v1/did`,
       headers,
     };
-
 
     // Make the API call
     const { data } = await axios(config);
@@ -335,7 +334,7 @@ export const onboardingInitialCredentialsAPI = async (
       secretKey,
       JSON.stringify(transformedData)
     );
-    console.log("🚀 ~ encryptedData:", encryptedData)
+    console.log("🚀 ~ encryptedData:", encryptedData);
 
     // Construct headers with bearer token
     const headers = {
@@ -362,7 +361,6 @@ export const onboardingInitialCredentialsAPI = async (
     throw new Error("Unable to make API call");
   }
 };
-
 
 export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
   try {
@@ -412,7 +410,6 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
   }
 };
 
-
 export const loginAPI = async (jsonData: Record<string, any>) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
@@ -427,8 +424,8 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
       "ID Type": "Citizenship",
       Image: jsonData.image, // Base64 encoded image
     };
-    
-    console.log("🚀 ~ loginAPI ~ transformedData:", transformedData)
+
+    console.log("🚀 ~ loginAPI ~ transformedData:", transformedData);
 
     // Encrypt the transformed data
     const encryptedData = await encryptPayload(
@@ -450,14 +447,11 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
       data: { data: encryptedData }, // Required format
     };
 
-
     // Make the API call
     const response = await axios(config);
 
     const responsePayload = response?.data.data;
-    console.log("🚀 ~ loginAPI ~ responsePayload:", responsePayload)
-  
-    
+    console.log("🚀 ~ loginAPI ~ responsePayload:", responsePayload);
 
     return responsePayload;
   } catch (error) {
@@ -466,10 +460,11 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
   }
 };
 
-export const getCredentialListAPI = async (params: { 
-  tenantId: string; 
-  take: number; 
-  skip: number; 
+export const getCredentialListAPI = async (params: {
+  tenantId: string;
+  status?: string;
+  take: number;
+  skip: number;
 }) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
@@ -491,12 +486,16 @@ export const getCredentialListAPI = async (params: {
       tenantId: params.tenantId,
       take: params.take.toString(),
       skip: params.skip.toString(),
-    }).toString();
+    });
+
+    if (params.status) {
+      queryParams.append("status", params.status);
+    }
 
     // API request configuration
     const config: AxiosRequestConfig = {
       method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/user/credential?${queryParams}`,
+      url: `${apiUrl}/cloud-wallet/v1/user/credential?${queryParams.toString()}`,
       headers,
     };
 
@@ -514,9 +513,53 @@ export const getCredentialListAPI = async (params: {
   }
 };
 
-export const getRevocationCredentialAPI = async (
-  params: { holderDID: string; revocationId: string }
-) => {
+export const getCredentialDetailsAPI = async (credentialRecordId: string) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    // Get authentication data
+    const cloudAccessToken = await secureGet("cloudAccessToken");
+    if (!cloudAccessToken) throw new Error("Access Token is Missing!");
+
+    // Construct headers with bearer token
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Prepare the API request URL
+    const url = `${apiUrl}/cloud-wallet/v1/credential?credentialRecordId=${credentialRecordId}`; // Assuming this is the correct endpoint
+
+    // Prepare API request configuration
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: url,
+      headers: headers,
+    };
+
+    console.log("Sending API Request:", config);
+
+    // Make the API call
+    const response = await axios(config);
+
+    // Extract the API response data
+    const responsePayload = response?.data?.data;
+
+    console.log("Credential Details Responseapi:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to get credential details");
+  }
+};
+
+export const getRevocationCredentialAPI = async (params: {
+  holderDID: string;
+  revocationId: string;
+}) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) throw new Error("API URL is missing in environment variables");
@@ -549,7 +592,7 @@ export const getRevocationCredentialAPI = async (
     const response = await axios(config);
     console.log("✅ Revocation Credential Response:", response.data);
 
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to fetch revocation credential");

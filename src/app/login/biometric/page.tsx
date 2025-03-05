@@ -8,7 +8,10 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { secureGet, secureStore } from "@/app/lib/storage/storage";
-import { loginAPI } from "@/app/lib/api_utils/onboardingAPI";
+import {
+  loginAPI,
+  onboardingGetDIDAPI,
+} from "@/app/lib/api_utils/onboardingAPI";
 
 const FaceLivenessDynamic = dynamic(
   () => import("@/app/components/Liveness/Liveness"),
@@ -47,11 +50,20 @@ export default function BiometricPage() {
 
       // ✅ Call login API
       const apiResponse = await loginAPI(jsonData);
-      console.log("API Response:", apiResponse);
 
       const cloudAccessToken = apiResponse.access_token;
+      const refreshToken = apiResponse.refresh_token;
       await secureStore("cloudAccessToken", cloudAccessToken);
+      await secureStore("refreshToken", refreshToken);
 
+      const getDidResponse = await onboardingGetDIDAPI();
+      const responseTenantId = getDidResponse.hashTenantID;
+      await secureStore("tenantId", responseTenantId);
+      const holderDID = getDidResponse.did;
+      console.log("🚀 ~ handleLivenessSuccess ~ holderDID:", holderDID)
+      await secureStore("holderDID", holderDID);
+
+      console.log("Tenant ID:", responseTenantId);
       // Navigate to validation page after success
       router.push("/dashboard");
     } catch (error) {
