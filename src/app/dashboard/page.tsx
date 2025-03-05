@@ -15,20 +15,13 @@ import {
   getCredentialListAPI,
 } from "../lib/api_utils/onboardingAPI";
 import { secureGet } from "../lib/storage/storage";
-
-const cardData = [
-  { title: "Total", value: 100 },
-  { title: "Active", value: 80 },
-  { title: "Self Attested", value: 10 },
-  { title: "Suspended", value: 5 },
-  { title: "Revoked", value: 5 },
-];
+import { retryAPI } from "../lib/api_utils/helperFunction";
 
 interface Credential {
   id: string;
   name: string;
   status: string;
-  credentialsId: string; // Add credentialsId here
+  credentialsId: string;
   revocationCredentialsId: string;
   revocationId: string;
   acceptedDate: string;
@@ -38,29 +31,30 @@ export default function DashboardPage() {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
-  ); // Use any for flexibility with detailed data
+  );
 
   useEffect(() => {
-    const fetchCredentials = async () => {
-      const tenantId = await secureGet("tenantId");
-      if (!tenantId) {
-        console.error("Tenant ID is missing");
-        return; // Stop execution if tenantId is null
-      }
-      try {
-        const data = await getCredentialListAPI({
-          tenantId: tenantId,
-          take: 10,
-          skip: 0,
-        });
-        setCredentials(data); // Assuming the data already includes the necessary fields
-      } catch (error) {
-        console.error("Error fetching credentials:", error);
-      }
-    };
-
     fetchCredentials();
   }, []);
+
+  const fetchCredentials = async (status?: string) => {
+    const tenantId = await secureGet("tenantId");
+    if (!tenantId) {
+      console.error("Tenant ID is missing");
+      return;
+    }
+    try {
+      const data = await retryAPI(getCredentialListAPI, {
+        tenantId: tenantId,
+        take: 10,
+        skip: 0,
+        status: status,
+      });
+      setCredentials(data);
+    } catch (error) {
+      console.error("Error fetching credentials after retries:", error);
+    }
+  };
 
   const handleCardClick = async (credentialId: string): Promise<void> => {
     try {
@@ -70,6 +64,34 @@ export default function DashboardPage() {
       console.error("Error fetching credential details:", error);
     }
   };
+
+  const calculateCardData = () => {
+    return [
+      { title: "Total", value: credentials.length, status: undefined },
+      {
+        title: "Active",
+        value: credentials.filter((c) => c.status === "ACTIVE").length,
+        status: "ACTIVE",
+      },
+      {
+        title: "Self Attested",
+        value: credentials.filter((c) => c.status === "self-attested").length,
+        status: "self-attested",
+      },
+      {
+        title: "Suspended",
+        value: credentials.filter((c) => c.status === "SUSPENDED").length,
+        status: "SUSPENDED",
+      },
+      {
+        title: "Revoked",
+        value: credentials.filter((c) => c.status === "REVOKED").length,
+        status: "REVOKED",
+      },
+    ];
+  };
+
+  const cardData = calculateCardData();
 
   return (
     <Box>
@@ -86,7 +108,9 @@ export default function DashboardPage() {
                 height: "90%",
                 boxShadow: `-4px 3px 1px 1px #5AC994`,
                 border: "solid 1px #5AC994",
+                cursor: "pointer",
               }}
+              onClick={() => fetchCredentials(card.status)}
             >
               <CardContent>
                 <Typography mb={3} variant="h6" sx={{ fontWeight: "bold" }}>
@@ -122,7 +146,7 @@ export default function DashboardPage() {
                         selectedCredential?.credential?.jsonld?.type?.[1] || "",
                       iconUrl: undefined,
                     }}
-                  ></CredentialCard>
+                  />
                 </Grid2>
                 <Grid2 container size={7} spacing={3}>
                   <Grid2 size={12}>
@@ -134,7 +158,7 @@ export default function DashboardPage() {
                   )
                     .filter(
                       (field) => field !== "revocation_id" && field !== "id"
-                    ) // Exclude 'revocationId' and 'id'
+                    )
                     .map((field) => (
                       <Grid2 key={field} size={6}>
                         <TextField
@@ -147,7 +171,6 @@ export default function DashboardPage() {
                             selectedCredential?.credential?.jsonld
                               ?.credentialSubject?.[field] || ""
                           }
-                          // Optionally handle onChange if you need to make it editable
                         />
                       </Grid2>
                     ))}
@@ -166,14 +189,20 @@ export default function DashboardPage() {
           borderRadius={3}
           spacing={3}
         >
-          {credentials.map((credential) => (
-            <Grid2 size={4} key={credential.id}>
-              <CredentialCard
-                credential={credential}
-                onClick={() => handleCardClick(credential.credentialsId)} // Pass the credentialsId here
-              />
-            </Grid2>
-          ))}
+          {credentials.length === 0 ? (
+            <Typography variant="h6">
+              You do not have any credentials yet.
+            </Typography>
+          ) : (
+            credentials.map((credential) => (
+              <Grid2 size={4} key={credential.id}>
+                <CredentialCard
+                  credential={credential}
+                  onClick={() => handleCardClick(credential.credentialsId)}
+                />
+              </Grid2>
+            ))
+          )}
         </Grid2>
       )}
     </Box>

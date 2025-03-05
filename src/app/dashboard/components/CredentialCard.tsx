@@ -26,11 +26,21 @@ export default function CredentialCard({
       onClick={onClick ? onClick : undefined}
       sx={{
         cursor: onClick ? "pointer" : "normal",
-        bgcolor: "#030305",
+        background: `
+          radial-gradient(
+            circle at 15% 0,
+            rgba(3, 3, 5, 0.5), /* Reduced opacity in the clipped area */
+            rgba(3, 3, 5, 1)    /* Fully opaque outside the clipped area */
+          ),
+          #030305 /* Fallback solid black background */
+        `,
         color: "#FFFFFF",
+        clipPath: "circle(61.4% at 15% 0)",
         borderRadius: 5,
         p: 1,
         minWidth: 310,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       <CardContent>

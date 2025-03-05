@@ -171,7 +171,7 @@ export default function SignupForm() {
         onboardingInitialCredentialsAPI,
         {
           ...parsedData,
-          credentialType: "jsonId",
+          credentialType: "jsonld",
           holderDID,
         }
       );

@@ -12,6 +12,7 @@ import {
   loginAPI,
   onboardingGetDIDAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
+import { retryAPI } from "@/app/lib/api_utils/helperFunction";
 
 const FaceLivenessDynamic = dynamic(
   () => import("@/app/components/Liveness/Liveness"),
@@ -56,11 +57,11 @@ export default function BiometricPage() {
       await secureStore("cloudAccessToken", cloudAccessToken);
       await secureStore("refreshToken", refreshToken);
 
-      const getDidResponse = await onboardingGetDIDAPI();
+      const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
       const responseTenantId = getDidResponse.hashTenantID;
       await secureStore("tenantId", responseTenantId);
       const holderDID = getDidResponse.did;
-      console.log("🚀 ~ handleLivenessSuccess ~ holderDID:", holderDID)
+      console.log("🚀 ~ handleLivenessSuccess ~ holderDID:", holderDID);
       await secureStore("holderDID", holderDID);
 
       console.log("Tenant ID:", responseTenantId);
