@@ -1,11 +1,10 @@
-version: '3.8'
+version: '3'
 services:
-  ndi-cloud-wallet-frontend:
-    image: ${IMAGE_NAME}
-    container_name: ndi-cloud-wallet-frontend
+  web:
+    build: .
     ports:
       - "4003:4003"
-    working_dir: /
-    env_file:
-      - .env
-    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    command: |
+      sh -c "npm run build && npm run start"
