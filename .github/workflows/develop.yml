@@ -3,7 +3,7 @@ name: DEV CI/CD Workflow
 on:
   push:
     branches:
-      - develop
+      - develop1
 
 jobs:
   build:
@@ -21,8 +21,25 @@ jobs:
 
       - name: Log in to ECR
         run: 
-          aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com    
+          aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com
       
+      - name: Get runner IP address
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: Print Runner IP Address
+        id: print-ip
+        run: |
+         echo "Runner IP Address: ${{ steps.ip.outputs.ipv4 }}"
+
+      - name: Whitelist runner IP address
+        run: |
+         aws ec2 authorize-security-group-ingress \
+         --group-id ${{ secrets.DEV_INSTANCE_SG_ID }} \
+         --protocol tcp \
+         --port 22 \
+         --cidr ${{ steps.ip.outputs.ipv4 }}/32   
+         
       - name: Create .env file
         run: |
          echo "NEXT_PUBLIC_AUTH_BASE_API_URL=${{ secrets.NEXT_PUBLIC_AUTH_BASE_API_URL }}" > .env
@@ -76,5 +93,3 @@ jobs:
             if [ -n "$(docker images -f 'dangling=true' -q)" ]; then
             docker rmi $(docker images -f "dangling=true" -q) || true  # Ignore errors if images are in use
             fi
-             
-             
