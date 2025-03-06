@@ -334,7 +334,6 @@ export const onboardingInitialCredentialsAPI = async (
       secretKey,
       JSON.stringify(transformedData)
     );
-    console.log("🚀 ~ encryptedData:", encryptedData);
 
     // Construct headers with bearer token
     const headers = {

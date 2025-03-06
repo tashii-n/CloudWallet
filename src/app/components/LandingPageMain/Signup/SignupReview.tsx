@@ -38,6 +38,17 @@ const modalStyle = {
   p: 4,
 };
 
+// Define the steps in the onboarding process
+const ONBOARDING_STEPS = {
+  REGISTER: "REGISTER",
+  CREATE_WALLET: "CREATE_WALLET",
+  CREATE_DID: "CREATE_DID",
+  ISSUE_CREDENTIALS: "ISSUE_CREDENTIALS",
+  GET_TENANT_ID: "GET_TENANT_ID",
+  GET_CREDENTIAL_LIST: "GET_CREDENTIAL_LIST",
+  ACCEPT_REVOCATION_CREDENTIALS: "ACCEPT_REVOCATION_CREDENTIALS",
+};
+
 export default function SignupForm() {
   const router = useRouter();
   const requiredFields = [
@@ -55,230 +66,238 @@ export default function SignupForm() {
   ];
 
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false); // Example of a non-JSON state variable
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [open, setOpen] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string | null>(null); // Track the current step
+  const [holderDID, setHolderDID] = useState<string | null>(null); // Store holderDID
+  const [tenantId, setTenantId] = useState<string | null>(null); // Store tenantId
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const handleErrorModalClose = () => {
+    setErrorModalOpen(false);
+  };
 
-  // const testconfirm = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     // Retrieve onboarding data
-  //     const storedData = await secureGet("onboardingData");
-  //     if (!storedData) throw new Error("No onboarding data found.");
+  // Step 1: Register and Get Token
+  const registerAndGetToken = async () => {
+    const storedData = await secureGet("onboardingData");
+    if (!storedData) throw new Error("No onboarding data found.");
 
-  //     const parsedData = JSON.parse(storedData);
-  //     const { onboardingUniqueId } = parsedData;
-  //     if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
-  //     const responseTenantId = await secureGet("tenantId");
-  //     if (!responseTenantId) throw new Error("Missing onboardingUniqueId.");
-  //     const holderDID = await secureGet("holderDID")
-  //     if (!holderDID) throw new Error("Missing onboardingUniqueId.");
+    const parsedData = JSON.parse(storedData);
+    const { onboardingUniqueId } = parsedData;
+    if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
 
-  //     console.log("Tenant ID:", responseTenantId);
+    const response = await retryAPI(onboardingRegisterAPI, {
+      onboardingUniqueId,
+    });
+    const cloudAccessToken = response.access_token;
+    await secureStore("cloudAccessToken", cloudAccessToken);
 
-  //     // Step 7: Get Credential List
-  //     const credentialList = await getCredentialListAPI({
-  //       tenantId: responseTenantId,
-  //       take: 10,
-  //       skip: 0,
-  //     });
-  //     console.log("Credential List:", credentialList);
+    setCurrentStep(ONBOARDING_STEPS.CREATE_WALLET); // Move to the next step
+  };
 
-  //     // Step 8: Call Revocation API and Accept Each Revocation Credential
-  //     if (credentialList?.length) {
-  //       for (const credential of credentialList) {
-  //         if (credential.revocationId) {
-  //           console.log(`Calling revocation API for: ${credential.name}`);
+  // Step 2: Create Wallet
+  const createWallet = async () => {
+    const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
+      label: "Credential Wallet",
+    });
+    console.log("✅ Wallet Created:", walletResponse);
+    setCurrentStep(ONBOARDING_STEPS.CREATE_DID); // Move to the next step
+  };
 
-  //           try {
-  //             const revocationResponse = await getRevocationCredentialAPI({
-  //               holderDID,
-  //               revocationId: credential.revocationId,
-  //             });
+  // Step 3: Create DID
+  const createDID = async () => {
+    const didResponse = await retryAPI(onboardingDIDAPI, {});
+    const holderDID = didResponse.did;
+    console.log("✅ Holder DID:", holderDID);
+    await secureStore("holderDID", holderDID);
+    setHolderDID(holderDID); // Store holderDID for later steps
+    setCurrentStep(ONBOARDING_STEPS.ISSUE_CREDENTIALS); // Move to the next step
+  };
 
-  //             console.log(
-  //               `✅ Revocation Credential for ${credential.name}:`,
-  //               revocationResponse
-  //             );
+  // Step 4: Issue Credentials
+  const issueCredentials = async () => {
+    if (!holderDID) throw new Error("Missing holderDID.");
 
-  //             const invitationUrl = revocationResponse?.credInviteURL; // Correct URL from API response
-  //             if (invitationUrl) {
-  //               const acceptResponse = await acceptCredentialAPI({
-  //                 invitationUrl,
-  //               });
+    // Retrieve the stored onboarding data
+    const storedData = await secureGet("onboardingData");
+    if (!storedData) throw new Error("No onboarding data found.");
 
-  //               console.log(
-  //                 `✅ Revocation Credential Accepted: ${credential.name}`,
-  //                 acceptResponse
-  //               );
-  //             } else {
-  //               console.error(
-  //                 `❌ Missing credInviteURL for ${credential.name}`
-  //               );
-  //             }
-  //           } catch (error) {
-  //             console.error(
-  //               `❌ Error with Revocation Credential for ${credential.name}:`,
-  //               error
-  //             );
-  //           }
-  //         }
-  //       }
-  //     }
+    const parsedData = JSON.parse(storedData);
 
-  //     alert("Onboarding completed successfully!");
-  //   } catch (error) {
-  //     console.error("Error during onboarding:", error);
-  //     alert("An error occurred. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  const handleConfirm = async () => {
-    setIsLoading(true);
-    try {
-      // Step 1: Retrieve onboarding data
-      const storedData = await secureGet("onboardingData");
-      if (!storedData) throw new Error("No onboarding data found.");
+    // Prepare the payload for the API
+    const payload = {
+      ...parsedData, // Include all the onboarding data
+      credentialType: "jsonld", // Specify the credential type
+      holderDID, // Include the holderDID
+    };
 
-      const parsedData = JSON.parse(storedData);
-      const { onboardingUniqueId } = parsedData;
-      if (!onboardingUniqueId) throw new Error("Missing onboardingUniqueId.");
+    // Call the API to issue credentials
+    const credentialsResponse = await retryAPI(
+      onboardingInitialCredentialsAPI,
+      payload
+    );
+    console.log("✅ Credentials Issued:", credentialsResponse);
 
-      // Step 2: Register and Get Token
-      const response = await retryAPI(onboardingRegisterAPI, {
-        onboardingUniqueId,
-      });
-      const cloudAccessToken = response.access_token;
-      await secureStore("cloudAccessToken", cloudAccessToken);
-
-      // Step 3: Create Wallet
-      const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
-        label: "Credential Wallet",
-      });
-      console.log("✅ Wallet Created:", walletResponse);
-
-      // Step 4: Create DID
-      const didResponse = await retryAPI(onboardingDIDAPI, {});
-      const holderDID = didResponse.did;
-      console.log("✅ Holder DID:", holderDID);
-      await secureStore("holderDID", holderDID);
-
-      // Step 5: Issue Credentials
-      const credentialsResponse = await retryAPI(
-        onboardingInitialCredentialsAPI,
-        {
-          ...parsedData,
-          credentialType: "jsonld",
-          holderDID,
-        }
-      );
-      console.log("✅ Credentials Issued:", credentialsResponse);
-
-      if (credentialsResponse?.length) {
-        for (const credential of credentialsResponse) {
-          console.log(`Accepting credential: ${credential.name}`);
-          try {
-            const acceptResponse = await retryAPI(acceptCredentialAPI, {
-              invitationUrl: credential.url,
-            });
-            console.log(
-              `✅ Credential ${credential.name} Accepted:`,
-              acceptResponse
-            );
-          } catch (error) {
-            console.error(`❌ Error Accepting ${credential.name}:`, error);
-          }
-        }
-      }
-
-      // Step 6: Get Tenant ID
-      const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
-      const responseTenantId = getDidResponse.hashTenantID;
-      console.log("✅ Tenant ID:", responseTenantId);
-
-      // Step 7: Get Credential List
-      const fetchCredentialList = async (tenantId: string) => {
-        let attempts = 0;
-
-        while (attempts < 10) {
-          console.log(`⏳ Fetching Credential List... Attempt ${attempts + 1}`);
-          const credentialList = await getCredentialListAPI({
-            tenantId,
-            take: 10,
-            skip: 0,
+    // Accept each issued credential
+    if (credentialsResponse?.length) {
+      for (const credential of credentialsResponse) {
+        console.log(`Accepting credential: ${credential.name}`);
+        try {
+          const acceptResponse = await retryAPI(acceptCredentialAPI, {
+            invitationUrl: credential.url,
           });
-
-          if (credentialList?.length) {
-            console.log("✅ Credential List Found:", credentialList);
-            return credentialList; // Break out if credentials are found
-          }
-
-          attempts++;
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+          console.log(
+            `✅ Credential ${credential.name} Accepted:`,
+            acceptResponse
+          );
+        } catch (error) {
+          console.error(`❌ Error Accepting ${credential.name}:`, error);
         }
+      }
+    }
 
-        console.error("❌ Credential List still empty after 10 attempts");
-        return [];
-      };
+    // Move to the next step
+    setCurrentStep(ONBOARDING_STEPS.GET_TENANT_ID);
+  };
 
-      const credentialList = await fetchCredentialList(responseTenantId);
-      console.log("Credential List:", credentialList);
+  // Step 5: Get Tenant ID
+  const getTenantId = async () => {
+    const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
+    const responseTenantId = getDidResponse.hashTenantID;
+    console.log("✅ Tenant ID:", responseTenantId);
+    setTenantId(responseTenantId); // Store tenantId for later steps
+    setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
+  };
 
-      // Step 8: Call Revocation API and Accept Each Revocation Credential
+  // Step 6: Get Credential List
+  const getCredentialList = async () => {
+    if (!tenantId) throw new Error("Missing tenantId.");
+
+    let attempts = 0;
+    while (attempts < 10) {
+      console.log(`⏳ Fetching Credential List... Attempt ${attempts + 1}`);
+      const credentialList = await getCredentialListAPI({
+        tenantId,
+        take: 10,
+        skip: 0,
+      });
+
       if (credentialList?.length) {
-        for (const credential of credentialList) {
-          if (credential.revocationId) {
-            console.log(`Calling Revocation API for: ${credential.name}`);
-            try {
-              const revocationResponse = await retryAPI(
-                getRevocationCredentialAPI,
-                {
-                  holderDID,
-                  revocationId: credential.revocationId,
-                }
-              );
+        console.log("✅ Credential List Found:", credentialList);
+        // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
+        return credentialList;
+      }
 
-              console.log(
-                `✅ Revocation Credential for ${credential.name}:`,
-                revocationResponse
-              );
+      attempts++;
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+    }
 
-              const invitationUrl = revocationResponse?.credInviteURL;
-              if (invitationUrl) {
-                const acceptResponse = await retryAPI(acceptCredentialAPI, {
-                  invitationUrl,
-                });
-                console.log(
-                  `✅ Revocation Credential Accepted: ${credential.name}`,
-                  acceptResponse
-                );
-              } else {
-                console.error(
-                  `❌ Missing credInviteURL for ${credential.name}`
-                );
+    throw new Error("❌ Credential List still empty after 10 attempts");
+  };
+
+  // Step 7: Accept Revocation Credentials
+  const acceptRevocationCredentials = async () => {
+    if (!tenantId || !holderDID) throw new Error("Missing required data.");
+
+    const credentialList = await getCredentialList();
+    if (credentialList?.length) {
+      for (const credential of credentialList) {
+        if (credential.revocationId) {
+          console.log(`Calling Revocation API for: ${credential.name}`);
+          try {
+            const revocationResponse = await retryAPI(
+              getRevocationCredentialAPI,
+              {
+                holderDID,
+                revocationId: credential.revocationId,
               }
-            } catch (error) {
-              console.error(
-                `❌ Error with Revocation Credential for ${credential.name}:`,
-                error
+            );
+
+            console.log(
+              `✅ Revocation Credential for ${credential.name}:`,
+              revocationResponse
+            );
+
+            const invitationUrl = revocationResponse?.credInviteURL;
+            if (invitationUrl) {
+              const acceptResponse = await retryAPI(acceptCredentialAPI, {
+                invitationUrl,
+              });
+              console.log(
+                `✅ Revocation Credential Accepted: ${credential.name}`,
+                acceptResponse
               );
+            } else {
+              console.error(`❌ Missing credInviteURL for ${credential.name}`);
             }
+          } catch (error) {
+            console.error(
+              `❌ Error with Revocation Credential for ${credential.name}:`,
+              error
+            );
           }
         }
       }
+    }
+    setIsLoading(false); // Hide the spinner after the process completes
+    sessionStorage.clear();
+    // Onboarding completed successfully
+    router.push("/login");
+  };
 
-      router.push("/dashboard");
+  const handleConfirm = async () => {
+    setIsLoading(true); // Show the spinner
+    try {
+      // Start from the current step (or the first step if no step is set)
+      switch (currentStep || ONBOARDING_STEPS.REGISTER) {
+        case ONBOARDING_STEPS.REGISTER:
+          await registerAndGetToken();
+          break;
+        case ONBOARDING_STEPS.CREATE_WALLET:
+          await createWallet();
+          break;
+        case ONBOARDING_STEPS.CREATE_DID:
+          await createDID();
+          break;
+        case ONBOARDING_STEPS.ISSUE_CREDENTIALS:
+          await issueCredentials();
+          break;
+        case ONBOARDING_STEPS.GET_TENANT_ID:
+          await getTenantId();
+          break;
+        case ONBOARDING_STEPS.GET_CREDENTIAL_LIST:
+          await getCredentialList();
+          break;
+        case ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS:
+          await acceptRevocationCredentials();
+          break;
+        default:
+          throw new Error("Invalid step");
+      }
     } catch (error) {
       console.error("Error during onboarding:", error);
-      alert("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
+      setErrorModalOpen(true); // Show error modal
+      setIsLoading(false); // Hide the spinner on error
     }
   };
 
+  // Automatically progress through steps
+  useEffect(() => {
+    if (currentStep) {
+      handleConfirm();
+    }
+  }, [currentStep]); // Trigger handleConfirm when currentStep changes
+
+  // When "Try Again" is clicked, resume the onboarding process
+  const handleTryAgain = () => {
+    setErrorModalOpen(false); // Close the error modal
+    setIsLoading(true); // Show the spinner
+    handleConfirm(); // Resume from the current step
+  };
+
+  // Fetch onboarding data on component mount
   useEffect(() => {
     const fetchOnboardingData = async () => {
       try {
@@ -331,9 +350,6 @@ export default function SignupForm() {
             alt="Loading..."
             unoptimized
           />
-          {/* <Typography variant="h5" color="black" mt={2} textAlign={'center'}>
-              Validating...
-            </Typography> */}
         </Box>
       </Backdrop>
       <Typography
@@ -348,7 +364,6 @@ export default function SignupForm() {
 
       <Box
         component="form"
-        // noValidate
         action={"/"}
         method="POST"
         autoComplete="off"
@@ -358,15 +373,7 @@ export default function SignupForm() {
           borderRadius: 2,
         }}
       >
-        <Grid2
-          marginBottom={4}
-          container
-          spacing={2}
-          // border="1px solid"
-          // borderRadius={2}
-          // borderColor="primary.main"
-          // padding={3}
-        >
+        <Grid2 marginBottom={4} container spacing={2}>
           {requiredFields.map((field) => (
             <Grid2 key={field} size={6}>
               <TextField
@@ -389,7 +396,11 @@ export default function SignupForm() {
           justifyContent="space-between"
         >
           <Button
-            onClick={handleConfirm}
+            onClick={() => {
+              setIsLoading(true); // Show the spinner
+              setCurrentStep(ONBOARDING_STEPS.REGISTER); // Start the process
+            }}
+            disabled={isLoading}
             variant="contained"
             sx={{
               minWidth: "200px",
@@ -467,7 +478,6 @@ export default function SignupForm() {
                 LinkComponent={Link}
                 type="submit"
                 href="/signup"
-                // onClick={handleOpen}
                 variant="contained"
                 sx={{
                   minWidth: "180px",
@@ -480,6 +490,40 @@ export default function SignupForm() {
                 OK
               </Button>
             </Stack>
+          </Box>
+        </Modal>
+
+        {/* Error Modal */}
+        <Modal
+          open={errorModalOpen}
+          onClose={handleErrorModalClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box textAlign="center" borderRadius={4} sx={modalStyle}>
+            <Image
+              src="/images/errorred.svg"
+              width={150}
+              height={150}
+              alt="Error"
+            />
+            <Typography gutterBottom m={3}>
+              An error has occurred. Please click the button below to try again.
+            </Typography>
+            <Button
+              onClick={handleTryAgain}
+              variant="contained"
+              sx={{
+                minWidth: "180px",
+                backgroundColor: "#5AC994",
+                textTransform: "none",
+                color: "white",
+                minHeight: "40px",
+                borderRadius: 10,
+              }}
+            >
+              Try Again
+            </Button>
           </Box>
         </Modal>
       </Box>

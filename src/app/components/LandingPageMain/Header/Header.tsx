@@ -137,7 +137,7 @@ export default function ResponsiveAppBar() {
             sx={{
               flexGrow: 1,
               textAlign: "center",
-              justifyContent: "center",
+              justifyContent: "end",
               display: { xs: "none", md: "flex" },
             }}
           >

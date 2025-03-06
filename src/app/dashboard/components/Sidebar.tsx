@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import Link from "next/link";
 import Image from "next/image";
 import HomeIcon from "@mui/icons-material/Home";
 import PermContactCalendarIcon from "@mui/icons-material/PermContactCalendar";
@@ -19,7 +18,8 @@ import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import PermPhoneMsgOutlinedIcon from "@mui/icons-material/PermPhoneMsgOutlined";
 import PolicyOutlinedIcon from "@mui/icons-material/PolicyOutlined";
-
+import { useRouter } from "next/navigation"; // Import useRouter
+import Link from "next/link";
 
 const menuItems = [
   { name: "Home", path: "/dashboard", icon: <HomeIcon /> },
@@ -41,6 +41,17 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
+  const router = useRouter(); // Initialize the router
+
+  // Logout function
+  const handleLogout = () => {
+    // Clear session storage
+    sessionStorage.clear();
+
+    // Redirect to the login page
+    router.push("/login");
+  };
+
   return (
     <Drawer
       variant="permanent"
@@ -108,26 +119,26 @@ export default function Sidebar() {
         ))}
       </List>
 
+      {/* Logout Button */}
       <List sx={{ position: "absolute", bottom: 0, p: 3, width: "100%" }}>
         <ListItem disablePadding>
-          <Link href="/" style={{ width: "100%", textDecoration: "none" }}>
-            <ListItemButton
-              sx={{
-                "&:hover": {
-                  backgroundColor: "#5AC994", // Light green hover color
-                  "& .MuiListItemText-root": {
-                    color: "white", // Green text on hover
-                  },
-                  "& .MuiSvgIcon-root": {
-                    color: "white", // Icon color on hover
-                  },
+          <ListItemButton
+            onClick={handleLogout} // Add onClick handler for logout
+            sx={{
+              "&:hover": {
+                backgroundColor: "#5AC994", // Light green hover color
+                "& .MuiListItemText-root": {
+                  color: "white", // Green text on hover
                 },
-              }}
-            >
-              <LogoutIcon />
-              <ListItemText primary="Logout" sx={{ ml: 2, color: "#0C213A" }} />
-            </ListItemButton>
-          </Link>
+                "& .MuiSvgIcon-root": {
+                  color: "white", // Icon color on hover
+                },
+              },
+            }}
+          >
+            <LogoutIcon />
+            <ListItemText primary="Logout" sx={{ ml: 2, color: "#0C213A" }} />
+          </ListItemButton>
         </ListItem>
       </List>
     </Drawer>

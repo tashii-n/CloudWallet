@@ -24,6 +24,7 @@ export default function BiometricPage() {
 
   const [showLiveness, setShowLiveness] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
 
   const maxRetries = 3; // Maximum number of retries
 
@@ -78,6 +79,8 @@ export default function BiometricPage() {
 
         handleLivenessSuccess(livenessResponse, attempt + 1); // Retry
       } else {
+        setShowLiveness(false);
+        setLoginFailed(true);
         console.error("Max retries reached. API call failed.");
       }
     } finally {
@@ -108,9 +111,9 @@ export default function BiometricPage() {
             alt="Loading..."
             unoptimized
           />
-          <Typography variant="h5" color="green" mt={2} textAlign={"center"}>
+          {/* <Typography variant="h5" color="green" mt={2} textAlign={"center"}>
             Your biometric data is being validated. Please wait...
-          </Typography>
+          </Typography> */}
         </Box>
       </Backdrop>
       <Header />
@@ -226,6 +229,42 @@ export default function BiometricPage() {
                   onClose={() => setShowLiveness(false)}
                   onLivenessSuccess={handleLivenessSuccess}
                 />
+              ) : loginFailed ? (
+                <>
+                  <Typography
+                    variant="h5"
+                    color="#c43e3d"
+                    fontWeight={600}
+                    mb={3}
+                    letterSpacing={1}
+                  >
+                    LOGIN FAILED !
+                  </Typography>
+                  <Image
+                    src="/images/errorred.svg"
+                    width={170}
+                    height={170}
+                    alt="Biometric Avatar"
+                  />
+                  <Typography variant="body2" mt={3}>
+                    Click the button below to try again.
+                  </Typography>
+                  <br />
+                  <Button
+                    onClick={() => setShowLiveness(true)}
+                    variant="contained"
+                    sx={{
+                      minWidth: "250px",
+                      backgroundColor: "#c43e3d",
+                      textTransform: "none",
+                      color: "white",
+                      minHeight: "60px",
+                      borderRadius: "50px",
+                    }}
+                  >
+                    <Typography variant="body1">Scan My Face</Typography>
+                  </Button>
+                </>
               ) : (
                 <>
                   <Typography
@@ -249,7 +288,10 @@ export default function BiometricPage() {
                   <br />
                   <br />
                   <Button
-                    onClick={() => setShowLiveness(true)}
+                    onClick={() => {
+                      setShowLiveness(true);
+                      setLoginFailed(false);
+                    }}
                     variant="contained"
                     sx={{
                       minWidth: "250px",

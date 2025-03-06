@@ -28,16 +28,16 @@ import { secureStore } from "@/app/lib/storage/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-// const modalStyle = {
-//   position: "absolute",
-//   top: "50%",
-//   left: "50%",
-//   transform: "translate(-50%, -50%)",
-//   width: 400,
-//   bgcolor: "background.paper",
-//   boxShadow: 24,
-//   p: 4,
-// };
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 500,
+  bgcolor: "background.paper",
+  boxShadow: 24,
+  p: 4,
+};
 
 interface Gewog {
   gewogSerialNo: number;
@@ -51,7 +51,6 @@ interface Dzongkhag {
 }
 
 export default function SignupForm() {
-
   const router = useRouter();
   const dzongkhags: Dzongkhag[] = dzongkhagData.dzongkhags;
 
@@ -67,6 +66,11 @@ export default function SignupForm() {
   const [dob, setDob] = useState<Dayjs | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [validateFailed, setValidateFailed] = useState<boolean>(false);
+
+  const handleErrorModalClose = () => {
+    setValidateFailed(false);
+  };
 
   // Handlers
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,12 +139,13 @@ export default function SignupForm() {
       setIsLoading(true);
       const response = await onboardingValidateAPI(formData);
       secureStore("onboardingData", JSON.stringify(response));
-      router.push("/signup/biometric"); 
+      router.push("/signup/biometric");
       setIsLoading(false);
       // Handle the API response as needed
       // console.log("API Response:", response);
     } catch (error) {
       setIsLoading(false);
+      setValidateFailed(true);
       console.error("API call failed:", error);
       throw new Error("An unexpected error occurred. Please try again.");
     }
@@ -397,48 +402,43 @@ export default function SignupForm() {
           </Button>
         </Stack>
 
-        {/* <Modal
-          open={open}
-          onClose={handleClose}
+        <Modal
+          open={validateFailed}
+          onClose={handleErrorModalClose}
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
           <Box textAlign="center" borderRadius={4} sx={modalStyle}>
             <Image
-              src="images/success.svg"
-              width={110}
-              height={110}
-              alt="Success"
+              src="/images/errorred.svg"
+              width={150}
+              height={150}
+              alt="Error"
             />
-            <Typography
-              id="modal-modal-title"
-              color="primary"
-              fontWeight={600}
-              variant="h6"
-              component="h2"
-              mt={2}
-            >
-              Successfully submitted!
+            <Typography variant="h6" color="red" gutterBottom mt={3}>
+              INVALID INFORMATION !
             </Typography>
-            <Typography id="modal-modal-description" mt={2}>
-              
-              Please click on "Next" to proceed.
+            <Typography gutterBottom m={3}>
+              The information you provided appears to be incorrect, incomplete
+              or not found at the source. Please ensure your data is correct and
+              try again.
             </Typography>
             <Button
-              type="submit"
+              onClick={handleErrorModalClose}
               variant="contained"
               sx={{
-                color: "white",
-                minWidth: 110,
-                borderRadius: 15,
-                mt: 4,
+                minWidth: "180px",
+                backgroundColor: "#c43e3d",
                 textTransform: "none",
+                color: "white",
+                minHeight: "40px",
+                borderRadius: 10,
               }}
             >
-              Next
+              Try Again
             </Button>
           </Box>
-        </Modal> */}
+        </Modal>
       </Box>
     </>
   );
