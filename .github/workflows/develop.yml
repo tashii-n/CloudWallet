@@ -21,11 +21,11 @@ jobs:
 
       - name: Log in to ECR
         run: 
-          aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com
-          
+          aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com    
+      
       - name: Create .env file
         run: |
-          echo "NEXT_PUBLIC_AUTH_BASE_API_URL=${{ secrets.NEXT_PUBLIC_AUTH_BASE_API_URL }}" > .env
+         echo "NEXT_PUBLIC_AUTH_BASE_API_URL=${{ secrets.NEXT_PUBLIC_AUTH_BASE_API_URL }}" > .env
          echo "NEXT_PUBLIC_IDENTIFIER=${{ secrets.NEXT_PUBLIC_IDENTIFIER }}" >> .env
          echo "NEXT_PUBLIC_ENV=${{ secrets.NEXT_PUBLIC_ENV }}" >> .env
          echo "NEXT_PUBLIC_ENCRYPTION_KEY=${{ secrets.NEXT_PUBLIC_ENCRYPTION_KEY }}" >> .env
