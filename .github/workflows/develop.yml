@@ -25,23 +25,11 @@ jobs:
           
       - name: Create .env file
         run: |
-         echo "REACT_APP_STAGING_URL=${{ secrets.REACT_APP_STAGING_URL }}" > .env
-         echo "REACT_APP_VERIFIER_SERVICE_URL=${{ secrets.REACT_APP_VERIFIER_SERVICE_URL }}" >> .env
-         echo "REACT_APP_WEB_SOCKET_SERVER=${{ secrets.REACT_APP_WEB_SOCKET_SERVER }}" >> .env
-         echo "REACT_APP_ISSUER_SERVICE_URL=${{ secrets.REACT_APP_ISSUER_SERVICE_URL }}" >> .env
-         echo "REACT_APP_PROOF_REQUEST_RESTRICTIONS_SCHEMAID=${{ secrets.REACT_APP_PROOF_REQUEST_RESTRICTIONS_SCHEMAID }}" >> .env
-         echo "REACT_APP_ISSUE_CREDENTIAL_CREDDEFID=${{ secrets.REACT_APP_ISSUE_CREDENTIAL_CREDDEFID }}" >> .env
-         echo "REACT_APP_SECRET_KEY=${{ secrets.REACT_APP_SECRET_KEY }}" >> .env
-         echo "REACT_APP_CLIENT_ID=${{ secrets.REACT_APP_CLIENT_ID }}" >> .env
-         echo "REACT_APP_SOCKET_NKEY_ID=${{ secrets.REACT_APP_SOCKET_NKEY_ID }}" >> .env
-         echo "REACT_APP_PERMANENT_ADDRESS_SCHEMAID=${{ secrets.REACT_APP_PERMANENT_ADDRESS_SCHEMAID }}" >> .env
-         echo "REACT_APP_EMPLOYMENT_SCHEMAID=${{ secrets.REACT_APP_EMPLOYMENT_SCHEMAID }}" >> .env
-         echo "REACT_APP_ENCRYPTION_KEY=${{ secrets.REACT_APP_ENCRYPTION_KEY }}" >> .env
-         echo "REACT_APP_ENCRYPTION_KEY=${{ secrets.REACT_APP_VIDEO_GUID_LINK }}" >> .env
-         echo "REACT_APP_ENCRYPTION_KEY=${{ secrets.REACT_APP_BANK_ACCOUNT_SCHEMA_ID }}" >> .env
-         echo "REACT_APP_EMPLOYMENT_RECORD_CRED_DEF_ID=${{ secrets.REACT_APP_EMPLOYMENT_RECORD_CRED_DEF_ID }}" >> .env
-         echo "REACT_APP_VIDEO_GUID_LINK=${{ secrets.REACT_APP_VIDEO_GUID_LINK }}" >> .env
-
+          echo "NEXT_PUBLIC_AUTH_BASE_API_URL=${{ secrets.NEXT_PUBLIC_AUTH_BASE_API_URL }}" > .env
+         echo "NEXT_PUBLIC_IDENTIFIER=${{ secrets.NEXT_PUBLIC_IDENTIFIER }}" >> .env
+         echo "NEXT_PUBLIC_ENV=${{ secrets.NEXT_PUBLIC_ENV }}" >> .env
+         echo "NEXT_PUBLIC_ENCRYPTION_KEY=${{ secrets.NEXT_PUBLIC_ENCRYPTION_KEY }}" >> .env
+         echo "NEXT_PUBLIC_BASE_API_URL=${{ secrets.NEXT_PUBLIC_BASE_API_URL }}" >> .env
     
       - name: Copy Docker Compose file to EC2
         uses: appleboy/scp-action@v0.1.4
