@@ -12,12 +12,12 @@ export default function Header() {
         alignItems: "center",
         justifyContent: "space-between",
         px: 4,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#F4F6F8",
         boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.1)",
       }}
     >
       <Box>
-        <strong>Welcome Back,</strong>{" "} <br />
+        <strong>Welcome Back,</strong> <br />
         <span style={{ fontWeight: "bold" }}>Dorji Sonam</span>
       </Box>
 
@@ -25,7 +25,7 @@ export default function Header() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          sx={{ backgroundColor: "#4CAF50" }}
+          sx={{ backgroundColor: "primary.main#", borderRadius: 10 }}
         >
           Accept Invitation
         </Button>

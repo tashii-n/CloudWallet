@@ -14,8 +14,13 @@ import Image from "next/image";
 import HomeIcon from "@mui/icons-material/Home";
 import PermContactCalendarIcon from "@mui/icons-material/PermContactCalendar";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
-import HelpIcon from "@mui/icons-material/Help";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import PermPhoneMsgOutlinedIcon from "@mui/icons-material/PermPhoneMsgOutlined";
+import PolicyOutlinedIcon from "@mui/icons-material/PolicyOutlined";
+
 
 const menuItems = [
   { name: "Home", path: "/dashboard", icon: <HomeIcon /> },
@@ -25,10 +30,15 @@ const menuItems = [
     icon: <PermContactCalendarIcon />,
   },
   { name: "Credentials", path: "/credentials", icon: <CreditCardIcon /> },
-  { name: "Support", path: "/d", icon: <HelpIcon /> },
-  { name: "fsdf", path: "/suppfdasort", icon: <HelpIcon /> },
-  { name: "fdas", path: "/dfsa", icon: <HelpIcon /> },
-  { name: "dfa", path: "/fd", icon: <HelpIcon /> },
+  {
+    name: "Self Attested Credentials",
+    path: "/suppfdasort",
+    icon: <AccountCircleOutlinedIcon />,
+  },
+  { name: "Support", path: "/d", icon: <SupportAgentOutlinedIcon /> },
+  { name: "About", path: "/dfsa", icon: <HelpOutlineOutlinedIcon /> },
+  { name: "Contact", path: "/fd", icon: <PermPhoneMsgOutlinedIcon /> },
+  { name: "FAQ", path: "/fd", icon: <PolicyOutlinedIcon /> },
 ];
 
 export default function Sidebar() {
@@ -37,12 +47,12 @@ export default function Sidebar() {
       variant="permanent"
       sx={{
         borderRadius: 5,
-        width: 300,
+        width: 330,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
           borderRadius: 5,
           border: "none",
-          width: 300,
+          width: 330,
           backgroundColor: "#FFFFFF",
           color: "#0C213A",
         },
@@ -78,7 +88,7 @@ export default function Sidebar() {
               <ListItemButton
                 sx={{
                   "&:hover": {
-                    backgroundColor: "#5AC994", // Light green hover color
+                    backgroundColor: "primary.main", // Light green hover color
                     "& .MuiListItemText-root": {
                       color: "white", // Green text on hover
                     },

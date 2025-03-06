@@ -6,7 +6,7 @@ import Header from "./components/Header";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", height: "100vh", bgcolor: "#F4F6F8" }}>
       <Sidebar />
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <Header />

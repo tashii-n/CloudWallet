@@ -8,6 +8,7 @@ import {
   CardContent,
   Grid2,
   TextField,
+  Button,
 } from "@mui/material";
 import CredentialCard from "./components/CredentialCard";
 import {
@@ -32,6 +33,16 @@ export default function DashboardPage() {
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
   );
+
+  const dummyCredential: Credential = {
+    id: "12345",
+    name: "John Doe's Driver License",
+    status: "Active",
+    credentialsId: "ABC123XYZ",
+    revocationCredentialsId: "XYZ123ABC",
+    revocationId: "98765",
+    acceptedDate: "2025-03-06T12:00:00Z",
+  };
 
   useEffect(() => {
     fetchCredentials();
@@ -76,7 +87,7 @@ export default function DashboardPage() {
       {
         title: "Self Attested",
         value: credentials.filter((c) => c.status === "self-attested").length,
-        status: "self-attested",
+        // status: "self-attested",
       },
       {
         title: "Suspended",
@@ -95,9 +106,22 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Credential Overview
-      </Typography>
+      <Grid2 size={12} display={"flex"} justifyContent={"space-between"} mb={3}>
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          Credential Overview
+        </Typography>
+        <Grid2 display="flex" alignItems="center">
+          <TextField
+            label="Search"
+            variant="outlined"
+            size="small"
+            sx={{ marginRight: 2, borderRadius: 10 }}
+          />
+          {/* <Button variant="contained" color="primary">
+            Button
+          </Button> */}
+        </Grid2>
+      </Grid2>
 
       <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
         {cardData.map((card, index) => (
@@ -190,9 +214,12 @@ export default function DashboardPage() {
           spacing={3}
         >
           {credentials.length === 0 ? (
-            <Typography variant="h6">
-              You do not have any credentials yet.
-            </Typography>
+            <>
+              <Typography variant="h6">
+                You do not have any credentials yet.
+              </Typography>
+              {/* <CredentialCard credential={dummyCredential} /> */}
+            </>
           ) : (
             credentials.map((credential) => (
               <Grid2 size={4} key={credential.id}>
