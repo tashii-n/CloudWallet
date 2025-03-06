@@ -1,6 +1,6 @@
 # stage 1
 
-FROM --platform=linux/amd64 node:18 AS ndi-cloud-wallet-frontend-build
+FROM --platform=linux/arm64 node:18 AS ndi-cloud-wallet-frontend-build
 WORKDIR /app
 COPY . .
 
