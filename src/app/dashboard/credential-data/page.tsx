@@ -51,7 +51,11 @@ export default function CredentialData() {
         Your Credential Details
         </Typography>
         <Grid2 size={4}>
-          <CredentialCard />
+          <CredentialCard credential={{
+            credentialsId: undefined,
+            name: "",
+            iconUrl: undefined
+          }} />
         </Grid2>
         
       </Grid2>
