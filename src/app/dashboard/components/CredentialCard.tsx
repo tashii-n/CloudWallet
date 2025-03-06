@@ -31,7 +31,7 @@ export default function CredentialCard({
         // clipPath: "circle(61.4% at 15% 0)",
         borderRadius: 5,
         p: 1,
-        minWidth: 310,
+        minWidth: 300,
       }}
     >
       <CardContent>

@@ -33,6 +33,9 @@ export default function DashboardPage() {
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
   );
+  const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
+    []
+  );
 
   const dummyCredential: Credential = {
     id: "12345",
@@ -62,6 +65,7 @@ export default function DashboardPage() {
         status: status,
       });
       setCredentials(data);
+      setFilteredCredentials(data); // Set filtered credentials to all initially
     } catch (error) {
       console.error("Error fetching credentials after retries:", error);
     }
@@ -87,7 +91,6 @@ export default function DashboardPage() {
       {
         title: "Self Attested",
         value: credentials.filter((c) => c.status === "self-attested").length,
-        // status: "self-attested",
       },
       {
         title: "Suspended",
@@ -104,23 +107,32 @@ export default function DashboardPage() {
 
   const cardData = calculateCardData();
 
+  // Handle the click on a status card to filter the list based on status
+  const handleStatusCardClick = (status?: string) => {
+    if (status) {
+      const filtered = credentials.filter(
+        (credential) => credential.status === status
+      );
+      setFilteredCredentials(filtered);
+    } else {
+      setFilteredCredentials(credentials); // Show all credentials if no status
+    }
+  };
+
   return (
     <Box>
       <Grid2 size={12} display={"flex"} justifyContent={"space-between"} mb={3}>
         <Typography variant="h5" sx={{ mb: 3 }}>
           Credential Overview
         </Typography>
-        <Grid2 display="flex" alignItems="center">
+        {/* <Grid2 display="flex" alignItems="center">
           <TextField
             label="Search"
             variant="outlined"
             size="small"
             sx={{ marginRight: 2, borderRadius: 10 }}
           />
-          {/* <Button variant="contained" color="primary">
-            Button
-          </Button> */}
-        </Grid2>
+        </Grid2> */}
       </Grid2>
 
       <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
@@ -134,7 +146,7 @@ export default function DashboardPage() {
                 border: "solid 1px #5AC994",
                 cursor: "pointer",
               }}
-              onClick={() => fetchCredentials(card.status)}
+              onClick={() => handleStatusCardClick(card.status)} // Use the new function to filter credentials
             >
               <CardContent>
                 <Typography mb={3} variant="h6" sx={{ fontWeight: "bold" }}>
@@ -213,15 +225,12 @@ export default function DashboardPage() {
           borderRadius={3}
           spacing={3}
         >
-          {credentials.length === 0 ? (
-            <>
-              <Typography variant="h6">
-                You do not have any credentials yet.
-              </Typography>
-              {/* <CredentialCard credential={dummyCredential} /> */}
-            </>
+          {filteredCredentials.length === 0 ? (
+            <Typography variant="h6">
+              You do not have any credentials yet.
+            </Typography>
           ) : (
-            credentials.map((credential) => (
+            filteredCredentials.map((credential) => (
               <Grid2 size={4} key={credential.id}>
                 <CredentialCard
                   credential={credential}
