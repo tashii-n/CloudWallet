@@ -59,7 +59,7 @@ jobs:
     
       - name: Build and tag Docker image
         run: |
-          docker build --platform linux/amd64 -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
+          docker build --platform=linux/arm64/v8 -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
           docker images
           ls -al
           cat .env
