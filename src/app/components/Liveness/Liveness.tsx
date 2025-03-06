@@ -18,10 +18,7 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose, onLivenessSuccess 
 
   const listener = (data: CustomEvent<FaceLivenessDetailType>) => {
     if (data.detail?.action === "PROCESS_FINISHED") {
-      console.log("regula log:  ", data.detail)
       if (data.detail.data?.status === 1 && data.detail.data.response?.code === 0) {
-        console.log(data.detail.data.status)
-        console.log("Face Liveness Response:", data.detail.data.response);
         onLivenessSuccess(data.detail.data.response); // Pass response to parent
       }
     }

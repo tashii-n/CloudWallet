@@ -3,7 +3,7 @@ import { CONFIG } from "../constants";
 import { encryptPayload, decryptPayload } from "../cryptography/dataCrypt.js";
 import axios, { AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { secureGet, secureStore } from "../storage/storage";
+import { secureGet } from "../storage/storage";
 
 export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
   try {

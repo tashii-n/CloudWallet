@@ -1,10 +1,4 @@
-import {
-  Box,
-  Button,
-  Grid2,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid2, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 
 import ImageList from "../ImageLIst/imagelist";
@@ -42,7 +36,7 @@ export default function Home() {
                   minWidth: "200px",
                   backgroundColor: "#5AC994",
                   textTransform: "none",
-                  color: 'white'
+                  color: "white",
                 }}
               >
                 Sign Up

@@ -7,7 +7,6 @@ import {
   ListItemText,
   Typography,
   Box,
-  ListItemIcon,
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";

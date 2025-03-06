@@ -1,4 +1,3 @@
-import CryptoJS from "crypto-js";
 import { CONFIG } from "../constants";
 
 // Encrypt function with Web Crypto API
@@ -134,7 +133,7 @@ const storeAuthData = async (
 
   if (!encryptionKey) {
     console.error("Encryption key is not defined in the config.");
-    return null; 
+    return null;
   }
 
   const encryptedAccessToken = await encryptData(accessToken, encryptionKey);
@@ -188,9 +187,6 @@ const clearAuthData = () => {
   sessionStorage.removeItem("secretKey");
   sessionStorage.removeItem("expirationTime");
 };
-
-
-
 
 // GENERAL STORAGE
 

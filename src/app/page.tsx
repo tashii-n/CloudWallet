@@ -1,4 +1,3 @@
-import styles from "./page.module.css";
 import Header from "@/app/components/LandingPageMain/Header/Header";
 import LandingPageContent from "./components/LandingPageMain/LandingPage/LandingPageContent";
 import Footer from "./components/LandingPageMain/Footer/footer";

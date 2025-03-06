@@ -2,7 +2,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Box,
   Grid2,
   Stack,
 } from "@mui/material";
