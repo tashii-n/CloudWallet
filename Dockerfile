@@ -6,10 +6,8 @@ COPY . .
 
 RUN npm ci
 RUN npm run build
+COPY package*.json ./
 
 # stage 2
-
-FROM nginx:alpine
-COPY /nginx.conf /etc/nginx/nginx.conf
-COPY --from=onboarding-demo-app-build /app/build /usr/share/nginx/html
 EXPOSE 4003
+CMD [ "npm", "start" ]
