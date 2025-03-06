@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy the Next.js config file first (to ensure it exists in the build stage)
-COPY next.config.js ./  
+COPY next.config.ts ./  
 
 # Copy the rest of the files and build the project
 COPY . .
