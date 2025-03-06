@@ -1,15 +1,13 @@
 # stage 1
 
-FROM node:18 AS onboarding-demo-app-build
+FROM node:18 AS ndi-cloud-wallet-frontend-build
 WORKDIR /app
 COPY . .
 
 RUN npm ci
 RUN npm run build
+COPY package*.json ./
 
 # stage 2
-
-FROM nginx:alpine
-COPY /nginx.conf /etc/nginx/nginx.conf
-COPY --from=onboarding-demo-app-build /app/build /usr/share/nginx/html
 EXPOSE 4003
+CMD [ "npm", "start" ]
