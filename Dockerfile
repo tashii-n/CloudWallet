@@ -1,6 +1,6 @@
 # stage 1
 
-FROM node:18 AS onboarding-demo-app-build
+FROM node:18 AS ndi-cloud-wallet-frontend-build
 WORKDIR /app
 COPY . .
 
