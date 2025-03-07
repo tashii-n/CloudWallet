@@ -13,6 +13,7 @@ import {
   onboardingGetDIDAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
 import { retryAPI } from "@/app/lib/api_utils/helperFunction";
+import { storeCloudAuth } from "@/app/lib/auth/auth";
 
 const FaceLivenessDynamic = dynamic(
   () => import("@/app/components/Liveness/Liveness"),
@@ -51,12 +52,15 @@ export default function BiometricPage() {
       };
 
       // ✅ Call login API
-      const apiResponse = await loginAPI(jsonData);
+      const response = await loginAPI(jsonData);
+      console.log("🚀 ~ handleLivenessSuccess ~ apiResponse:", response);
 
-      const cloudAccessToken = apiResponse.access_token;
-      const refreshToken = apiResponse.refresh_token;
-      await secureStore("cloudAccessToken", cloudAccessToken);
-      await secureStore("refreshToken", refreshToken);
+      await storeCloudAuth(
+        response.access_token,
+        response.expires_in,
+        response.refresh_token,
+        response.refresh_expires_in
+      );
 
       const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
       const responseTenantId = getDidResponse.hashTenantID;

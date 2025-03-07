@@ -7,6 +7,7 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import CircularProgress from "@mui/material/CircularProgress"; // For loading state
 import { secureGet } from "../lib/storage/storage";
+import { getValidCloudAccessToken } from "../lib/auth/auth";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,15 +15,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const cloudAccessToken = await secureGet("cloudAccessToken");
+      try {
+        // Get a valid cloudAccessToken (checks expiration and refreshes if needed)
+        const cloudAccessToken = await getValidCloudAccessToken();
 
-      if (!cloudAccessToken) {
-        // Redirect to login page if no token is found
-
+        if (!cloudAccessToken) {
+          // Redirect to login page if no valid token is found
+          router.push("/login");
+        } else {
+          // Set authenticated state to true
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        // Redirect to login page if there's an error (e.g., token refresh failed)
         router.push("/login");
-      } else {
-        // Set authenticated state to true
-        setIsAuthenticated(true);
       }
     };
 

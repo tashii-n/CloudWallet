@@ -26,6 +26,7 @@ import {
   onboardingWalletCreationAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
 import { retryAPI } from "@/app/lib/api_utils/helperFunction";
+import { storeCloudAuth } from "@/app/lib/auth/auth";
 
 const modalStyle = {
   position: "absolute",
@@ -91,8 +92,13 @@ export default function SignupForm() {
     const response = await retryAPI(onboardingRegisterAPI, {
       onboardingUniqueId,
     });
-    const cloudAccessToken = response.access_token;
-    await secureStore("cloudAccessToken", cloudAccessToken);
+    
+    await storeCloudAuth(
+      response.access_token,
+      response.expires_in,
+      response.refresh_token,
+      response.refresh_expires_in
+    );
 
     setCurrentStep(ONBOARDING_STEPS.CREATE_WALLET); // Move to the next step
   };
@@ -200,7 +206,7 @@ export default function SignupForm() {
   // Step 7: Accept Revocation Credentials
   const acceptRevocationCredentials = async () => {
     if (!tenantId || !holderDID) throw new Error("Missing required data.");
-
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     const credentialList = await getCredentialList();
     if (credentialList?.length) {
       for (const credential of credentialList) {

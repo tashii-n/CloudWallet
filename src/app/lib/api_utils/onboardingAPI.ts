@@ -1,4 +1,4 @@
-import { getAuthData } from "../auth/auth";
+import { getAuthData, getValidCloudAccessToken } from "../auth/auth";
 import { CONFIG } from "../constants";
 import { encryptPayload, decryptPayload } from "../cryptography/dataCrypt.js";
 import axios, { AxiosRequestConfig } from "axios";
@@ -193,10 +193,7 @@ export const onboardingWalletCreationAPI = async (
       throw new Error("API URL is missing in environment variables");
     }
 
-    const cloudAccessToken = await secureGet("cloudAccessToken");
-    if (!cloudAccessToken) {
-      throw new Error("Access Token is Missing!");
-    }
+    const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct the required JSON structure
     const transformedData = {
@@ -237,8 +234,7 @@ export const onboardingDIDAPI = async () => {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) throw new Error("API URL is missing in environment variables");
 
-    const cloudAccessToken = await secureGet("cloudAccessToken");
-    if (!cloudAccessToken) throw new Error("Access Token is Missing!");
+    const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct headers with bearer token
     const headers = {
@@ -268,8 +264,7 @@ export const onboardingGetDIDAPI = async () => {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) throw new Error("API URL is missing in environment variables");
 
-    const cloudAccessToken = await secureGet("cloudAccessToken");
-    if (!cloudAccessToken) throw new Error("Access Token is Missing!");
+    const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct headers with bearer token
     const headers = {
@@ -369,8 +364,7 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
     }
 
     // Get authentication data
-    const cloudAccessToken = await secureGet("cloudAccessToken");
-    if (!cloudAccessToken) throw new Error("Access Token is Missing!");
+    const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct the required JSON structure
     const transformedData = {
@@ -428,7 +422,7 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
 
     // Encrypt the transformed data
     const encryptedData = await encryptPayload(
-      secretKey, // Using cloudAccessToken as the encryption key
+      secretKey, 
       JSON.stringify(transformedData)
     );
 
@@ -520,8 +514,7 @@ export const getCredentialDetailsAPI = async (credentialRecordId: string) => {
     }
 
     // Get authentication data
-    const cloudAccessToken = await secureGet("cloudAccessToken");
-    if (!cloudAccessToken) throw new Error("Access Token is Missing!");
+    const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct headers with bearer token
     const headers = {
@@ -595,5 +588,53 @@ export const getRevocationCredentialAPI = async (params: {
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to fetch revocation credential");
+  }
+};
+
+export const refreshToken = async () => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    // Get accessToken and refreshToken from secure storage
+    const accessToken = secureGet("accessToken");
+    const refreshToken = secureGet("refreshToken");
+
+    if (!accessToken) {
+      throw new Error("Access token is missing");
+    }
+    if (!refreshToken) {
+      throw new Error("Refresh token is missing");
+    }
+
+    // Construct headers with access token
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Prepare request body
+    const requestData = {
+      refreshToken: refreshToken,
+    };
+
+    // Prepare API request configuration
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url: `${apiUrl}/cloud-wallet/v1/user/refresh-token`,
+      headers: headers,
+      data: requestData,
+    };
+
+    // Make the API call
+    const response = await axios(config);
+
+    // Return the refreshed token data
+    return response?.data.data;
+  } catch (error) {
+    console.error("Refresh token API call failed:", error);
+    throw new Error("Unable to refresh token");
   }
 };
