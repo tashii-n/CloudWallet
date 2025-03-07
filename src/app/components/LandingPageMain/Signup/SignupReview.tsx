@@ -92,7 +92,7 @@ export default function SignupForm() {
     const response = await retryAPI(onboardingRegisterAPI, {
       onboardingUniqueId,
     });
-    
+
     await storeCloudAuth(
       response.access_token,
       response.expires_in,
@@ -499,12 +499,12 @@ export default function SignupForm() {
           </Box>
         </Modal>
 
-        {/* Error Modal */}
         <Modal
           open={errorModalOpen}
-          onClose={handleErrorModalClose}
+          onClose={() => {}} 
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
+          disableEscapeKeyDown
         >
           <Box textAlign="center" borderRadius={4} sx={modalStyle}>
             <Image
@@ -514,22 +514,38 @@ export default function SignupForm() {
               alt="Error"
             />
             <Typography gutterBottom m={3}>
-              An error has occurred. Please click the button below to try again.
+              An error has occurred. Please click the button below to try again
+              or return to the home page.
             </Typography>
-            <Button
-              onClick={handleTryAgain}
-              variant="contained"
-              sx={{
-                minWidth: "180px",
-                backgroundColor: "#5AC994",
-                textTransform: "none",
-                color: "white",
-                minHeight: "40px",
-                borderRadius: 10,
-              }}
-            >
-              Try Again
-            </Button>
+            <Stack direction={"row"} justifyContent={"space-around"}>
+              <Button
+                onClick={handleTryAgain}
+                variant="contained"
+                sx={{
+                  minWidth: "150px",
+                  backgroundColor: "#c43e3d",
+                  textTransform: "none",
+                  color: "white",
+                  minHeight: "40px",
+                  borderRadius: 10,
+                }}
+              >
+                Try Again
+              </Button>
+              <Button
+                LinkComponent={Link}
+                variant="outlined"
+                href="/"
+                sx={{
+                  minWidth: "150px",
+                  textTransform: "none",
+                  minHeight: "40px",
+                  borderRadius: 10,
+                }}
+              >
+                Home
+              </Button>
+            </Stack>
           </Box>
         </Modal>
       </Box>
