@@ -1,23 +1,15 @@
-# Use the official Node.js image as the base image
-FROM node:18
+# stage 1
 
-# Set the working directory inside the container
+FROM node:18 AS build
 WORKDIR /app
-
-# Copy package.json and package-lock.json (or yarn.lock) into the container
-COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the app files into the container
 COPY . .
 
-# Build the Next.js app (this step compiles the app for production)
+RUN npm ci
 RUN npm run build
 
-# Expose port 3000
-EXPOSE 4003
+# stage 2
 
-# Start the app in production mode
-CMD ["npm", "start"]
+FROM nginx:alpine
+COPY /nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/.next /usr/share/nginx/html
+EXPOSE 4003
