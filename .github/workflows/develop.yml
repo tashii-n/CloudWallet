@@ -3,7 +3,7 @@ name: DEV CI/CD Workflow
 on:
   push:
     branches:
-      - develop1
+      - develop
 
 jobs:
   build:
@@ -65,7 +65,7 @@ jobs:
         
       - name: Build and tag Docker image
         run: |
-          docker build --platform=linux/arm64/v8 --no-cache -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
+          docker build buildx --no-cache -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
           docker images
           ls -al
           cat .env
