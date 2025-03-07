@@ -65,7 +65,7 @@ jobs:
         
       - name: Build and tag Docker image
         run: |
-          docker build buildx --no-cache -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
+          docker build buildx --platform linux/amd64,linux/arm64 --no-cache -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com/qacloudwalletservice:frontend .
           docker images
           ls -al
           cat .env
