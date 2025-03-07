@@ -3,7 +3,7 @@ name: DEV CI/CD Workflow
 on:
   push:
     branches:
-      - develop
+      - develop1
 
 jobs:
   build:
