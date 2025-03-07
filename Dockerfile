@@ -1,23 +1,22 @@
-# Use the official Node.js image as the base image
-FROM node:18
+FROM node:18 AS base
+#RUN apk add --no-cache \
+ #   build-base \
+ #   g++ \
+ #   cairo-dev \
+ #   jpeg-dev \
+ #   pango-dev \
+ #   giflib-dev
+WORKDIR /usr/src/app
 
-# Set the working directory inside the container
-WORKDIR /app
+COPY package*.json ./
+#RUN npm install -g npm@10.2.4
+#RUN npm i -g nodemon
+#RUN npm install canvas
+#RUN npm install
 
-# Copy package.json and package-lock.json (or yarn.lock) into the container
-COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the app files into the container
 COPY . .
-
-# Build the Next.js app (this step compiles the app for production)
+RUN npm ci
 RUN npm run build
-
-# Expose port 3000
 EXPOSE 4003
-
-# Start the app in production mode
-CMD ["npm", "start"]
+#CMD npm start
+CMD [ "npm","run","start" ]
