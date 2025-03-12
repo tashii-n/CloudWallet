@@ -1,22 +1,19 @@
-FROM node:18 AS base
-#RUN apk add --no-cache \
- #   build-base \
- #   g++ \
- #   cairo-dev \
- #   jpeg-dev \
- #   pango-dev \
- #   giflib-dev
+FROM node:18-alpine
+
 WORKDIR /usr/src/app
 
+# Copy package files
 COPY package*.json ./
-#RUN npm install -g npm@10.2.4
-#RUN npm i -g nodemon
-#RUN npm install canvas
-#RUN npm install
-
-COPY . .
 RUN npm ci
+
+# Copy the rest of the application
+COPY . .
+
+# Build the application
 RUN npm run build
+
+# Expose the port the app runs on
 EXPOSE 4003
-#CMD npm start
-CMD [ "npm","run","start" ]
+
+# Run the application
+CMD ["npm", "start"]
