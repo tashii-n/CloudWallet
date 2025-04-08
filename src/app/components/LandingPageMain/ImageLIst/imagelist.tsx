@@ -8,7 +8,7 @@ export default function ImageList() {
     { src: "/images/tcell.svg", alt: "Tashi Cell Logo" },
     { src: "/images/mid.svg", alt: "Mid Logo" },
     { src: "/images/rcsc.svg", alt: "RCSC Logo" },
-    { src: "/images/BOB.svg", alt: "BOB Logo" },
+    { src: "/images/bob.svg", alt: "BOB Logo" },
     { src: "/images/rub.svg", alt: "RUB Logo" },
   ];
 

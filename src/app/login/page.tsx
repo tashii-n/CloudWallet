@@ -51,8 +51,12 @@ export default function LoginPage() {
           }}
         >
           <Typography variant="h3" fontWeight={600} component="h1" gutterBottom>
-            Bhutan <span className="ndigreen">NDI</span> <br />
-            <i>Cloud</i> <i>Wallet</i>
+            Bhutan{" "}
+            <span className="ndigreen">
+              NDI <br />
+              <i>Cloud</i>
+            </span>{" "}
+            <i>Wallet</i>
           </Typography>
 
           <Image
@@ -155,10 +159,12 @@ export default function LoginPage() {
                   },
                 }}
               />
+              
             </Box>
 
             <Button
               variant="contained"
+              type="submit"
               fullWidth
               sx={{
                 p: 2,

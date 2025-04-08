@@ -20,7 +20,7 @@ export default function BiometricPage() {
 
   const handleLivenessSuccess = async (livenessResponse: any) => {
     try {
-        console.log("Liveness successful:", livenessResponse);
+        // console.log("Liveness successful:", livenessResponse);
         
         const imageData = livenessResponse?.images?.[0];
 

@@ -39,7 +39,7 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
       secretKey,
       JSON.stringify(transformedData)
     );
-    console.log("🚀 ~ onboardingValidateAPI ~ data:", data);
+    // console.log("🚀 ~ onboardingValidateAPI ~ data:", data);
 
     // Construct headers with bearer token
     const headers = {
@@ -63,7 +63,7 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
     const responsePayload = response?.data.data;
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
-    console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
+    // console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
 
     return decryptedData;
   } catch (error) {
@@ -372,6 +372,7 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
       autoAcceptInvitation: true,
       reuseConnection: true,
       invitationUrl: jsonData.invitationUrl || "",
+      isShortenURL: jsonData.isShortenUrl || false,
     };
 
     // Construct headers with bearer token
@@ -422,9 +423,10 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
 
     // Encrypt the transformed data
     const encryptedData = await encryptPayload(
-      secretKey, 
+      secretKey,
       JSON.stringify(transformedData)
     );
+    console.log("🚀 ~ loginAPI ~ encryptedData:", encryptedData);
 
     // Construct headers with bearer token
     const headers = {
@@ -636,5 +638,388 @@ export const refreshToken = async () => {
   } catch (error) {
     console.error("Refresh token API call failed:", error);
     throw new Error("Unable to refresh token");
+  }
+};
+
+export const getProofRequestListAPI = async (params: {
+  tenantId: string;
+  status: string;
+  take: number;
+  skip: number;
+}) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+
+    const authData = await getAuthData();
+    const { accessToken } = authData;
+
+    if (!accessToken) throw new Error("Access token is missing");
+
+    // Construct headers
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Create URL query params
+    const queryParams = new URLSearchParams({
+      tenantId: params.tenantId,
+      status: params.status.toString(),
+      take: params.take.toString(),
+      skip: params.skip.toString(),
+      order: "desc",
+    });
+
+    // API request configuration
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${apiUrl}/cloud-wallet/v1/user/proof-requests?${queryParams.toString()}`,
+      headers,
+    };
+
+    console.log("API Request:", config);
+
+    // Make API call
+    const response = await axios(config);
+    console.log("API Response:", response.data);
+
+    // Return only the data array from response
+    return response.data?.data || [];
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to fetch proof request list");
+  }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TEST API Functions
+export const getProofPresentationTest = async () => {
+  try {
+    return {
+      request: {
+        presentationExchange: {
+          presentation_definition: {
+            id: "bd0190de-0569-4c36-acb6-684b51c5897e",
+            name: "WALLET_BACKUP",
+            purpose: "auth_standard",
+            input_descriptors: [
+              {
+                id: "input_0",
+                schema: [
+                  {
+                    uri: "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                  },
+                ],
+                constraints: {
+                  fields: [
+                    {
+                      path: ["$.credentialSubject['ID Type']"],
+                    },
+                  ],
+                },
+              },
+              {
+                id: "input_1",
+                schema: [
+                  {
+                    uri: "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                  },
+                ],
+                constraints: {
+                  fields: [
+                    {
+                      path: ["$.credentialSubject['ID Number']"],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          options: {
+            challenge: "400154574282395709577071",
+          },
+        },
+      },
+    };
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to fetch proof request list");
+  }
+};
+
+export const getProofCredentialMatchTest = async () => {
+  try {
+    return {
+      proofFormats: {
+        presentationExchange: {
+          requirements: [
+            {
+              rule: "pick",
+              needsCount: 1,
+              submissionEntry: [
+                {
+                  inputDescriptorId: "input_0",
+                  verifiableCredentials: [
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "b52a5b97-c08b-4bce-b6a0-input_00",
+                        createdAt: "2025-01-30T06:56:16.067Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          },
+                          issuanceDate: "2025-01-30T06:53:19.457Z",
+                          credentialSubject: {
+                            "Full Name": "Sagar Khole",
+                            "Blood Type": "AB-",
+                            "Date of Birth": "19/07/1998",
+                            Gender: "Male",
+                            "ID Type": "Citizenship",
+                            "ID Number": "0223",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "889fcdcb-0da9-4095-b93a-bca24526058b",
+                            id: "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-01-30T06:56:13Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..6yuqJ95UbdqRSFshG6AhbxtCRmi08MLoX-ntLOkZfUdyzexEGy9YpLOSeuJGCm3cDLwBPWoHRDxC6Tm43WH6Pg",
+                          },
+                        },
+                        updatedAt: "2025-01-30T06:56:16.067Z",
+                      },
+                    },
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "b52a5b97-c08b-4bce-b6a0-soso",
+                        createdAt: "2025-01-30T06:56:16.067Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          },
+                          issuanceDate: "2025-01-30T06:53:19.457Z",
+                          credentialSubject: {
+                            "Full Name": "Sagar Khole",
+                            "Blood Type": "AB-",
+                            "Date of Birth": "19/07/1998",
+                            Gender: "Male",
+                            "ID Type": "soso",
+                            "ID Number": "0223",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "889fcdcb-0da9-4095-b93a-bca24526058b",
+                            id: "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-01-30T06:56:13Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..6yuqJ95UbdqRSFshG6AhbxtCRmi08MLoX-ntLOkZfUdyzexEGy9YpLOSeuJGCm3cDLwBPWoHRDxC6Tm43WH6Pg",
+                          },
+                        },
+                        updatedAt: "2025-01-30T06:56:16.067Z",
+                      },
+                    },
+                  ],
+                },
+              ],
+              isRequirementSatisfied: true,
+            },
+            {
+              rule: "pick",
+              needsCount: 1,
+              submissionEntry: [
+                {
+                  inputDescriptorId: "input_1",
+                  verifiableCredentials: [
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "9a048b77-c909-468f-8f67-f5e099ad5f98",
+                        createdAt: "2025-01-30T11:47:19.818Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          },
+                          issuanceDate: "2025-01-30T11:46:48.042Z",
+                          credentialSubject: {
+                            "Full Name": "Sagar Khole",
+                            "Blood Type": "AB-",
+                            "Date of Birth": "19/07/1998",
+                            Gender: "Male",
+                            "ID Type": "Citizenship",
+                            "ID Number": "0223",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "18323f50-897f-42fa-8336-925d58439745",
+                            id: "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-01-30T11:47:17Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.._ifGjy4co4y8Kf4lcq5sRND68bnvvm32jmokJgi7bW4ngeVcg2YOwFzfa5fIZr6IjolLKOEUCg5d4U6Hw76tfQ",
+                          },
+                        },
+                        updatedAt: "2025-01-30T11:47:19.818Z",
+                      },
+                    },
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "9a048b77-c909-468f-8f67-lsdkjfsldkj",
+                        createdAt: "2025-01-30T11:47:19.818Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80",
+                          },
+                          issuanceDate: "2025-01-30T11:46:48.042Z",
+                          credentialSubject: {
+                            "Full Name": "Sagar Khole",
+                            "Blood Type": "AB-",
+                            "Date of Birth": "19/07/1998",
+                            Gender: "Male",
+                            "ID Type": "ldskfjslkdfj",
+                            "ID Number": "lfdksjflskfs",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "18323f50-897f-42fa-8336-925d58439745",
+                            id: "did:key:z6Mkq35NoZK4a5cc31T7MwZf1V3VCe7tcB7R3wMdc3frgBJj",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xC3294C6b77b4FA859aFF744DFb8AE572a1ed3E80#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-01-30T11:47:17Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.._ifGjy4co4y8Kf4lcq5sRND68bnvvm32jmokJgi7bW4ngeVcg2YOwFzfa5fIZr6IjolLKOEUCg5d4U6Hw76tfQ",
+                          },
+                        },
+                        updatedAt: "2025-01-30T11:47:19.818Z",
+                      },
+                    },
+                  ],
+                },
+              ],
+              isRequirementSatisfied: true,
+            },
+          ],
+          areRequirementsSatisfied: true,
+          name: "PERMANENT_ADDRESS",
+          purpose: "auth_standard",
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Mock response error:", error);
+    throw new Error("Unable to generate mock credential match data");
   }
 };

@@ -76,9 +76,7 @@ export default function SignupForm() {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const handleErrorModalClose = () => {
-    setErrorModalOpen(false);
-  };
+ 
 
   // Step 1: Register and Get Token
   const registerAndGetToken = async () => {
@@ -92,6 +90,7 @@ export default function SignupForm() {
     const response = await retryAPI(onboardingRegisterAPI, {
       onboardingUniqueId,
     });
+    console.log("🚀 ~ registerAndGetToken ~ response:", response)
 
     await storeCloudAuth(
       response.access_token,
@@ -99,6 +98,8 @@ export default function SignupForm() {
       response.refresh_token,
       response.refresh_expires_in
     );
+
+    
 
     setCurrentStep(ONBOARDING_STEPS.CREATE_WALLET); // Move to the next step
   };
@@ -225,7 +226,7 @@ export default function SignupForm() {
               `✅ Revocation Credential for ${credential.name}:`,
               revocationResponse
             );
-
+            
             const invitationUrl = revocationResponse?.credInviteURL;
             if (invitationUrl) {
               const acceptResponse = await retryAPI(acceptCredentialAPI, {

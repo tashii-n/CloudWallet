@@ -11,11 +11,17 @@ import {
 } from "@mui/material";
 import CredentialCard from "./components/CredentialCard";
 import {
+  acceptCredentialAPI,
   getCredentialDetailsAPI,
   getCredentialListAPI,
+  getProofCredentialMatchTest,
+  getProofPresentationTest,
+  getProofRequestListAPI,
 } from "../lib/api_utils/onboardingAPI";
 import { secureGet } from "../lib/storage/storage";
 import { retryAPI } from "../lib/api_utils/helperFunction";
+import { useRouter, useSearchParams } from "next/navigation";
+import ProofShareModal from "./components/ProofShareModal";
 
 interface Credential {
   id: string;
@@ -27,6 +33,32 @@ interface Credential {
   acceptedDate: string;
 }
 
+interface InputDescriptor {
+  id: string;
+  schema: { uri: string }[];
+  constraints: {
+    fields: { path: string[] }[];
+  };
+}
+
+interface PresentationDefinition {
+  id: string;
+  name: string;
+  purpose: string;
+  input_descriptors: InputDescriptor[];
+}
+
+interface ProofRequestData {
+  request: {
+    presentationExchange: {
+      presentation_definition: PresentationDefinition;
+      options: {
+        challenge: string;
+      };
+    };
+  };
+}
+
 export default function DashboardPage() {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
@@ -35,23 +67,135 @@ export default function DashboardPage() {
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
     []
   );
+  const [selectedData, setSelectedData] = useState<{
+    [key: string]: { value: string; id: string };
+  }>({});
+  const [requestedData, setRequestedData] = useState<{
+    [key: string]: { value: string; id: string }[]; // Now an array of objects for each field
+  }>({});
+  const [inputDescriptors, setInputDescriptors] = useState<any[]>([]);
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const dummyCredential: Credential = {
-    id: "12345",
-    name: "John Doe's Driver License",
-    status: "Active",
-    credentialsId: "ABC123XYZ",
-    revocationCredentialsId: "XYZ123ABC",
-    revocationId: "98765",
-    acceptedDate: "2025-03-06T12:00:00Z",
-  };
+  const handleCloseModal = () => setProofModalOpen(false);
+
+  // const dummyCredential: Credential = {
+  //   id: "12345",
+  //   name: "John Doe's Driver License",
+  //   status: "Active",
+  //   credentialsId: "ABC123XYZ",
+  //   revocationCredentialsId: "XYZ123ABC",
+  //   revocationId: "98765",
+  //   acceptedDate: "2025-03-06T12:00:00Z",
+  // };
 
   useEffect(() => {
     fetchCredentials();
+
+    const proofRequestURL = searchParams?.get("proofRequestURL");
+    if (proofRequestURL) {
+      handleProofRequest(proofRequestURL);
+    }
+    handleProofRequestTest();
   }, []);
+
+  const handleProofRequestTest = async () => {
+    try {
+      const testData: any = await getProofPresentationTest();
+      const testProofCredential: any = await getProofCredentialMatchTest();
+  
+      const extractRequestedValues = (data: any, proofCredential: any) => {
+        const result: {
+          [key: string]: { value: string; id: string }[];
+        } = {};
+  
+        const descriptors = data.request.presentationExchange.presentation_definition.input_descriptors;
+        setInputDescriptors(descriptors);
+  
+        descriptors.forEach((inputDescriptor: any) => {
+          const submissionEntry = proofCredential.proofFormats.presentationExchange.requirements.find(
+            (req: any) =>
+              req.submissionEntry.some(
+                (entry: any) => entry.inputDescriptorId === inputDescriptor.id
+              )
+          )?.submissionEntry;
+  
+          submissionEntry?.forEach((entry: any) => {
+            entry.verifiableCredentials.forEach((vc: any) => {
+              const credentialSubject = vc.credentialRecord.credential.credentialSubject;
+              const credentialId = vc.credentialRecord.id;
+  
+              inputDescriptor.constraints.fields.forEach((field: any) => {
+                const match = field.path[0].match(/\['(.+?)'\]/);
+                const fieldName = match ? match[1] : "";
+                const value = credentialSubject[fieldName];
+  
+                if (value) {
+                  if (!result[fieldName]) result[fieldName] = [];
+                  result[fieldName].push({ value, id: credentialId });
+                }
+              });
+            });
+          });
+        });
+  
+        return result;
+      };
+  
+      const requested = extractRequestedValues(testData, testProofCredential);
+      const initialSelected: typeof selectedData = {};
+      for (const [key, values] of Object.entries(requested)) {
+        initialSelected[key] = values[0];
+      }
+  
+      setRequestedData(requested);
+      setSelectedData(initialSelected);
+      setProofModalOpen(true);
+    } catch (err) {
+      console.error("❌ Error handling proof request:", err);
+    }
+  };
+
+  const handleProofRequest = async (url: string) => {
+    const tenantId = await secureGet("tenantId");
+    console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
+
+    if (!tenantId) {
+      console.error("Tenant ID is missing");
+      return;
+    }
+    try {
+      const payload = { invitationUrl: url, isShortenUrl: true };
+      const proofAcceptResponse = await acceptCredentialAPI(payload);
+      console.log(
+        "✅ Proof request handled successfully:",
+        proofAcceptResponse
+      );
+
+      const proofRequestList = await getProofRequestListAPI({
+        tenantId: tenantId,
+        status: "request-received",
+        take: 10,
+        skip: 0,
+      });
+      console.log(
+        "🚀 ~ handleProofRequest ~ proofRequestList:",
+        proofRequestList
+      );
+
+      setProofModalOpen(true);
+
+      router.replace("/dashboard");
+    } catch (error) {
+      console.error("❌ Error handling proof request:", error);
+    }
+  };
 
   const fetchCredentials = async (status?: string) => {
     const tenantId = await secureGet("tenantId");
+    console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
+
     if (!tenantId) {
       console.error("Tenant ID is missing");
       return;
@@ -112,14 +256,27 @@ export default function DashboardPage() {
       const filtered = credentials.filter(
         (credential) => credential.status === status
       );
+      setSelectedCredential(null);
       setFilteredCredentials(filtered);
     } else {
+      setSelectedCredential(null);
       setFilteredCredentials(credentials); // Show all credentials if no status
     }
   };
 
   return (
     <Box>
+      {proofModalOpen && (
+        <ProofShareModal
+        open={proofModalOpen}
+        handleClose={handleCloseModal}
+        requestedData={requestedData}
+        selectedData={selectedData}
+        setSelectedData={setSelectedData}
+        inputDescriptors={inputDescriptors}
+      />
+      )}
+
       <Grid2 size={12} display={"flex"} justifyContent={"space-between"} mb={3}>
         <Typography variant="h5" sx={{ mb: 3 }}>
           Credential Overview

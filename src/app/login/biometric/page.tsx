@@ -7,7 +7,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { secureGet, secureStore } from "@/app/lib/storage/storage";
+import { secureClear, secureGet, secureStore } from "@/app/lib/storage/storage";
 import {
   loginAPI,
   onboardingGetDIDAPI,
@@ -31,8 +31,6 @@ export default function BiometricPage() {
 
   const handleLivenessSuccess = async (livenessResponse: any, attempt = 1) => {
     try {
-      console.log("Liveness successful:", livenessResponse);
-
       const imageData = livenessResponse?.images?.[0]; // Base64 encoded image
       if (!imageData) {
         throw new Error("No image data found in liveness response");
@@ -71,7 +69,15 @@ export default function BiometricPage() {
 
       console.log("Tenant ID:", responseTenantId);
       // Navigate to validation page after success
-      router.push("/dashboard");
+      const redirectUrl = sessionStorage.getItem("redirectUrl");
+      sessionStorage.removeItem("redirectUrl"); // Cleanup
+
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push("/dashboard");
+      }
+      
     } catch (error) {
       console.error(`Error on attempt ${attempt}:`, error);
 
@@ -85,6 +91,7 @@ export default function BiometricPage() {
       } else {
         setShowLiveness(false);
         setLoginFailed(true);
+        await secureClear("cloudAuth");
         console.error("Max retries reached. API call failed.");
       }
     } finally {

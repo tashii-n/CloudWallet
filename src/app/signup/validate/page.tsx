@@ -43,7 +43,7 @@ export default function BiometricValidatePage() {
           image: imageData,
         };
 
-        console.log(onboardingData["onboardingUniqueId"])
+        // console.log(onboardingData["onboardingUniqueId"])
 
         // console.log(`Attempt ${attempt}: Calling Biometric API`, requestData);
 
