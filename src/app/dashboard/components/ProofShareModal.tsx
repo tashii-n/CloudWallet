@@ -2,6 +2,9 @@
 import {
   getProofPresentationTest,
   getProofCredentialMatchTest,
+  getProofPresentationAPI,
+  getCredentialsForRequestAPI,
+  acceptProofRequestAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
 import {
   Box,
@@ -31,8 +34,9 @@ const modalStyle = {
 type ProofShareModalProps = {
   open: boolean;
   handleClose: () => void;
-  logoURL: string;
+  logoURL: string | undefined;
   verifierName: string;
+  recordId: string;
 };
 
 interface ValueOption {
@@ -45,6 +49,7 @@ export default function ProofShareModal({
   handleClose,
   logoURL,
   verifierName,
+  recordId,
 }: ProofShareModalProps) {
   const [loading, setLoading] = useState(false);
   const [requestedData, setRequestedData] = useState<{
@@ -62,8 +67,8 @@ export default function ProofShareModal({
 
       setLoading(true);
       try {
-        const testData = await getProofPresentationTest();
-        const testProofCredential = await getProofCredentialMatchTest();
+        const proofPresentation = await getProofPresentationAPI(recordId);
+        const matchingCredentials = await getCredentialsForRequestAPI(recordId);
 
         // Function to process and extract requested values
         const extractRequestedValues = (data: any, proofCredential: any) => {
@@ -105,7 +110,10 @@ export default function ProofShareModal({
           return result;
         };
 
-        const requested = extractRequestedValues(testData, testProofCredential);
+        const requested = extractRequestedValues(
+          proofPresentation,
+          matchingCredentials
+        );
         const initialSelected: { [key: string]: ValueOption } = {};
 
         for (const [key, values] of Object.entries(requested)) {
@@ -147,10 +155,13 @@ export default function ProofShareModal({
             credentials: credentialMap,
           },
         },
+        proofRecordId: recordId,
       };
 
       console.log("📤 Proof Payload:");
       console.log(JSON.stringify(payload, null, 2));
+      const acceptRequest = await acceptProofRequestAPI(payload);
+      console.log("🚀 ~ handleShare ~ acceptRequest:", acceptRequest);
 
       // Placeholder for sending proof
       // await sendProof(payload);
@@ -181,7 +192,13 @@ export default function ProofShareModal({
         >
           Proof Share Request
         </Typography>
-        <Image src={logoURL} width={50} height={50} alt="Error" unoptimized />
+        <Image
+          src={logoURL ? logoURL : "/images/ndilogodark.svg"}
+          width={50}
+          height={50}
+          alt="Error"
+          unoptimized
+        />
         <Typography id="modal-modal-description" mt={2} mb={4}>
           {verifierName} would like to request you to share the following data.
         </Typography>

@@ -103,11 +103,11 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
   
   // Token has expired, refresh it
   console.log("Cloud Access Token has expired. Refreshing...");
-  console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", refreshToken);
+  console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", currentRefreshToken);
 
   try {
     // Call the refreshToken function to get new tokens
-    const newTokens = await refreshToken(refreshToken);
+    const newTokens = await refreshToken(currentRefreshToken);
 
     // Calculate expiration timestamps
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
@@ -123,6 +123,7 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
       refreshToken: newTokens.refresh_token,
       refreshTokenExpirationTime: newRefreshTokenExpirationTime,
     };
+    console.log("🚀 ~ getValidCloudAccessToken ~ updatedCloudAuth:", updatedCloudAuth)
 
     // Save the updated cloudAuth data to secureStore
     await secureStore("cloudAuth", JSON.stringify(updatedCloudAuth));
@@ -132,7 +133,7 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
     // Return the new cloudAccessToken
     return newTokens.access_token;
   } catch (error) {
-    secureClear("cloudAuth");
+    // secureClear("cloudAuth");
     console.error("Failed to refresh Cloud Access Token:", error);
     throw new Error("Unable to refresh Cloud Access Token");
   }

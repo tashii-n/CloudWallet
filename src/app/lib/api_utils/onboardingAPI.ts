@@ -497,7 +497,7 @@ export const getCredentialListAPI = async (params: {
     console.log("API Response:", response.data);
 
     // Return only the data array from response
-    return response.data?.data || [];
+    return response.data;
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to fetch credential list");
@@ -771,6 +771,43 @@ export const getCredentialsForRequestAPI = async (proofRecordId: string) => {
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to get credentials for request");
+  }
+};
+
+export const acceptProofRequestAPI = async (payload: Record<string, any>) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    const url = `${apiUrl}/cloud-wallet/v1/proofs/accept-request`;
+
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url,
+      headers,
+      data: payload,
+    };
+
+    console.log("Sending Accept Proof Request:", config);
+
+    const response = await axios(config);
+
+    const responsePayload = response?.data;
+
+    console.log("Accept Proof Request Response:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("Accept Proof Request API call failed:", error);
+    throw new Error("Unable to accept proof request");
   }
 };
 

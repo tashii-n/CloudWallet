@@ -49,6 +49,7 @@ interface Credential {
 interface ModalProps {
   logoURL: string;
   verifierName: string;
+  recordId: string;
 }
 
 export default function DashboardPage() {
@@ -62,6 +63,7 @@ export default function DashboardPage() {
   const [modalProps, setModalProps] = useState<ModalProps>({
     logoURL: "",
     verifierName: "",
+    recordId: "",
   });
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -86,48 +88,78 @@ export default function DashboardPage() {
     if (deepLinkURL) {
       handleDeepLinkRequest(deepLinkURL);
     }
+
     // handleProofRequestTest();
   }, []);
 
+
+
+  // Assuming this function is inside a React component
   const handleDeepLinkRequest = async (url: string) => {
     const tenantId = await secureGet("tenantId");
     console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
-
     if (!tenantId) {
       console.error("Tenant ID is missing");
       return;
     }
+
     try {
-      // const socket = await initSocket();
+      let responseLogoURL: string | undefined;
+      let responseVerifierName: string | undefined;
+      let responseRecordId: string | undefined;
 
-      // socket.once(tenantId, (data) => {
-      //   console.log("📥 Socket message received for tenant:", data);
+      // Initialize socket and wait for connection
+      const socket = await initSocket();
 
-      //   // ✅ Handle response (navigate, show success, etc.)
-      //   // router.replace("/dashboard");
-      //   console.log("success")
-      // });
+      // Step 1: Create a Promise to listen for the tenant-specific event before calling the API
+      const socketEventPromise = new Promise<string>((resolve, reject) => {
+        socket.once(tenantId, (data) => {
+          console.log("📥 Socket message received for tenant:", data);
+          const recordId = data?.message?.recordId;
+          if (recordId) {
+            console.log("Record ID received:", recordId);
+            responseRecordId = recordId;
+            resolve(recordId); // Resolve the promise when recordId is received
+          } else {
+            reject(new Error("Record ID is missing in socket response"));
+          }
+        });
+      });
 
+      // Step 2: Now call the acceptCredentialAPI after setting up the listener
       const payload = { invitationUrl: url, isShortenUrl: true };
       const proofAcceptResponse = await acceptCredentialAPI(payload);
+
       console.log(
         "✅ Proof request handled successfully:",
         proofAcceptResponse
       );
 
-      const logoURL =
+      // Step 3: Extract logoURL and verifierName from the API response
+      responseLogoURL =
         proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.imageUrl;
-      const verifierName =
+      responseVerifierName =
         proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.label;
 
-      setModalProps({ logoURL, verifierName });
+      // Step 4: Wait for the socket event response (recordId)
+      const recordId = await socketEventPromise;
 
-      setProofModalOpen(true);
-
-      // router.replace("/dashboard");
+      // Step 5: Set modal props once both socket and API data are available
+      if (responseLogoURL && responseVerifierName && recordId) {
+        setModalProps({
+          logoURL: responseLogoURL,
+          verifierName: responseVerifierName,
+          recordId: recordId,
+        });
+        setProofModalOpen(true);
+      }
+      if (socket) {
+        socket.disconnect();
+        console.log("Socket connection closed.");
+      }
     } catch (error) {
       console.error("❌ Error handling DeepLinkRequest:", error);
-    }
+    } 
   };
 
   const fetchCredentials = async (status?: string) => {
@@ -210,6 +242,7 @@ export default function DashboardPage() {
           handleClose={handleCloseModal}
           logoURL={modalProps.logoURL}
           verifierName={modalProps.verifierName}
+          recordId={modalProps.recordId}
         />
       )}
 

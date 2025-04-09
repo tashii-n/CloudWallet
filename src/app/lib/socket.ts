@@ -12,7 +12,7 @@ export const initSocket = async (): Promise<Socket> => {
   }
 
   if (!socket) {
-    socket = io("https://dev.bhutanndi.com/cloud-wallet/wehbook", {
+    socket = io("13.212.36.126:3018", {
       auth: { token: authData.accessToken },
       transports: ["websocket", "polling"],
     });

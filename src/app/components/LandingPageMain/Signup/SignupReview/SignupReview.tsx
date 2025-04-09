@@ -76,7 +76,6 @@ export default function SignupForm() {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
- 
 
   // Step 1: Register and Get Token
   const registerAndGetToken = async () => {
@@ -90,7 +89,7 @@ export default function SignupForm() {
     const response = await retryAPI(onboardingRegisterAPI, {
       onboardingUniqueId,
     });
-    console.log("🚀 ~ registerAndGetToken ~ response:", response)
+    console.log("🚀 ~ registerAndGetToken ~ response:", response);
 
     await storeCloudAuth(
       response.access_token,
@@ -98,8 +97,6 @@ export default function SignupForm() {
       response.refresh_token,
       response.refresh_expires_in
     );
-
-    
 
     setCurrentStep(ONBOARDING_STEPS.CREATE_WALLET); // Move to the next step
   };
@@ -185,12 +182,12 @@ export default function SignupForm() {
     let attempts = 0;
     while (attempts < 10) {
       console.log(`⏳ Fetching Credential List... Attempt ${attempts + 1}`);
-      const credentialList = await getCredentialListAPI({
+      const credentialListResponse = await getCredentialListAPI({
         tenantId,
         take: 10,
         skip: 0,
       });
-
+      const credentialList = credentialListResponse?.data;
       if (credentialList?.length) {
         console.log("✅ Credential List Found:", credentialList);
         // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
@@ -226,7 +223,7 @@ export default function SignupForm() {
               `✅ Revocation Credential for ${credential.name}:`,
               revocationResponse
             );
-            
+
             const invitationUrl = revocationResponse?.credInviteURL;
             if (invitationUrl) {
               const acceptResponse = await retryAPI(acceptCredentialAPI, {
@@ -285,8 +282,8 @@ export default function SignupForm() {
       }
     } catch (error) {
       console.error("Error during onboarding:", error);
-      setErrorModalOpen(true); 
-      setIsLoading(false); 
+      setErrorModalOpen(true);
+      setIsLoading(false);
     }
   };
 
@@ -304,7 +301,6 @@ export default function SignupForm() {
     handleConfirm(); // Resume from the current step
   };
 
-  
   useEffect(() => {
     const fetchOnboardingData = async () => {
       try {
@@ -502,7 +498,7 @@ export default function SignupForm() {
 
         <Modal
           open={errorModalOpen}
-          onClose={() => {}} 
+          onClose={() => {}}
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
           disableEscapeKeyDown
