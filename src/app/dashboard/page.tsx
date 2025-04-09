@@ -14,14 +14,12 @@ import {
   acceptCredentialAPI,
   getCredentialDetailsAPI,
   getCredentialListAPI,
-  getProofCredentialMatchTest,
-  getProofPresentationTest,
-  getProofRequestListAPI,
 } from "../lib/api_utils/onboardingAPI";
 import { secureGet } from "../lib/storage/storage";
 import { retryAPI } from "../lib/api_utils/helperFunction";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProofShareModal from "./components/ProofShareModal";
+import { getSocket, initSocket } from "../lib/socket";
 
 interface Credential {
   id: string;
@@ -33,30 +31,24 @@ interface Credential {
   acceptedDate: string;
 }
 
-interface InputDescriptor {
-  id: string;
-  schema: { uri: string }[];
-  constraints: {
-    fields: { path: string[] }[];
-  };
-}
+// interface InputDescriptor {
+//   id: string;
+//   schema: { uri: string }[];
+//   constraints: {
+//     fields: { path: string[] }[];
+//   };
+// }
 
-interface PresentationDefinition {
-  id: string;
-  name: string;
-  purpose: string;
-  input_descriptors: InputDescriptor[];
-}
+// interface PresentationDefinition {
+//   id: string;
+//   name: string;
+//   purpose: string;
+//   input_descriptors: InputDescriptor[];
+// }
 
-interface ProofRequestData {
-  request: {
-    presentationExchange: {
-      presentation_definition: PresentationDefinition;
-      options: {
-        challenge: string;
-      };
-    };
-  };
+interface ModalProps {
+  logoURL: string;
+  verifierName: string;
 }
 
 export default function DashboardPage() {
@@ -67,13 +59,10 @@ export default function DashboardPage() {
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
     []
   );
-  const [selectedData, setSelectedData] = useState<{
-    [key: string]: { value: string; id: string };
-  }>({});
-  const [requestedData, setRequestedData] = useState<{
-    [key: string]: { value: string; id: string }[]; // Now an array of objects for each field
-  }>({});
-  const [inputDescriptors, setInputDescriptors] = useState<any[]>([]);
+  const [modalProps, setModalProps] = useState<ModalProps>({
+    logoURL: "",
+    verifierName: "",
+  });
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -93,71 +82,14 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchCredentials();
 
-    const proofRequestURL = searchParams?.get("proofRequestURL");
-    if (proofRequestURL) {
-      handleProofRequest(proofRequestURL);
+    const deepLinkURL = searchParams?.get("proofRequestURL");
+    if (deepLinkURL) {
+      handleDeepLinkRequest(deepLinkURL);
     }
-    handleProofRequestTest();
+    // handleProofRequestTest();
   }, []);
 
-  const handleProofRequestTest = async () => {
-    try {
-      const testData: any = await getProofPresentationTest();
-      const testProofCredential: any = await getProofCredentialMatchTest();
-  
-      const extractRequestedValues = (data: any, proofCredential: any) => {
-        const result: {
-          [key: string]: { value: string; id: string }[];
-        } = {};
-  
-        const descriptors = data.request.presentationExchange.presentation_definition.input_descriptors;
-        setInputDescriptors(descriptors);
-  
-        descriptors.forEach((inputDescriptor: any) => {
-          const submissionEntry = proofCredential.proofFormats.presentationExchange.requirements.find(
-            (req: any) =>
-              req.submissionEntry.some(
-                (entry: any) => entry.inputDescriptorId === inputDescriptor.id
-              )
-          )?.submissionEntry;
-  
-          submissionEntry?.forEach((entry: any) => {
-            entry.verifiableCredentials.forEach((vc: any) => {
-              const credentialSubject = vc.credentialRecord.credential.credentialSubject;
-              const credentialId = vc.credentialRecord.id;
-  
-              inputDescriptor.constraints.fields.forEach((field: any) => {
-                const match = field.path[0].match(/\['(.+?)'\]/);
-                const fieldName = match ? match[1] : "";
-                const value = credentialSubject[fieldName];
-  
-                if (value) {
-                  if (!result[fieldName]) result[fieldName] = [];
-                  result[fieldName].push({ value, id: credentialId });
-                }
-              });
-            });
-          });
-        });
-  
-        return result;
-      };
-  
-      const requested = extractRequestedValues(testData, testProofCredential);
-      const initialSelected: typeof selectedData = {};
-      for (const [key, values] of Object.entries(requested)) {
-        initialSelected[key] = values[0];
-      }
-  
-      setRequestedData(requested);
-      setSelectedData(initialSelected);
-      setProofModalOpen(true);
-    } catch (err) {
-      console.error("❌ Error handling proof request:", err);
-    }
-  };
-
-  const handleProofRequest = async (url: string) => {
+  const handleDeepLinkRequest = async (url: string) => {
     const tenantId = await secureGet("tenantId");
     console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
 
@@ -166,6 +98,16 @@ export default function DashboardPage() {
       return;
     }
     try {
+      // const socket = await initSocket();
+
+      // socket.once(tenantId, (data) => {
+      //   console.log("📥 Socket message received for tenant:", data);
+
+      //   // ✅ Handle response (navigate, show success, etc.)
+      //   // router.replace("/dashboard");
+      //   console.log("success")
+      // });
+
       const payload = { invitationUrl: url, isShortenUrl: true };
       const proofAcceptResponse = await acceptCredentialAPI(payload);
       console.log(
@@ -173,22 +115,18 @@ export default function DashboardPage() {
         proofAcceptResponse
       );
 
-      const proofRequestList = await getProofRequestListAPI({
-        tenantId: tenantId,
-        status: "request-received",
-        take: 10,
-        skip: 0,
-      });
-      console.log(
-        "🚀 ~ handleProofRequest ~ proofRequestList:",
-        proofRequestList
-      );
+      const logoURL =
+        proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.imageUrl;
+      const verifierName =
+        proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.label;
+
+      setModalProps({ logoURL, verifierName });
 
       setProofModalOpen(true);
 
-      router.replace("/dashboard");
+      // router.replace("/dashboard");
     } catch (error) {
-      console.error("❌ Error handling proof request:", error);
+      console.error("❌ Error handling DeepLinkRequest:", error);
     }
   };
 
@@ -268,17 +206,15 @@ export default function DashboardPage() {
     <Box>
       {proofModalOpen && (
         <ProofShareModal
-        open={proofModalOpen}
-        handleClose={handleCloseModal}
-        requestedData={requestedData}
-        selectedData={selectedData}
-        setSelectedData={setSelectedData}
-        inputDescriptors={inputDescriptors}
-      />
+          open={proofModalOpen}
+          handleClose={handleCloseModal}
+          logoURL={modalProps.logoURL}
+          verifierName={modalProps.verifierName}
+        />
       )}
 
       <Grid2 size={12} display={"flex"} justifyContent={"space-between"} mb={3}>
-        <Typography variant="h5" sx={{ mb: 3 }}>
+        <Typography variant="h5" fontWeight={500} mb={3}>
           Credential Overview
         </Typography>
         {/* <Grid2 display="flex" alignItems="center">

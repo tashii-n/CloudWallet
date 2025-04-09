@@ -2,6 +2,7 @@
 import axios from "axios";
 import {
   retrieveAuthData,
+  secureClear,
   secureGet,
   secureStore,
   storeAuthData,
@@ -88,24 +89,25 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
     cloudAccessTokenExpirationTime,
     refreshToken: currentRefreshToken,
   } = cloudAuth;
-
+  
   // Check if the cloudAccessToken has expired
   const isTokenExpired = (expirationTime: number): boolean => {
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
     return currentTime > expirationTime;
   };
-
+  
   if (!isTokenExpired(cloudAccessTokenExpirationTime)) {
     // Token is still valid, return it
     return cloudAccessToken;
   }
-
+  
   // Token has expired, refresh it
   console.log("Cloud Access Token has expired. Refreshing...");
+  console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", refreshToken);
 
   try {
     // Call the refreshToken function to get new tokens
-    const newTokens = await refreshToken();
+    const newTokens = await refreshToken(refreshToken);
 
     // Calculate expiration timestamps
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
@@ -130,6 +132,7 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
     // Return the new cloudAccessToken
     return newTokens.access_token;
   } catch (error) {
+    secureClear("cloudAuth");
     console.error("Failed to refresh Cloud Access Token:", error);
     throw new Error("Unable to refresh Cloud Access Token");
   }

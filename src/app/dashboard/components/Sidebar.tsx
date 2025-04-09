@@ -37,7 +37,7 @@ const menuItems = [
   { name: "Support", path: "/d", icon: <SupportAgentOutlinedIcon /> },
   { name: "About", path: "/dfsa", icon: <HelpOutlineOutlinedIcon /> },
   { name: "Contact", path: "/fd", icon: <PermPhoneMsgOutlinedIcon /> },
-  { name: "FAQ", path: "/fd", icon: <PolicyOutlinedIcon /> },
+  { name: "FAQ", path: "/dashboard/faq", icon: <PolicyOutlinedIcon /> },
 ];
 
 export default function Sidebar() {

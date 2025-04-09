@@ -5,7 +5,7 @@ import {
 import Footer from "../components/LandingPageMain/Footer/footer";
 import Header from "../components/LandingPageMain/Header/Header";
 import Image from "next/image";
-import SignupForm from "../components/LandingPageMain/Signup/SignupForm";
+import SignupForm from "../components/LandingPageMain/Signup/SignupForm/SignupForm";
 
 export default function SignUpPage() {
   return (

@@ -41,6 +41,7 @@ export default function Header() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        py:2,
         px: 4,
         backgroundColor: "#F4F6F8",
         boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.1)",
@@ -115,7 +116,6 @@ export default function Header() {
                 color="primary"
                 sx={{
                   ml: 2,
-                  
                 }}
                 onClick={() => handleCopy(holderDid)} // Copy dynamic value
                 startIcon={<ContentCopyIcon />}

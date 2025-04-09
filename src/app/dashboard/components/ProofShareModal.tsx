@@ -1,6 +1,8 @@
-// ProofShareModal.tsx
-
 "use client";
+import {
+  getProofPresentationTest,
+  getProofCredentialMatchTest,
+} from "@/app/lib/api_utils/onboardingAPI";
 import {
   Box,
   Button,
@@ -9,10 +11,12 @@ import {
   TextField,
   Typography,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
+// Modal styling
 const modalStyle = {
   position: "absolute",
   top: "50%",
@@ -27,31 +31,107 @@ const modalStyle = {
 type ProofShareModalProps = {
   open: boolean;
   handleClose: () => void;
-  requestedData: { [key: string]: { value: string; id: string }[] };
-  selectedData: { [key: string]: { value: string; id: string } };
-  setSelectedData: React.Dispatch<
-    React.SetStateAction<{
-      [key: string]: { value: string; id: string };
-    }>
-  >;
-  inputDescriptors: any[];
+  logoURL: string;
+  verifierName: string;
 };
+
+interface ValueOption {
+  value: string;
+  id: string;
+}
 
 export default function ProofShareModal({
   open,
   handleClose,
-  requestedData,
-  selectedData,
-  setSelectedData,
-  inputDescriptors,
+  logoURL,
+  verifierName,
 }: ProofShareModalProps) {
   const [loading, setLoading] = useState(false);
+  const [requestedData, setRequestedData] = useState<{
+    [key: string]: ValueOption[];
+  }>({});
+  const [selectedData, setSelectedData] = useState<{
+    [key: string]: ValueOption;
+  }>({});
+  const [inputDescriptors, setInputDescriptors] = useState<any[]>([]);
 
+  // Fetch proof data when modal opens
+  useEffect(() => {
+    const fetchProofData = async () => {
+      if (!open) return; // Only fetch if modal is open
+
+      setLoading(true);
+      try {
+        const testData = await getProofPresentationTest();
+        const testProofCredential = await getProofCredentialMatchTest();
+
+        // Function to process and extract requested values
+        const extractRequestedValues = (data: any, proofCredential: any) => {
+          const result: { [key: string]: ValueOption[] } = {};
+          const descriptors =
+            data.request.presentationExchange.presentation_definition
+              .input_descriptors;
+          setInputDescriptors(descriptors);
+
+          descriptors.forEach((inputDescriptor: any) => {
+            const submissionEntry =
+              proofCredential.proofFormats.presentationExchange.requirements.find(
+                (req: any) =>
+                  req.submissionEntry.some(
+                    (entry: any) =>
+                      entry.inputDescriptorId === inputDescriptor.id
+                  )
+              )?.submissionEntry;
+
+            submissionEntry?.forEach((entry: any) => {
+              entry.verifiableCredentials.forEach((vc: any) => {
+                const credentialSubject =
+                  vc.credentialRecord.credential.credentialSubject;
+                const credentialId = vc.credentialRecord.id;
+
+                inputDescriptor.constraints.fields.forEach((field: any) => {
+                  const match = field.path[0].match(/\['(.+?)'\]/);
+                  const fieldName = match ? match[1] : "";
+                  const value = credentialSubject[fieldName];
+                  if (value) {
+                    if (!result[fieldName]) result[fieldName] = [];
+                    result[fieldName].push({ value, id: credentialId });
+                  }
+                });
+              });
+            });
+          });
+
+          return result;
+        };
+
+        const requested = extractRequestedValues(testData, testProofCredential);
+        const initialSelected: { [key: string]: ValueOption } = {};
+
+        for (const [key, values] of Object.entries(requested)) {
+          initialSelected[key] = values[0]; // Preselect the first value by default
+        }
+
+        setRequestedData(requested);
+        setSelectedData(initialSelected);
+      } catch (err) {
+        console.error("❌ Error fetching proof data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchProofData(); // Fetch data when modal opens
+    }
+  }, [open]);
+
+  // Share proof data
   const handleShare = async () => {
     try {
       setLoading(true);
-  
       const credentialMap: { [inputId: string]: string } = {};
+
       inputDescriptors.forEach((descriptor) => {
         const field = descriptor.constraints.fields[0];
         const match = field.path[0].match(/\['(.+?)'\]/);
@@ -60,22 +140,22 @@ export default function ProofShareModal({
           credentialMap[descriptor.id] = selectedData[fieldName].id;
         }
       });
-  
+
       const payload = {
         proofFormats: {
           presentationExchange: {
             credentials: credentialMap,
           },
         },
-        // proofRecordId intentionally removed
       };
-  
+
       console.log("📤 Proof Payload:");
       console.log(JSON.stringify(payload, null, 2));
-  
+
+      // Placeholder for sending proof
       // await sendProof(payload);
-  
-      // handleClose();
+
+      handleClose(); // Close modal after sharing
     } catch (err) {
       console.error("❌ Error sending proof:", err);
     } finally {
@@ -101,45 +181,46 @@ export default function ProofShareModal({
         >
           Proof Share Request
         </Typography>
-        <Image src="/images/error.svg" width={150} height={50} alt="Error" />
-        <Typography id="modal-modal-description" mt={2} mb={3}>
-          G2C would like to request you to share the following data
+        <Image src={logoURL} width={50} height={50} alt="Error" unoptimized />
+        <Typography id="modal-modal-description" mt={2} mb={4}>
+          {verifierName} would like to request you to share the following data.
         </Typography>
 
-        {Object.entries(requestedData).map(([label, values]) => (
-          <TextField
-            key={label}
-            fullWidth
-            select={values.length > 1}
-            label={label}
-            variant="outlined"
-            name={label}
-            value={selectedData[label]?.value || ""}
-            onChange={(e) => {
-              const selectedValue = values.find(
-                (v) => v.value === e.target.value
-              );
-              if (selectedValue) {
-                setSelectedData((prev) => ({
-                  ...prev,
-                  [label]: selectedValue,
-                }));
-              }
-            }}
-            sx={{ marginBottom: "16px" }}
-            disabled={values.length === 1}
-          >
-            {values.map((val) => (
-              <MenuItem
-                key={val.id}
-                value={val.value}
-                sx={{ textAlign: "start" }}
-              >
-                {val.value}
-              </MenuItem>
-            ))}
-          </TextField>
-        ))}
+        {loading ? (
+          <CircularProgress /> // Show loading spinner while fetching data
+        ) : (
+          requestedData &&
+          Object.entries(requestedData).map(([label, values]) => (
+            <TextField
+              key={label}
+              fullWidth
+              select={values.length > 1}
+              label={label}
+              variant="outlined"
+              name={label}
+              value={selectedData[label]?.value || ""}
+              onChange={(e) => {
+                const selectedValue = values.find(
+                  (v) => v.value === e.target.value
+                );
+                if (selectedValue) {
+                  setSelectedData((prev) => ({
+                    ...prev,
+                    [label]: selectedValue,
+                  }));
+                }
+              }}
+              sx={{ marginBottom: "16px" }}
+              disabled={values.length === 1}
+            >
+              {values.map((val) => (
+                <MenuItem key={val.id} value={val.value}>
+                  <Typography textAlign={"start"}>{val.value}</Typography>
+                </MenuItem>
+              ))}
+            </TextField>
+          ))
+        )}
 
         <Stack direction="row" spacing={3} mt={4} justifyContent="space-around">
           <Button
@@ -156,7 +237,7 @@ export default function ProofShareModal({
           </Button>
           <Button
             onClick={handleShare}
-            disabled={loading}
+            disabled={loading} // Disable while loading
             sx={{
               borderRadius: "30px",
               minWidth: "180px",

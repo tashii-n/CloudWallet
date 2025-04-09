@@ -18,8 +18,8 @@ import {
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import Link from "next/link";
-import CustomNumberInput from "../../Common/customnumberinput";
-import dzongkhagData from "../../../lib/address.json";
+import CustomNumberInput from "../../../Common/customnumberinput";
+import dzongkhagData from "../../../../lib/data/address.json";
 import { useState } from "react";
 import React from "react";
 import { Dayjs } from "dayjs";

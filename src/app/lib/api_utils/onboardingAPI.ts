@@ -419,14 +419,11 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
       Image: jsonData.image, // Base64 encoded image
     };
 
-    console.log("🚀 ~ loginAPI ~ transformedData:", transformedData);
-
     // Encrypt the transformed data
     const encryptedData = await encryptPayload(
       secretKey,
       JSON.stringify(transformedData)
     );
-    console.log("🚀 ~ loginAPI ~ encryptedData:", encryptedData);
 
     // Construct headers with bearer token
     const headers = {
@@ -446,7 +443,6 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
     const response = await axios(config);
 
     const responsePayload = response?.data.data;
-    console.log("🚀 ~ loginAPI ~ responsePayload:", responsePayload);
 
     return responsePayload;
   } catch (error) {
@@ -593,7 +589,7 @@ export const getRevocationCredentialAPI = async (params: {
   }
 };
 
-export const refreshToken = async () => {
+export const refreshToken = async (refreshToken: string | any) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) {
@@ -601,13 +597,14 @@ export const refreshToken = async () => {
     }
 
     // Get accessToken and refreshToken from secure storage
-    const accessToken = secureGet("accessToken");
-    const refreshToken = secureGet("refreshToken");
+    const authData = await getAuthData();
+    const { accessToken } = authData;
+    const refreshTokenData = refreshToken;
 
     if (!accessToken) {
       throw new Error("Access token is missing");
     }
-    if (!refreshToken) {
+    if (!refreshTokenData) {
       throw new Error("Refresh token is missing");
     }
 
@@ -619,7 +616,7 @@ export const refreshToken = async () => {
 
     // Prepare request body
     const requestData = {
-      refreshToken: refreshToken,
+      refreshToken: refreshTokenData,
     };
 
     // Prepare API request configuration
@@ -629,6 +626,7 @@ export const refreshToken = async () => {
       headers: headers,
       data: requestData,
     };
+    console.log("🚀 ~ refreshToken ~ config:", config)
 
     // Make the API call
     const response = await axios(config);
@@ -689,6 +687,90 @@ export const getProofRequestListAPI = async (params: {
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to fetch proof request list");
+  }
+};
+
+export const getProofPresentationAPI = async (proofRecordId: string) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    // Get authentication data
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    // Construct headers with bearer token
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Prepare the API request URL
+    const url = `${apiUrl}/cloud-wallet/v1/proof-presentation?proofRecordId=${proofRecordId}`;
+
+    // Prepare API request configuration
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: url,
+      headers: headers,
+    };
+
+    console.log("Sending API Request:", config);
+
+    // Make the API call
+    const response = await axios(config);
+
+    // Extract the API response data
+    const responsePayload = response?.data?.data;
+
+    console.log("Proof Presentation Response:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to get proof presentation details");
+  }
+};
+
+export const getCredentialsForRequestAPI = async (proofRecordId: string) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    // Get authentication data
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    // Construct headers with bearer token
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Prepare the API request URL
+    const url = `${apiUrl}/cloud-wallet/v1/credentialsForRequest/${proofRecordId}`;
+
+    // Prepare API request configuration
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: url,
+      headers: headers,
+    };
+
+    console.log("Sending API Request:", config);
+
+    // Make the API call
+    const response = await axios(config);
+
+    // Extract the API response data
+    const responsePayload = response?.data?.data;
+
+    console.log("Credentials For Request Response:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to get credentials for request");
   }
 };
 

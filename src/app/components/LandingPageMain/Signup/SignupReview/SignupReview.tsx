@@ -285,8 +285,8 @@ export default function SignupForm() {
       }
     } catch (error) {
       console.error("Error during onboarding:", error);
-      setErrorModalOpen(true); // Show error modal
-      setIsLoading(false); // Hide the spinner on error
+      setErrorModalOpen(true); 
+      setIsLoading(false); 
     }
   };
 
@@ -304,7 +304,7 @@ export default function SignupForm() {
     handleConfirm(); // Resume from the current step
   };
 
-  // Fetch onboarding data on component mount
+  
   useEffect(() => {
     const fetchOnboardingData = async () => {
       try {
