@@ -51,7 +51,6 @@ export default function BiometricPage() {
 
       // ✅ Call login API
       const response = await loginAPI(jsonData);
-      console.log("🚀 ~ handleLivenessSuccess ~ apiResponse:", response);
 
       await storeCloudAuth(
         response.access_token,

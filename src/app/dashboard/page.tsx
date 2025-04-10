@@ -92,8 +92,6 @@ export default function DashboardPage() {
     // handleProofRequestTest();
   }, []);
 
-
-
   // Assuming this function is inside a React component
   const handleDeepLinkRequest = async (url: string) => {
     const tenantId = await secureGet("tenantId");
@@ -159,7 +157,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("❌ Error handling DeepLinkRequest:", error);
-    } 
+    }
   };
 
   const fetchCredentials = async (status?: string) => {
