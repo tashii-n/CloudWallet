@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -31,21 +31,6 @@ interface Credential {
   acceptedDate: string;
 }
 
-// interface InputDescriptor {
-//   id: string;
-//   schema: { uri: string }[];
-//   constraints: {
-//     fields: { path: string[] }[];
-//   };
-// }
-
-// interface PresentationDefinition {
-//   id: string;
-//   name: string;
-//   purpose: string;
-//   input_descriptors: InputDescriptor[];
-// }
-
 interface ModalProps {
   logoURL: string;
   verifierName: string;
@@ -66,63 +51,171 @@ export default function DashboardPage() {
     recordId: "",
   });
   const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [waitingForVerification, setWaitingForVerification] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const socketRef = useRef<any>(null);
+  const tenantIdRef = useRef<string | null>(null);
+  const initialSocketMessageReceivedRef = useRef<boolean>(false);
 
-  const handleCloseModal = () => setProofModalOpen(false);
-
-  // const dummyCredential: Credential = {
-  //   id: "12345",
-  //   name: "John Doe's Driver License",
-  //   status: "Active",
-  //   credentialsId: "ABC123XYZ",
-  //   revocationCredentialsId: "XYZ123ABC",
-  //   revocationId: "98765",
-  //   acceptedDate: "2025-03-06T12:00:00Z",
-  // };
 
   useEffect(() => {
-    fetchCredentials();
-
-    const deepLinkURL = searchParams?.get("proofRequestURL");
-    if (deepLinkURL) {
-      handleDeepLinkRequest(deepLinkURL);
+    // If there are any query parameters, remove them after the page reloads
+    if (searchParams && searchParams.toString()) {
+      // Use window.location.replace to reload the page without the query params
+      router.replace("/dashboard");
     }
+  }, [searchParams]);
 
-    // handleProofRequestTest();
+  const handleCloseModal = () => {
+    setProofModalOpen(false);
+    // We don't disconnect the socket since we still want to listen for messages
+  };
+
+  const waitingForVerificationRef = useRef(false);
+
+  useEffect(() => {
+    waitingForVerificationRef.current = waitingForVerification;
+  }, [waitingForVerification]);
+
+  // This function will be passed to the ProofShare modal to inform us when share button is clicked
+  const handleProofShared = () => {
+    setWaitingForVerification(true);
+    console.log("Proof share initiated, waiting for verification message...");
+    console.log(
+      "🚀 ~ DashboardPage ~ waitingForVerification:",
+      waitingForVerification
+    );
+  };
+
+  useEffect(() => {
+    const setupComponent = async () => {
+      // Get tenant ID and store it for use throughout the component
+      const tenantId = await secureGet("tenantId");
+      tenantIdRef.current = tenantId;
+
+      if (tenantId) {
+        // If we have a tenant ID, fetch credentials
+        await fetchCredentials();
+
+        // Check for deep link URL
+        const deepLinkURL = searchParams?.get("proofRequestURL");
+        if (deepLinkURL) {
+          await handleDeepLinkRequest(deepLinkURL);
+        }
+      } else {
+        console.error("Tenant ID is missing");
+      }
+    };
+
+    setupComponent();
+
+    // Cleanup function for socket connection
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        console.log("Socket connection closed on component unmount.");
+      }
+    };
   }, []);
 
-  // Assuming this function is inside a React component
+  // Set up socket message handler
+  const setupSocketListener = (tenantId: string) => {
+    if (!socketRef.current) return;
+
+    // Remove any existing listeners to prevent duplicates
+    socketRef.current.off(tenantId);
+
+    // Set up the new listener
+    socketRef.current.on(tenantId, async (data: any) => {
+      console.log("📥 Socket message received for tenant:", data);
+      console.log(
+        "🚀 ~ socketRef.current.on ~ waitingForVerification:",
+        waitingForVerification
+      );
+
+      // First message contains the recordId needed to open the modal
+      if (!initialSocketMessageReceivedRef.current && data?.message?.recordId) {
+        initialSocketMessageReceivedRef.current = true;
+        const recordId = data.message.recordId;
+        console.log(
+          "Initial socket message with Record ID received:",
+          recordId
+        );
+
+        // If we have all the data needed, open the modal
+        if (modalProps.logoURL && modalProps.verifierName) {
+          setModalProps((prev) => ({
+            ...prev,
+            recordId: recordId,
+          }));
+          setProofModalOpen(true);
+          
+        }
+      }
+      else if (waitingForVerificationRef.current) {
+        console.log("✅ Verification message received:", data);
+        if (data?.message?.type === "Issuance" || false) {
+          setWaitingForVerification(false);
+          await handlePostProofVerification(data);
+        }
+      }
+    });
+  };
+
+  const handlePostProofVerification = async (data: any) => {
+    try {
+      console.log("✅ Post-proof verification API called successfully, ", data);      
+      await fetchCredentials();
+      router.replace("/dashboard");
+    } catch (error) {
+      console.error("❌ Error calling post-proof verification API:", error);
+    }
+  };
+
   const handleDeepLinkRequest = async (url: string) => {
-    const tenantId = await secureGet("tenantId");
-    console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
+    const tenantId = tenantIdRef.current;
     if (!tenantId) {
       console.error("Tenant ID is missing");
       return;
     }
 
     try {
-      let responseLogoURL: string | undefined;
-      let responseVerifierName: string | undefined;
-      let responseRecordId: string | undefined;
+      if (!socketRef.current) {
+        const socket = await initSocket();
+        socketRef.current = socket;
 
-      // Initialize socket and wait for connection
-      const socket = await initSocket();
+        setupSocketListener(tenantId);
+      }
 
-      // Step 1: Create a Promise to listen for the tenant-specific event before calling the API
-      const socketEventPromise = new Promise<string>((resolve, reject) => {
-        socket.once(tenantId, (data) => {
-          console.log("📥 Socket message received for tenant:", data);
-          const recordId = data?.message?.recordId;
-          if (recordId) {
-            console.log("Record ID received:", recordId);
-            responseRecordId = recordId;
-            resolve(recordId); // Resolve the promise when recordId is received
-          } else {
-            reject(new Error("Record ID is missing in socket response"));
+      const initialSocketEventPromise = new Promise<string>(
+        (resolve, reject) => {
+          // Set a timeout to reject the promise if no message is received
+          const timeoutId = setTimeout(() => {
+            reject(
+              new Error("Socket event timeout: No initial message received")
+            );
+          }, 20000); // 20 seconds timeout
+
+          // Set up a one-time listener just for the initial message
+          const handleInitialMessage = (data: any) => {
+            const recordId = data?.message?.recordId;
+            if (recordId) {
+              clearTimeout(timeoutId);
+              initialSocketMessageReceivedRef.current = true;
+              console.log("Initial Record ID received:", recordId);
+              resolve(recordId);
+              // Don't remove the listener here - setupSocketListener handles this
+            }
+          };
+
+          // Only add this temporary listener if we don't already have a permanent one
+          if (!initialSocketMessageReceivedRef.current) {
+            socketRef.current.once(tenantId, handleInitialMessage);
           }
-        });
-      });
+        }
+      );
 
       // Step 2: Now call the acceptCredentialAPI after setting up the listener
       const payload = { invitationUrl: url, isShortenUrl: true };
@@ -134,34 +227,39 @@ export default function DashboardPage() {
       );
 
       // Step 3: Extract logoURL and verifierName from the API response
-      responseLogoURL =
+      const responseLogoURL =
         proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.imageUrl;
-      responseVerifierName =
+      const responseVerifierName =
         proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.label;
 
-      // Step 4: Wait for the socket event response (recordId)
-      const recordId = await socketEventPromise;
+      // Store these in the modal props
+      setModalProps((prev) => ({
+        ...prev,
+        logoURL: responseLogoURL || "",
+        verifierName: responseVerifierName || "",
+      }));
 
-      // Step 5: Set modal props once both socket and API data are available
-      if (responseLogoURL && responseVerifierName && recordId) {
-        setModalProps({
-          logoURL: responseLogoURL,
-          verifierName: responseVerifierName,
+      // Step 4: Wait for the initial socket event response (recordId)
+      try {
+        const recordId = await initialSocketEventPromise;
+
+        // Step 5: Set modal props once both socket and API data are available
+        setModalProps((prev) => ({
+          ...prev,
           recordId: recordId,
-        });
+        }));
         setProofModalOpen(true);
-      }
-      if (socket) {
-        socket.disconnect();
-        console.log("Socket connection closed.");
+      } catch (error) {
+        console.error("❌ Error waiting for initial socket message:", error);
       }
     } catch (error) {
       console.error("❌ Error handling DeepLinkRequest:", error);
+      // Don't disconnect socket on error - just log the error
     }
   };
 
   const fetchCredentials = async (status?: string) => {
-    const tenantId = await secureGet("tenantId");
+    const tenantId = tenantIdRef.current;
     console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
 
     if (!tenantId) {
@@ -171,7 +269,7 @@ export default function DashboardPage() {
     try {
       const data = await retryAPI(getCredentialListAPI, {
         tenantId: tenantId,
-        take: 10,
+        take: 20,
         skip: 0,
         status: status,
       });
@@ -241,6 +339,7 @@ export default function DashboardPage() {
           logoURL={modalProps.logoURL}
           verifierName={modalProps.verifierName}
           recordId={modalProps.recordId}
+          onShareClick={handleProofShared} // Pass this to the modal to notify us when share is clicked
         />
       )}
 
@@ -248,14 +347,6 @@ export default function DashboardPage() {
         <Typography variant="h5" fontWeight={500} mb={3}>
           Credential Overview
         </Typography>
-        {/* <Grid2 display="flex" alignItems="center">
-          <TextField
-            label="Search"
-            variant="outlined"
-            size="small"
-            sx={{ marginRight: 2, borderRadius: 10 }}
-          />
-        </Grid2> */}
       </Grid2>
 
       <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
@@ -269,7 +360,7 @@ export default function DashboardPage() {
                 border: "solid 1px #5AC994",
                 cursor: "pointer",
               }}
-              onClick={() => handleStatusCardClick(card.status)} // Use the new function to filter credentials
+              onClick={() => handleStatusCardClick(card.status)}
             >
               <CardContent>
                 <Typography mb={3} variant="h6" sx={{ fontWeight: "bold" }}>

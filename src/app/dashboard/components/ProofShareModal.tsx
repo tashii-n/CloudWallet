@@ -38,6 +38,7 @@ type ProofShareModalProps = {
   logoURL: string | undefined;
   verifierName: string;
   recordId: string;
+  onShareClick?: () => void;
 };
 
 interface ValueOption {
@@ -52,6 +53,7 @@ export default function ProofShareModal({
   logoURL,
   verifierName,
   recordId,
+  onShareClick,
 }: ProofShareModalProps) {
   const [loading, setLoading] = useState(false);
   const [requestedData, setRequestedData] = useState<{
@@ -94,8 +96,8 @@ export default function ProofShareModal({
       try {
         const proofPresentation = await getProofPresentationAPI(recordId);
         // const proofPresentation = await getProofPresentationTest();
-        // const matchingCredentials = await getCredentialsForRequestAPI(recordId);
-        const matchingCredentials = await getProofCredentialMatchTest();
+        const matchingCredentials = await getCredentialsForRequestAPI(recordId);
+        // const matchingCredentials = await getProofCredentialMatchTest();
 
         const result: { [key: string]: ValueOption[] } = {};
 
@@ -201,6 +203,9 @@ export default function ProofShareModal({
   };
 
   const handleShare = async () => {
+    if (onShareClick) {
+      onShareClick(); // Call this before sending the proof
+    }
     try {
       setLoading(true);
       const credentialMap: { [inputId: string]: string } = {};
@@ -288,68 +293,103 @@ export default function ProofShareModal({
               No matching credentials found for this request.
             </Typography>
           ) : (
-            Object.entries(requestedData).map(([label, values]) => (
-              <TextField
-                key={label}
-                fullWidth
-                select={values.length > 1 && values[0].value !== "Not Found"}
-                label={label}
-                variant="outlined"
-                name={label}
-                value={selectedData[label]?.value || ""}
-                onChange={(e) => {
-                  const selectedValue = values.find(
-                    (v) => v.value === e.target.value
-                  );
-                  if (selectedValue) {
-                    setSelectedData((prev) => ({
-                      ...prev,
-                      [label]: selectedValue,
-                    }));
+            Object.entries(requestedData).map(([label, values]) => {
+              const isMultiple =
+                values.length > 1 && values[0].value !== "Not Found";
+              const value = selectedData[label]?.value || "";
+              const selectedItem =
+                values.find((val) => val.value === value) || values[0];
+
+              return (
+                <TextField
+                  key={label}
+                  fullWidth
+                  select={isMultiple}
+                  label={label}
+                  variant="outlined"
+                  name={label}
+                  value={value}
+                  onChange={(e) => {
+                    const selectedValue = values.find(
+                      (v) => v.value === e.target.value
+                    );
+                    if (selectedValue) {
+                      setSelectedData((prev) => ({
+                        ...prev,
+                        [label]: selectedValue,
+                      }));
+                    }
+                  }}
+                  sx={{ marginBottom: "16px" }}
+                  disabled={
+                    values.length === 1 || values[0].value === "Not Found"
                   }
-                }}
-                sx={{ marginBottom: "16px" }}
-                disabled={
-                  values.length === 1 || values[0].value === "Not Found"
-                }
-                slotProps={{
-                  select: {
-                    renderValue: (selected) => {
-                      const selectedItem = values.find(
-                        (val) => val.value === selected
-                      );
-                      return (
-                        <Typography>
-                          {selectedItem?.value}
-                          {selectedItem?.revocationStatus &&
-                          selectedItem.revocationStatus !== "ACTIVE" &&
-                          selectedItem.revocationStatus !== "NOT_FOUND"
-                            ? ` (${selectedItem.revocationStatus})`
-                            : ""}
-                        </Typography>
-                      );
+                  // For single item fields, display status in InputProps
+                  // InputProps={{
+                  //   endAdornment: !isMultiple && selectedItem?.revocationStatus &&
+                  //     selectedItem.revocationStatus !== "ACTIVE" &&
+                  //     selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                  //     <Typography color="red">
+                  //       ({selectedItem.revocationStatus})
+                  //     </Typography>
+                  //   ) : null
+                  // }}
+                  // For dropdown fields, use renderValue
+                  slotProps={{
+                    select: {
+                      renderValue: (selected) => {
+                        const selectedItem = values.find(
+                          (val) => val.value === selected
+                        );
+                        return (
+                          <Stack
+                            justifyContent={"space-between"}
+                            direction="row"
+                          >
+                            <Typography>{selectedItem?.value}</Typography>
+                            <Typography color="red">
+                              {selectedItem?.revocationStatus &&
+                              selectedItem.revocationStatus !== "ACTIVE" &&
+                              selectedItem.revocationStatus !== "NOT_FOUND"
+                                ? ` (${selectedItem.revocationStatus})`
+                                : ""}
+                            </Typography>
+                          </Stack>
+                        );
+                      },
                     },
-                  },
-                }}
-              >
-                {values.map((val) => (
-                  <MenuItem
-                    key={val.id}
-                    value={val.value}
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
-                    <Typography>{val.value}</Typography>
-                    <Typography color="red">
+                    input: {
+                      endAdornment:
+                        !isMultiple &&
+                        selectedItem?.revocationStatus &&
+                        selectedItem.revocationStatus !== "ACTIVE" &&
+                        selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                          <Typography color="red">
+                            ({selectedItem.revocationStatus})
+                          </Typography>
+                        ) : null,
+                    },
+                  }}
+                >
+                  {values.map((val) => (
+                    <MenuItem
+                      key={val.id}
+                      value={val.value}
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography>{val.value}</Typography>
                       {val.revocationStatus &&
                       val.revocationStatus !== "ACTIVE" &&
-                      val.revocationStatus !== "NOT_FOUND"
-                        ? val.revocationStatus
-                        : ""}
-                    </Typography>
-                  </MenuItem>
-                ))}
-              </TextField>
-            ))
+                      val.revocationStatus !== "NOT_FOUND" ? (
+                        <Typography color="red">
+                          {val.revocationStatus}
+                        </Typography>
+                      ) : null}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              );
+            })
           )}
 
           <Stack
@@ -375,7 +415,7 @@ export default function ProofShareModal({
             </Button>
             <Button
               onClick={handleShare}
-              disabled={loading || anyRevoked || hasMissingFields}
+              // disabled={loading || anyRevoked || hasMissingFields}
               sx={{
                 borderRadius: "30px",
                 minWidth: "180px",
