@@ -58,7 +58,6 @@ export default function DashboardPage() {
   const tenantIdRef = useRef<string | null>(null);
   const initialSocketMessageReceivedRef = useRef<boolean>(false);
 
-
   useEffect(() => {
     // If there are any query parameters, remove them after the page reloads
     if (searchParams && searchParams.toString()) {
@@ -80,11 +79,12 @@ export default function DashboardPage() {
 
   // This function will be passed to the ProofShare modal to inform us when share button is clicked
   const handleProofShared = () => {
+    console.log("handleProofShared called - setting waiting state to TRUE");
     setWaitingForVerification(true);
-    console.log("Proof share initiated, waiting for verification message...");
+    waitingForVerificationRef.current = true; // Add this line to directly update the ref
     console.log(
-      "🚀 ~ DashboardPage ~ waitingForVerification:",
-      waitingForVerification
+      "After update, waitingForVerificationRef.current =",
+      waitingForVerificationRef.current
     );
   };
 
@@ -131,8 +131,8 @@ export default function DashboardPage() {
     socketRef.current.on(tenantId, async (data: any) => {
       console.log("📥 Socket message received for tenant:", data);
       console.log(
-        "🚀 ~ socketRef.current.on ~ waitingForVerification:",
-        waitingForVerification
+        "🚀 ~ socketRef.current.on ~ waitingForVerificationref:():",
+        waitingForVerificationRef.current
       );
 
       // First message contains the recordId needed to open the modal
@@ -151,12 +151,14 @@ export default function DashboardPage() {
             recordId: recordId,
           }));
           setProofModalOpen(true);
-          
         }
-      }
-      else if (waitingForVerificationRef.current) {
+      } else if (waitingForVerificationRef.current) {
+        console.log(
+          "🚀 ~ socketRef.current.on ~ waitingForVerificationRef.current:",
+          waitingForVerificationRef.current
+        );
         console.log("✅ Verification message received:", data);
-        if (data?.message?.type === "Issuance" || false) {
+        if (data?.message?.type === "Issuance") {
           setWaitingForVerification(false);
           await handlePostProofVerification(data);
         }
@@ -166,7 +168,7 @@ export default function DashboardPage() {
 
   const handlePostProofVerification = async (data: any) => {
     try {
-      console.log("✅ Post-proof verification API called successfully, ", data);      
+      console.log("✅ Post-proof verification API called successfully, ", data);
       await fetchCredentials();
       router.replace("/dashboard");
     } catch (error) {
@@ -274,7 +276,7 @@ export default function DashboardPage() {
         status: status,
       });
       setCredentials(data);
-      setFilteredCredentials(data); // Set filtered credentials to all initially
+      setFilteredCredentials(data);
     } catch (error) {
       console.error("Error fetching credentials after retries:", error);
     }
