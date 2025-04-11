@@ -51,25 +51,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <CircularProgress size={100} />
       </Box>
     );
-  }
-
-  // Render the layout only if authenticated
-  return (
-    <Box sx={{ display: "flex", height: "100vh", bgcolor: "#F4F6F8" }}>
-      <Sidebar />
-      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        <Header />
-        <Box
-          sx={{
-            padding: 3,
-            flexGrow: 1,
-            overflowY: "auto",
-            backgroundColor: "#F4F6F8",
-          }}
-        >
-          {children}
+  } else if (isAuthenticated === true) {
+    return (
+      <Box sx={{ display: "flex", height: "100vh", bgcolor: "#F4F6F8" }}>
+        <Sidebar />
+        <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+          <Header />
+          <Box
+            sx={{
+              padding: 3,
+              flexGrow: 1,
+              overflowY: "auto",
+              backgroundColor: "#F4F6F8",
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
+    );
+  }
+  return <div></div>;
 }

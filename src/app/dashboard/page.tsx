@@ -271,7 +271,7 @@ export default function DashboardPage() {
     try {
       const data = await retryAPI(getCredentialListAPI, {
         tenantId: tenantId,
-        take: 20,
+        take: 30,
         skip: 0,
         status: status,
       });
