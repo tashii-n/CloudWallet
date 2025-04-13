@@ -30,6 +30,9 @@ const modalStyle = {
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
+  maxHeight: "90vh", // Add maximum height
+  display: "flex",
+  flexDirection: "column", // Stack children vertically
 };
 
 type ProofShareModalProps = {
@@ -260,137 +263,143 @@ export default function ProofShareModal({
         disableEscapeKeyDown
       >
         <Box textAlign="center" borderRadius={4} sx={modalStyle}>
-          <Typography
-            id="modal-modal-title"
-            color="primary"
-            fontWeight={600}
-            variant="h5"
-            gutterBottom
-            mb={2}
-          >
-            Proof Share Request
-          </Typography>
-          <Image
-            src={logoURL || "/images/ndilogodark.svg"}
-            width={50}
-            height={50}
-            alt="logo"
-            unoptimized
-          />
+          <Box textAlign={"center"}>
+            <Image
+              src={logoURL || "/images/ndilogodark.svg"}
+              width={60}
+              height={60}
+              alt="logo"
+              unoptimized
+            />
+          </Box>
           <Typography id="modal-modal-description" mt={2} mb={4}>
             {verifierName} would like to request you to share the following
             data.
           </Typography>
 
-          {loading ? (
-            <CircularProgress />
-          ) : error ? (
-            <Typography color="error" mt={2}>
-              {error}
-            </Typography>
-          ) : Object.keys(requestedData).length === 0 ? (
-            <Typography>
-              No matching credentials found for this request.
-            </Typography>
-          ) : (
-            Object.entries(requestedData).map(([label, values]) => {
-              const isMultiple =
-                values.length > 1 && values[0].value !== "Not Found";
-              const value = selectedData[label]?.value || "";
-              const selectedItem =
-                values.find((val) => val.value === value) || values[0];
+          {/* Wrap the scrollable content in a Box with overflow */}
+          <Box
+            sx={{
+              overflowY: "auto",
+              flex: "1 1 auto",
+              maxHeight: "calc(90vh - 390px)", // Adjust based on header/footer height
+              mb: 2,
+              py: 1,
+            }}
+          >
+            {loading ? (
+              <CircularProgress />
+            ) : error ? (
+              <Typography color="error" mt={2}>
+                {error}
+              </Typography>
+            ) : Object.keys(requestedData).length === 0 ? (
+              <Typography>
+                No matching credentials found for this request.
+              </Typography>
+            ) : (
+              Object.entries(requestedData).map(([label, values]) => {
+                const isMultiple =
+                  values.length > 1 && values[0].value !== "Not Found";
+                const value = selectedData[label]?.value || "";
+                const selectedItem =
+                  values.find((val) => val.value === value) || values[0];
 
-              return (
-                <TextField
-                  key={label}
-                  fullWidth
-                  select={isMultiple}
-                  label={label}
-                  variant="outlined"
-                  name={label}
-                  value={value}
-                  onChange={(e) => {
-                    const selectedValue = values.find(
-                      (v) => v.value === e.target.value
-                    );
-                    if (selectedValue) {
-                      setSelectedData((prev) => ({
-                        ...prev,
-                        [label]: selectedValue,
-                      }));
+                return (
+                  <TextField
+                    key={label}
+                    fullWidth
+                    select={isMultiple}
+                    label={label}
+                    variant="outlined"
+                    name={label}
+                    value={value}
+                    onChange={(e) => {
+                      const selectedValue = values.find(
+                        (v) => v.value === e.target.value
+                      );
+                      if (selectedValue) {
+                        setSelectedData((prev) => ({
+                          ...prev,
+                          [label]: selectedValue,
+                        }));
+                      }
+                    }}
+                    sx={{ marginBottom: "16px" }}
+                    disabled={
+                      values.length === 1 || values[0].value === "Not Found"
                     }
-                  }}
-                  sx={{ marginBottom: "16px" }}
-                  disabled={
-                    values.length === 1 || values[0].value === "Not Found"
-                  }
-                  // For single item fields, display status in InputProps
-                  // InputProps={{
-                  //   endAdornment: !isMultiple && selectedItem?.revocationStatus &&
-                  //     selectedItem.revocationStatus !== "ACTIVE" &&
-                  //     selectedItem.revocationStatus !== "NOT_FOUND" ? (
-                  //     <Typography color="red">
-                  //       ({selectedItem.revocationStatus})
-                  //     </Typography>
-                  //   ) : null
-                  // }}
-                  // For dropdown fields, use renderValue
-                  slotProps={{
-                    select: {
-                      renderValue: (selected) => {
-                        const selectedItem = values.find(
-                          (val) => val.value === selected
-                        );
-                        return (
-                          <Stack
-                            justifyContent={"space-between"}
-                            direction="row"
-                          >
-                            <Typography>{selectedItem?.value}</Typography>
-                            <Typography color="red">
-                              {selectedItem?.revocationStatus &&
-                              selectedItem.revocationStatus !== "ACTIVE" &&
-                              selectedItem.revocationStatus !== "NOT_FOUND"
-                                ? ` (${selectedItem.revocationStatus})`
-                                : ""}
-                            </Typography>
-                          </Stack>
-                        );
+                    // For single item fields, display status in InputProps
+                    // InputProps={{
+                    //   endAdornment: !isMultiple && selectedItem?.revocationStatus &&
+                    //     selectedItem.revocationStatus !== "ACTIVE" &&
+                    //     selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                    //     <Typography color="red">
+                    //       ({selectedItem.revocationStatus})
+                    //     </Typography>
+                    //   ) : null
+                    // }}
+                    // For dropdown fields, use renderValue
+                    slotProps={{
+                      select: {
+                        renderValue: (selected) => {
+                          const selectedItem = values.find(
+                            (val) => val.value === selected
+                          );
+                          return (
+                            <Stack
+                              justifyContent={"space-between"}
+                              direction="row"
+                            >
+                              <Typography>{selectedItem?.value}</Typography>
+                              <Typography color="red">
+                                {selectedItem?.revocationStatus &&
+                                selectedItem.revocationStatus !== "ACTIVE" &&
+                                selectedItem.revocationStatus !== "NOT_FOUND"
+                                  ? ` (${selectedItem.revocationStatus})`
+                                  : ""}
+                              </Typography>
+                            </Stack>
+                          );
+                        },
                       },
-                    },
-                    input: {
-                      endAdornment:
-                        !isMultiple &&
-                        selectedItem?.revocationStatus &&
-                        selectedItem.revocationStatus !== "ACTIVE" &&
-                        selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                      input: {
+                        endAdornment:
+                          !isMultiple &&
+                          selectedItem?.revocationStatus &&
+                          selectedItem.revocationStatus !== "ACTIVE" &&
+                          selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                            <Typography color="red">
+                              ({selectedItem.revocationStatus})
+                            </Typography>
+                          ) : null,
+                      },
+                    }}
+                  >
+                    {values.map((val) => (
+                      <MenuItem
+                        key={val.id}
+                        value={val.value}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography>{val.value}</Typography>
+                        {val.revocationStatus &&
+                        val.revocationStatus !== "ACTIVE" &&
+                        val.revocationStatus !== "NOT_FOUND" ? (
                           <Typography color="red">
-                            ({selectedItem.revocationStatus})
+                            {val.revocationStatus}
                           </Typography>
-                        ) : null,
-                    },
-                  }}
-                >
-                  {values.map((val) => (
-                    <MenuItem
-                      key={val.id}
-                      value={val.value}
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography>{val.value}</Typography>
-                      {val.revocationStatus &&
-                      val.revocationStatus !== "ACTIVE" &&
-                      val.revocationStatus !== "NOT_FOUND" ? (
-                        <Typography color="red">
-                          {val.revocationStatus}
-                        </Typography>
-                      ) : null}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              );
-            })
-          )}
+                        ) : null}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                );
+              })
+            )}
+          </Box>
 
           <Stack
             direction="row"
@@ -415,7 +424,7 @@ export default function ProofShareModal({
             </Button>
             <Button
               onClick={handleShare}
-              // disabled={loading || anyRevoked || hasMissingFields}
+              disabled={loading || anyRevoked || hasMissingFields}
               sx={{
                 borderRadius: "30px",
                 minWidth: "180px",
