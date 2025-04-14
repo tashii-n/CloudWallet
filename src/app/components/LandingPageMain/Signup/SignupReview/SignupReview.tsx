@@ -214,11 +214,11 @@ export default function SignupForm() {
             const revocationResponse = await retryAPI(
               getRevocationCredentialAPI,
               {
-                holderDID,
+                holderDID: holderDID,
                 revocationId: credential.revocationId,
               }
             );
-
+            
             console.log(
               `✅ Revocation Credential for ${credential.name}:`,
               revocationResponse

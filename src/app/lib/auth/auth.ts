@@ -65,6 +65,7 @@ export const storeCloudAuth = async (
       refreshToken,
       refreshTokenExpirationTime,
     };
+    console.log("🚀 ~ cloudAuth:", cloudAuth)
 
     // Store the cloudAuth object in secureStore
     await secureStore("cloudAuth", JSON.stringify(cloudAuth));

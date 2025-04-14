@@ -69,6 +69,7 @@ export default function ProofShareModal({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState(false);
   const [anyRevoked, setAnyRevoked] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   const [hasMissingFields, setHasMissingFields] = useState(false);
 
@@ -199,6 +200,7 @@ export default function ProofShareModal({
   const handleDeny = async () => {
     try {
       await declineProofRequestAPI(recordId);
+      setStatus("DENIED");
     } catch (err) {
       console.error("❌ Error declining proof:", err);
       setError("Failed to deny proof request. Please try again.");
@@ -240,7 +242,8 @@ export default function ProofShareModal({
       await acceptProofRequestAPI(payload);
 
       setSuccessMessage(true);
-      handleClose();
+      setStatus("SHARED");
+      // handleClose();
     } catch (err) {
       console.error("❌ Error sending proof:", err);
       setError("Failed to send proof. Please try again.");
@@ -263,21 +266,50 @@ export default function ProofShareModal({
         disableEscapeKeyDown
       >
         <Box textAlign="center" borderRadius={4} sx={modalStyle}>
-          <Box textAlign={"center"}>
-            <Image
-              src={logoURL || "/images/ndilogodark.svg"}
-              width={60}
-              height={60}
-              alt="logo"
-              unoptimized
-            />
-          </Box>
-          <Typography id="modal-modal-description" mt={2} mb={4}>
-            {verifierName} would like to request you to share the following
-            data.
-          </Typography>
+          {!status ? (
+            <>
+              <Box textAlign={"center"}>
+                <Image
+                  src={logoURL || "/images/ndilogodark.svg"}
+                  width={60}
+                  height={60}
+                  alt="logo"
+                  unoptimized
+                />
+              </Box>
+              <Typography id="modal-modal-description" mt={2} mb={4}>
+                {verifierName} would like to request you to share the following
+                data.
+              </Typography>
+            </>
+          ) : status == "SHARED" ? (
+            <>
+              <Typography
+                color="primary.main"
+                variant="h5"
+                fontWeight={500}
+                mb={3}
+              >
+                Proof Share Successful
+              </Typography>
+            </>
+          ) : (
+            <>
+              <>
+                <Typography
+                  color="primary.main"
+                  variant="h5"
+                  fontWeight={500}
+                  mb={3}
+                >
+                  Proof Deny Successful
+                </Typography>
+              </>
+            </>
+          )}
 
           {/* Wrap the scrollable content in a Box with overflow */}
+
           <Box
             sx={{
               overflowY: "auto",
@@ -294,9 +326,24 @@ export default function ProofShareModal({
                 {error}
               </Typography>
             ) : Object.keys(requestedData).length === 0 ? (
-              <Typography>
-                No matching credentials found for this request.
-              </Typography>
+              <>
+                <Typography>
+                  No matching credentials found for this request.
+                </Typography>
+              </>
+            ) : status ? (
+              <>
+                <Image
+                  src={"/images/success.svg"}
+                  width={150}
+                  height={150}
+                  alt="Success Image"
+                />
+                <Typography mt={2}>
+                  You have {status.toLocaleLowerCase()} proof for {verifierName}{" "}
+                  successfully.
+                </Typography>
+              </>
             ) : (
               Object.entries(requestedData).map(([label, values]) => {
                 const isMultiple =
@@ -400,43 +447,62 @@ export default function ProofShareModal({
               })
             )}
           </Box>
-
-          <Stack
-            direction="row"
-            spacing={3}
-            mt={4}
-            justifyContent="space-around"
-          >
-            <Button
-              onClick={() => {
-                handleDeny();
-                handleClose();
-              }}
-              variant="outlined"
-              color="error"
-              sx={{
-                borderRadius: "30px",
-                minWidth: "180px",
-                textTransform: "none",
-              }}
-            >
-              Deny
-            </Button>
-            <Button
-              onClick={handleShare}
-              disabled={loading || anyRevoked || hasMissingFields}
-              sx={{
-                borderRadius: "30px",
-                minWidth: "180px",
-                backgroundColor: "#5AC994",
-                color: "white",
-                textTransform: "none",
-                minHeight: "40px",
-              }}
-            >
-              {loading ? "Sharing..." : "Share"}
-            </Button>
-          </Stack>
+          {!status ? (
+            <>
+              <Stack
+                direction="row"
+                spacing={3}
+                mt={4}
+                justifyContent="space-around"
+              >
+                <Button
+                  onClick={() => {
+                    handleDeny();
+                  }}
+                  variant="outlined"
+                  color="error"
+                  sx={{
+                    borderRadius: "30px",
+                    minWidth: "180px",
+                    textTransform: "none",
+                  }}
+                >
+                  Deny
+                </Button>
+                <Button
+                  onClick={handleShare}
+                  // disabled={loading || anyRevoked || hasMissingFields}
+                  sx={{
+                    borderRadius: "30px",
+                    minWidth: "180px",
+                    backgroundColor: "#5AC994",
+                    color: "white",
+                    textTransform: "none",
+                    minHeight: "40px",
+                  }}
+                >
+                  {loading ? "Sharing..." : "Share"}
+                </Button>
+              </Stack>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleClose}
+                sx={{
+                  mt: 3,
+                  borderRadius: "30px",
+                  minWidth: "180px",
+                  backgroundColor: "#5AC994",
+                  color: "white",
+                  textTransform: "none",
+                  minHeight: "40px",
+                }}
+              >
+                Close
+              </Button>
+            </>
+          )}
         </Box>
       </Modal>
 

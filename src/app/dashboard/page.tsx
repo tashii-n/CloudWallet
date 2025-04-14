@@ -14,6 +14,7 @@ import {
   acceptCredentialAPI,
   getCredentialDetailsAPI,
   getCredentialListAPI,
+  getRevocationCredentialAPI,
 } from "../lib/api_utils/onboardingAPI";
 import { secureGet } from "../lib/storage/storage";
 import { retryAPI } from "../lib/api_utils/helperFunction";
@@ -79,9 +80,8 @@ export default function DashboardPage() {
 
   // This function will be passed to the ProofShare modal to inform us when share button is clicked
   const handleProofShared = () => {
-    console.log("handleProofShared called - setting waiting state to TRUE");
     setWaitingForVerification(true);
-    waitingForVerificationRef.current = true; // Add this line to directly update the ref
+    waitingForVerificationRef.current = true;
     console.log(
       "After update, waitingForVerificationRef.current =",
       waitingForVerificationRef.current
@@ -96,10 +96,57 @@ export default function DashboardPage() {
 
       if (tenantId) {
         // If we have a tenant ID, fetch credentials
-        await fetchCredentials();
+        const credentials = await fetchCredentials();
+
+        // Process each NEW credential and call API with revocationId
+        if (credentials) {
+          const newCredentials = credentials.filter(
+            (cred: Credential) => cred.status === "NEW"
+          );
+
+          const holderDID = await secureGet("holderDID");
+
+          for (const credential of newCredentials) {
+            if (credential.revocationId) {
+              try {
+                if (holderDID) {
+                  const revocationResponse = await retryAPI(
+                    getRevocationCredentialAPI,
+                    {
+                      holderDID: holderDID,
+                      revocationId: credential.revocationId,
+                    }
+                  );
+                  const invitationUrl = revocationResponse?.credInviteURL;
+                  if (invitationUrl) {
+                    const acceptResponse = await retryAPI(acceptCredentialAPI, {
+                      invitationUrl,
+                    });
+                    console.log(
+                      `✅ Revocation Credential Accepted: ${credential.name}`,
+                      acceptResponse
+                    );
+                  } else {
+                    console.error(
+                      `❌ Missing credInviteURL for ${credential.name}`
+                    );
+                  }
+                } else {
+                  console.error("holderDID is null, cannot call API");
+                }
+              } catch (error) {
+                console.error(
+                  `Error calling API for revocationId ${credential.revocationId}:`,
+                  error
+                );
+              }
+            }
+          }
+          await fetchCredentials();
+        }
 
         // Check for deep link URL
-        const deepLinkURL = searchParams?.get("proofRequestURL");
+        const deepLinkURL = searchParams?.get("URL");
         if (deepLinkURL) {
           await handleDeepLinkRequest(deepLinkURL);
         }
@@ -169,6 +216,7 @@ export default function DashboardPage() {
   const handlePostProofVerification = async (data: any) => {
     try {
       console.log("✅ Post-proof verification API called successfully, ", data);
+
       await fetchCredentials();
       router.replace("/dashboard");
     } catch (error) {
@@ -277,6 +325,7 @@ export default function DashboardPage() {
       });
       setCredentials(data);
       setFilteredCredentials(data);
+      return data;
     } catch (error) {
       console.error("Error fetching credentials after retries:", error);
     }
