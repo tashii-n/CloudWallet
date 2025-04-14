@@ -25,7 +25,7 @@ const menuItems = [
   { name: "Home", path: "/dashboard", icon: <HomeIcon /> },
   {
     name: "Your Connections",
-    path: "/connections",
+    path: "/dashboard/connections",
     icon: <PermContactCalendarIcon />,
   },
   { name: "Credentials", path: "/credentials", icon: <CreditCardIcon /> },
@@ -34,7 +34,7 @@ const menuItems = [
     path: "/suppfdasort",
     icon: <AccountCircleOutlinedIcon />,
   },
-  { name: "Support", path: "/d", icon: <SupportAgentOutlinedIcon /> },
+  // { name: "Support", path: "/d", icon: <SupportAgentOutlinedIcon /> },
   { name: "About", path: "/dfsa", icon: <HelpOutlineOutlinedIcon /> },
   { name: "Contact", path: "/fd", icon: <PermPhoneMsgOutlinedIcon /> },
   { name: "FAQ", path: "/dashboard/faq", icon: <PolicyOutlinedIcon /> },

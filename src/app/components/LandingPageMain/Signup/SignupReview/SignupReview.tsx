@@ -187,11 +187,11 @@ export default function SignupForm() {
         take: 10,
         skip: 0,
       });
-      const credentialList = credentialListResponse?.data;
-      if (credentialList?.length) {
-        console.log("✅ Credential List Found:", credentialList);
+      console.log("🚀 ~ getCredentialList ~ credentialList:", credentialListResponse)
+      if (credentialListResponse?.length) {
+        console.log("✅ Credential List Found:", credentialListResponse);
         // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
-        return credentialList;
+        return credentialListResponse;
       }
 
       attempts++;

@@ -853,6 +853,42 @@ export const declineProofRequestAPI = async (proofRecordId: string) => {
   }
 };
 
+export const getConnectionsAPI = async () => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    const url = `${apiUrl}/cloud-wallet/v1/connections`;
+
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url,
+      headers,
+    };
+
+    console.log("Connections API Request:", config);
+
+    const response = await axios(config);
+
+    const responsePayload = response?.data;
+
+    console.log("Connections API Response:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("Get Connections API call failed:", error);
+    throw new Error("Unable to get connections");
+  }
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TEST API Functions
@@ -940,13 +976,13 @@ export const getProofCredentialMatchTest = async () => {
                             "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
                           proofTypes: ["EcdsaSecp256k1Signature2019"],
                           subjectIds: [
-                            "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
+                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
                           ],
                           types: ["Foundational ID", "VerifiableCredential"],
                         },
                         metadata: {},
-                        id: "caca64c2-b682-4f47-ab39-ed808f38f3cf",
-                        createdAt: "2025-04-08T20:17:18.859Z",
+                        id: "d848ad67-99f5-49bf-bf15-number1 dark",
+                        createdAt: "2025-04-14T14:29:27.444Z",
                         credential: {
                           "@context": [
                             "https://www.w3.org/2018/credentials/v1",
@@ -956,30 +992,154 @@ export const getProofCredentialMatchTest = async () => {
                           issuer: {
                             id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
                           },
-                          issuanceDate: "2025-04-08T20:17:13.368Z",
+                          issuanceDate: "2025-04-14T14:29:21.802Z",
                           credentialSubject: {
                             "Full Name": "Tashi  Namgay",
                             "Blood Type": "A+",
                             "Date of Birth": "05/06/2001",
                             Gender: "Male",
                             "ID Type": "Citizenship",
-                            "ID Number": "11503000205",
+                            "ID Number": "Number 1 Dark",
                             Citizenship: "Bhutanese",
                             revocation_id:
-                              "c43f766e-4514-43a7-9a24-cbe35e0b300c",
-                            id: "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
+                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
+                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
                           },
                           proof: {
                             verificationMethod:
                               "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
                             type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-08T20:17:17Z",
+                            created: "2025-04-14T14:29:25Z",
                             proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..tIzEgpbjN_mgom3Nt7WTrkCsRRsPTBFbxbOL_uI6gWAJKu2cp3hkGCTkdNTPb84Ug0hPuFK06q0SAJGDuvNWYg",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
                           },
                         },
-                        updatedAt: "2025-04-08T20:17:18.859Z",
+                        updatedAt: "2025-04-14T14:29:27.444Z",
                       },
+                      orgLogo: "/images/ndilogodark.svg",
+                      label: "CW Foundation Issuer",
+                      revocationstatus: "NEW",
+                    },
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "d848ad67-99f5-49bf-bf15-number2 light",
+                        createdAt: "2025-04-14T14:29:27.444Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
+                          },
+                          issuanceDate: "2025-04-14T14:29:21.802Z",
+                          credentialSubject: {
+                            "Full Name": "Tashi  Namgay",
+                            "Blood Type": "A+",
+                            "Date of Birth": "05/06/2001",
+                            Gender: "Male",
+                            "ID Type": "Citizenship",
+                            "ID Number": "Number 2 Lightt",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
+                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-04-14T14:29:25Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
+                          },
+                        },
+                        updatedAt: "2025-04-14T14:29:27.444Z",
+                      },
+                      orgLogo: "/images/ndilogo.svg",
+                      label: "CW Foundation Issuer",
+                      revocationstatus: "NEW",
+                    },
+                    {
+                      type: "ldp_vc",
+                      credentialRecord: {
+                        _tags: {
+                          claimFormat: "ldp_vc",
+                          contexts: [
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                            "https://www.w3.org/2018/credentials/v1",
+                          ],
+                          expandedTypes: [
+                            "Foundational ID",
+                            "https://www.w3.org/2018/credentials#VerifiableCredential",
+                          ],
+                          issuerId:
+                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
+                          proofTypes: ["EcdsaSecp256k1Signature2019"],
+                          subjectIds: [
+                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
+                          ],
+                          types: ["Foundational ID", "VerifiableCredential"],
+                        },
+                        metadata: {},
+                        id: "d848ad67-99f5-49bf-bf15-efcbb2eb0ce1",
+                        createdAt: "2025-04-14T14:29:27.444Z",
+                        credential: {
+                          "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
+                          ],
+                          type: ["VerifiableCredential", "Foundational ID"],
+                          issuer: {
+                            id: "did:polygon:testnet:number 3 default",
+                          },
+                          issuanceDate: "2025-04-14T14:29:21.802Z",
+                          credentialSubject: {
+                            "Full Name": "Tashi  Namgay",
+                            "Blood Type": "A+",
+                            "Date of Birth": "05/06/2001",
+                            Gender: "Male",
+                            "ID Type": "Citizenship",
+                            "ID Number": "number 3 default",
+                            Citizenship: "Bhutanese",
+                            revocation_id:
+                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
+                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
+                          },
+                          proof: {
+                            verificationMethod:
+                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
+                            type: "EcdsaSecp256k1Signature2019",
+                            created: "2025-04-14T14:29:25Z",
+                            proofPurpose: "assertionMethod",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
+                          },
+                        },
+                        updatedAt: "2025-04-14T14:29:27.444Z",
+                      },
+                      orgLogo: null,
+                      label: "CW Foundation Issuer",
                       revocationstatus: "NEW",
                     },
                   ],
@@ -1000,104 +1160,59 @@ export const getProofCredentialMatchTest = async () => {
                         _tags: {
                           claimFormat: "ldp_vc",
                           contexts: [
-                            "https://dev-schema.ngotag.com/schemas/3c411fc8-c409-4d47-8369-68a12db691a3",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
                             "https://www.w3.org/2018/credentials/v1",
                           ],
                           expandedTypes: [
-                            "DHP Credential",
+                            "Foundational ID",
                             "https://www.w3.org/2018/credentials#VerifiableCredential",
                           ],
                           issuerId:
-                            "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d",
+                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
                           proofTypes: ["EcdsaSecp256k1Signature2019"],
                           subjectIds: [
-                            "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
+                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
                           ],
-                          types: ["DHP Credential", "VerifiableCredential"],
+                          types: ["Foundational ID", "VerifiableCredential"],
                         },
                         metadata: {},
-                        id: "1055e311-edb2-43b5-b80a-bd5f39a0dc22",
-                        createdAt: "2025-04-10T09:21:33.438Z",
+                        id: "d848ad67-99f5-49bf-bf15-efcbb2eb0ce1",
+                        createdAt: "2025-04-14T14:29:27.444Z",
                         credential: {
                           "@context": [
                             "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/3c411fc8-c409-4d47-8369-68a12db691a3",
+                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
                           ],
-                          type: ["VerifiableCredential", "DHP Credential"],
+                          type: ["VerifiableCredential", "Foundational ID"],
                           issuer: {
-                            id: "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d",
+                            id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
                           },
-                          issuanceDate: "2025-04-10T09:21:29.955Z",
+                          issuanceDate: "2025-04-14T14:29:21.802Z",
                           credentialSubject: {
-                            "DHP ID": "number1",
+                            "Full Name": "Tashi  Namgay",
+                            "Blood Type": "A+",
+                            "Date of Birth": "05/06/2001",
+                            Gender: "Male",
+                            "ID Type": "Citizenship",
+                            "ID Number": "11503000205",
+                            Citizenship: "Bhutanese",
                             revocation_id:
-                              "e4e94af9-22a1-4638-b738-b49ea601a4c4",
-                            id: "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
+                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
+                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
                           },
                           proof: {
                             verificationMethod:
-                              "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d#key-1",
+                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
                             type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-10T09:21:32Z",
+                            created: "2025-04-14T14:29:25Z",
                             proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..bOdSNbEvduK1f0gTSaHYmQeXxxgkhLC7AfhK6cTGOLF2ccmfMptlF_4942pMLZycE0fwvI6cgMyrTBPpO7cJKg",
+                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
                           },
                         },
-                        updatedAt: "2025-04-10T09:21:33.438Z",
+                        updatedAt: "2025-04-14T14:29:27.444Z",
                       },
-                      revocationstatus: "NEW",
-                    },
-                    {
-                      type: "ldp_vc",
-                      credentialRecord: {
-                        _tags: {
-                          claimFormat: "ldp_vc",
-                          contexts: [
-                            "https://dev-schema.ngotag.com/schemas/3c411fc8-c409-4d47-8369-68a12db691a3",
-                            "https://www.w3.org/2018/credentials/v1",
-                          ],
-                          expandedTypes: [
-                            "DHP Credential",
-                            "https://www.w3.org/2018/credentials#VerifiableCredential",
-                          ],
-                          issuerId:
-                            "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d",
-                          proofTypes: ["EcdsaSecp256k1Signature2019"],
-                          subjectIds: [
-                            "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
-                          ],
-                          types: ["DHP Credential", "VerifiableCredential"],
-                        },
-                        metadata: {},
-                        id: "8b08c61b-4ff3-4b72-947f-d4626481f409",
-                        createdAt: "2025-04-10T10:18:58.715Z",
-                        credential: {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/3c411fc8-c409-4d47-8369-68a12db691a3",
-                          ],
-                          type: ["VerifiableCredential", "DHP Credential"],
-                          issuer: {
-                            id: "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d",
-                          },
-                          issuanceDate: "2025-04-10T10:18:55.544Z",
-                          credentialSubject: {
-                            "DHP ID": "number2",
-                            revocation_id:
-                              "375933aa-1175-4c52-b5f4-8ba0879cc1c6",
-                            id: "did:key:z6MkpNpdxSiQ9oALk2TUub83yJMnrsZvHNEK94SRq7pjqsMz",
-                          },
-                          proof: {
-                            verificationMethod:
-                              "did:polygon:testnet:0xd6ee550a2D7129E458ff2ad82795e1f99165c06d#key-1",
-                            type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-10T10:18:56Z",
-                            proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..eYrdVPNXWfJbAeiv8YAgt-6sKHrgnVy2O86tVfxjw9wyRSJpYLkMKnCcnEVt8ZolyEm7VAegS7nOb6OQx-SC8g",
-                          },
-                        },
-                        updatedAt: "2025-04-10T10:18:58.715Z",
-                      },
+                      orgLogo: null,
+                      label: "CW Foundation Issuer",
                       revocationstatus: "NEW",
                     },
                   ],
@@ -1105,19 +1220,8 @@ export const getProofCredentialMatchTest = async () => {
               ],
               isRequirementSatisfied: true,
             },
-            {
-              rule: "pick",
-              needsCount: 1,
-              submissionEntry: [
-                {
-                  inputDescriptorId: "input_2",
-                  verifiableCredentials: [],
-                },
-              ],
-              isRequirementSatisfied: false,
-            },
           ],
-          areRequirementsSatisfied: false,
+          areRequirementsSatisfied: true,
           name: "Foundational ID",
           purpose: "auth_standard",
         },

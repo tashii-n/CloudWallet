@@ -1,27 +1,33 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
+"use client";
 
-// This will be your /deeplink page component
-const DeeplinkPage = () => {
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // Import both from next/navigation
+import { Box, CircularProgress } from "@mui/material";
+
+export default function DeeplinkPage() {
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    // Check if router is ready and has query parameters
-    if (router.isReady) {
-      const { url } = router.query;
+    const deepLinkURL = searchParams.get("url");
 
-      if (url) {
-        // Redirect to dashboard with the same URL parameter
-        router.push(`/dashboard?URL=${encodeURIComponent(url as string)}`);
-      } else {
-        // If no URL parameter found, redirect to dashboard without parameters
-        router.push("/dashboard");
-      }
+    if (deepLinkURL) {
+      router.push(`/dashboard?url=${encodeURIComponent(deepLinkURL)}`);
+    } else {
+      router.push("/dashboard");
     }
-  }, [router.isReady, router.query]);
+  }, [router, searchParams]);
 
-  // Optional: Show loading while redirecting
-  return <div>Redirecting...</div>;
-};
-
-export default DeeplinkPage;
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <CircularProgress size={100} />
+    </Box>
+  );
+}

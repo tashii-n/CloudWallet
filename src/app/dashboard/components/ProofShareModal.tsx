@@ -48,6 +48,7 @@ interface ValueOption {
   value: string;
   id: string;
   revocationStatus?: string;
+  orgLogo?: string | null;
 }
 
 export default function ProofShareModal({
@@ -73,7 +74,6 @@ export default function ProofShareModal({
 
   const [hasMissingFields, setHasMissingFields] = useState(false);
 
-  // Update this useEffect to check for both revoked and missing fields
   useEffect(() => {
     const hasRevoked = Object.values(selectedData).some(
       (item) =>
@@ -136,6 +136,8 @@ export default function ProofShareModal({
                 const status =
                   vc.revocationStatus || vc.revocationstatus || "ACTIVE";
 
+                const orgLogo = vc.orgLogo || "/images/ndilogodark.svg";
+
                 inputDescriptor.constraints.fields.forEach((field: any) => {
                   const match = field.path[0].match(/\['(.+?)'\]/);
                   const fieldName = match ? match[1] : "";
@@ -151,6 +153,7 @@ export default function ProofShareModal({
                         value,
                         id: credentialId,
                         revocationStatus: status,
+                        orgLogo: orgLogo,
                       });
                     }
                   }
@@ -173,6 +176,7 @@ export default function ProofShareModal({
                   value: "Not Found",
                   id: "not-found",
                   revocationStatus: "NOT_FOUND",
+                  orgLogo: null,
                 });
               }
             });
@@ -395,17 +399,41 @@ export default function ProofShareModal({
                           );
                           return (
                             <Stack
-                              justifyContent={"space-between"}
                               direction="row"
+                              spacing={1}
+                              alignItems="center"
+                              justifyContent={"space-between"}
+                              sx={{ width: "100%" }}
                             >
-                              <Typography>{selectedItem?.value}</Typography>
-                              <Typography color="red">
-                                {selectedItem?.revocationStatus &&
-                                selectedItem.revocationStatus !== "ACTIVE" &&
-                                selectedItem.revocationStatus !== "NOT_FOUND"
-                                  ? ` (${selectedItem.revocationStatus})`
-                                  : ""}
-                              </Typography>
+                              <Stack direction={"row"} spacing={2}>
+                                {selectedItem?.orgLogo ? (
+                                  <Image
+                                    src={selectedItem.orgLogo}
+                                    width={25}
+                                    height={25}
+                                    alt="logo"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <Image
+                                    src="/images/ndilogodark.svg"
+                                    width={25}
+                                    height={25}
+                                    alt="logo"
+                                    unoptimized
+                                  />
+                                )}
+                                <Typography sx={{ flexGrow: 1 }}>
+                                  {selectedItem?.value}
+                                </Typography>
+                              </Stack>
+                              {selectedItem?.revocationStatus &&
+                              selectedItem.revocationStatus !== "ACTIVE" &&
+                              selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                                <Typography color="red">
+                                  ({selectedItem.revocationStatus})
+                                </Typography>
+                              ) : null}
                             </Stack>
                           );
                         },
@@ -420,6 +448,34 @@ export default function ProofShareModal({
                               ({selectedItem.revocationStatus})
                             </Typography>
                           ) : null,
+                        startAdornment:
+                          !isMultiple &&
+                          selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                            selectedItem?.orgLogo ? (
+                              <Box
+                                mr={2}
+                                display={"flex"}
+                                alignItems={"center"}
+                                justifyContent={"center"}
+                              >
+                                <Image
+                                  src={selectedItem.orgLogo}
+                                  width={25}
+                                  height={25}
+                                  alt="logo"
+                                  unoptimized
+                                />
+                              </Box>
+                            ) : (
+                              <Image
+                                src="/images/ndilogodark.svg"
+                                width={25}
+                                height={25}
+                                alt="logo"
+                                unoptimized
+                              />
+                            )
+                          ) : null,
                       },
                     }}
                   >
@@ -429,15 +485,36 @@ export default function ProofShareModal({
                         value={val.value}
                         sx={{
                           display: "flex",
-                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 1,
+                          width: "100%",
                         }}
                       >
-                        <Typography>{val.value}</Typography>
+                        {val?.orgLogo ? (
+                          <Image
+                            src={val.orgLogo}
+                            width={25}
+                            height={25}
+                            alt="logo"
+                            unoptimized
+                          />
+                        ) : (
+                          <Image
+                            src="/images/ndilogodark.svg"
+                            width={25}
+                            height={25}
+                            alt="logo"
+                            unoptimized
+                          />
+                        )}
+                        <Typography sx={{ flexGrow: 1 }}>
+                          {val.value}
+                        </Typography>
                         {val.revocationStatus &&
                         val.revocationStatus !== "ACTIVE" &&
                         val.revocationStatus !== "NOT_FOUND" ? (
                           <Typography color="red">
-                            {val.revocationStatus}
+                            ({val.revocationStatus})
                           </Typography>
                         ) : null}
                       </MenuItem>

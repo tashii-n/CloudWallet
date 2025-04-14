@@ -1,14 +1,9 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Grid2,
-  Stack,
-} from "@mui/material";
+import { Card, CardContent, Typography, Grid2, Stack } from "@mui/material";
 import Image from "next/image";
 
 interface CredentialCardProps {
   credential: {
+    connection?: any;
     credentialsId?: string;
     name: string;
     iconUrl?: string;
@@ -37,11 +32,17 @@ export default function CredentialCard({
         <Grid2 container spacing={5}>
           <Grid2 size={8}>
             <Image
-              src={credential.iconUrl || "/images/ndilogodark.svg"}
+              src={
+                credential.connection?.imageUrl ??
+                credential.iconUrl ??
+                "/images/ndilogodark.svg"
+              }
               width={60}
               height={60}
-              alt="Credential Icon"
+              alt={credential.name || "Credential Icon"}
+              unoptimized
             />
+
             <Typography mt={5} variant="body1" fontWeight="bold">
               {credential.name}
             </Typography>
