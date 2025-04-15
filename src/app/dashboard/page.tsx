@@ -17,7 +17,7 @@ import {
   getPermanentAddressAPI,
   getRevocationCredentialAPI,
 } from "../lib/api_utils/onboardingAPI";
-import { secureGet } from "../lib/storage/storage";
+import { secureClear, secureGet } from "../lib/storage/storage";
 import { retryAPI } from "../lib/api_utils/helperFunction";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProofShareModal from "./components/ProofShareModal";
@@ -60,17 +60,9 @@ export default function DashboardPage() {
   const [issuanceCredentialData, setIssuanceCredentialData] =
     useState<any>(null);
   const [waitingForVerification, setWaitingForVerification] = useState(false);
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const socketRef = useRef<any>(null);
   const tenantIdRef = useRef<string | null>(null);
   const initialSocketMessageReceivedRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    if (searchParams && searchParams.toString()) {
-      router.replace("/dashboard");
-    }
-  }, [searchParams]);
 
   const handleCloseModal = () => {
     setProofModalOpen(false);
@@ -108,10 +100,11 @@ export default function DashboardPage() {
       }
 
       // Check for deep link URL first
-      const deepLinkURL = searchParams?.get("url");
+      const deepLinkURL = await secureGet("deeplinkURL");
       if (deepLinkURL) {
         // If there's a deep link, handle it and return early - skip revocation checks
         await handleDeepLinkRequest(deepLinkURL, true);
+        await secureClear("deeplinkURL");
         return; // <-- Early return to avoid running revocation checks
       }
 

@@ -1,33 +1,29 @@
+// app/deeplink/page.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Import both from next/navigation
+import { Suspense } from "react";
 import { Box, CircularProgress } from "@mui/material";
+import DeepLinkHandler from "./DeepLinkHandler"; // we'll create this next
+
+export const dynamic = "force-dynamic";
 
 export default function DeeplinkPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  useEffect(() => {
-    const deepLinkURL = searchParams.get("url");
-
-    if (deepLinkURL) {
-      router.push(`/dashboard?url=${encodeURIComponent(deepLinkURL)}`);
-    } else {
-      router.push("/dashboard");
-    }
-  }, [router, searchParams]);
-
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress size={100} />
+        </Box>
+      }
     >
-      <CircularProgress size={100} />
-    </Box>
+      <DeepLinkHandler />
+    </Suspense>
   );
 }
