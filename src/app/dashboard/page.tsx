@@ -14,6 +14,7 @@ import {
   acceptCredentialAPI,
   getCredentialDetailsAPI,
   getCredentialListAPI,
+  getPermanentAddressAPI,
   getRevocationCredentialAPI,
 } from "../lib/api_utils/onboardingAPI";
 import { secureGet } from "../lib/storage/storage";
@@ -21,6 +22,7 @@ import { retryAPI } from "../lib/api_utils/helperFunction";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProofShareModal from "./components/ProofShareModal";
 import { getSocket, initSocket } from "../lib/socket";
+import IssuanceModal from "./components/IssuanceModal";
 
 interface Credential {
   connection: any;
@@ -54,6 +56,9 @@ export default function DashboardPage() {
     recordId: "",
   });
   const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [issuanceModalOpen, setIssuanceModalOpen] = useState(false);
+  const [issuanceCredentialData, setIssuanceCredentialData] =
+    useState<any>(null);
   const [waitingForVerification, setWaitingForVerification] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -69,6 +74,10 @@ export default function DashboardPage() {
 
   const handleCloseModal = () => {
     setProofModalOpen(false);
+  };
+
+  const handleCloseIssuanceModal = () => {
+    setIssuanceModalOpen(false);
   };
 
   const waitingForVerificationRef = useRef(false);
@@ -114,6 +123,26 @@ export default function DashboardPage() {
           (cred: Credential) =>
             cred.status === "NEW" && cred.name !== "Revocation Credential"
         );
+
+        // Check if "Permanent Address" credential exists
+        const permanentAddressExists = credentials.some(
+          (cred: Credential) => cred.name === "Permanent Address"
+        );
+
+        if (!permanentAddressExists && holderDID) {
+          try {
+            const addressResponse = await getPermanentAddressAPI();
+            console.log(
+              "🚀 ~ setupComponent ~ addressResponse:",
+              addressResponse
+            );
+            const url = addressResponse.data?.proofRequestURL;
+            await handleDeepLinkRequest(url);
+            return;
+          } catch (error) {
+            console.error("Error calling API for Permanent Address:", error);
+          }
+        }
 
         for (const credential of newCredentials) {
           if (credential.revocationId) {
@@ -221,6 +250,7 @@ export default function DashboardPage() {
       console.log("✅ Post-proof verification API called successfully, ", data);
       const holderDID = await secureGet("holderDID");
       const revocationId = data?.message?.data?.revocation_id;
+      setIssuanceCredentialData(data?.message?.data);
       if (holderDID) {
         const issuanceRevocationResponse = await getRevocationCredentialAPI({
           holderDID: holderDID,
@@ -230,9 +260,13 @@ export default function DashboardPage() {
         const acceptInviteResponse = await acceptCredentialAPI({
           invitationUrl,
         });
-        console.log("🚀 ~ handlePostProofVerification ~ acceptInviteResponse:", acceptInviteResponse)
-        
+        console.log(
+          "🚀 ~ handlePostProofVerification ~ acceptInviteResponse:",
+          acceptInviteResponse
+        );
       }
+      setProofModalOpen(false);
+      setIssuanceModalOpen(true);
       await fetchCredentials();
     } catch (error) {
       console.error("❌ Error calling post-proof verification API:", error);
@@ -417,6 +451,14 @@ export default function DashboardPage() {
           verifierName={modalProps.verifierName}
           recordId={modalProps.recordId}
           onShareClick={handleProofShared}
+        />
+      )}
+
+      {issuanceModalOpen && (
+        <IssuanceModal
+          open={issuanceModalOpen}
+          onClose={handleCloseIssuanceModal}
+          credentialData={issuanceCredentialData}
         />
       )}
 

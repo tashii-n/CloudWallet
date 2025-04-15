@@ -1,6 +1,7 @@
 "use client";
 
 import { getConnectionsAPI } from "@/app/lib/api_utils/onboardingAPI";
+import { Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 export default function FAQTabs() {
@@ -8,14 +9,19 @@ export default function FAQTabs() {
   useEffect(() => {
     const getConnections = async () => {
       const connections = await getConnectionsAPI();
-      setConnections(connections?.data);
+      const connectionList = connections?.data;
+      console.log("🚀 ~ getConnections ~ connectionList:", connectionList)
+      setConnections(connections?.data?.data);
     };
     getConnections();
   }, []);
   return (
     <>
       Connections Dummy Page
+      <Typography>
+        
       {connections}
+      </Typography>
     </>
   );
 }

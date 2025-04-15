@@ -870,7 +870,7 @@ export const getConnectionsAPI = async () => {
     const url = `${apiUrl}/cloud-wallet/v1/connections`;
 
     const config: AxiosRequestConfig = {
-      method: "post",
+      method: "get",
       url,
       headers,
     };
@@ -888,6 +888,50 @@ export const getConnectionsAPI = async () => {
     throw new Error("Unable to get connections");
   }
 };
+
+export const getPermanentAddressAPI = async () => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+
+    const authData = await getAuthData();
+    const { accessToken } = authData;
+
+    if (!accessToken) throw new Error("Access token is missing");
+
+    // Construct headers
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Create URL query params
+    const queryParams = new URLSearchParams({
+      requestType: "PERMANENT_ADDRESS",
+      
+    });
+
+    // API request configuration
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${apiUrl}/cloud-wallet/v1/user/proof-request?${queryParams.toString()}`,
+      headers,
+    };
+
+    console.log("API Request (Permanent Address Reissuance):", config);
+
+    // Make API call
+    const response = await axios(config);
+    console.log("API Response (Permanent Address Reissuance):", response.data);
+
+    // Return only the data array from response
+    return response.data;
+  } catch (error) {
+    console.error("API call failed:", error);
+    throw new Error("Unable to issue permanent address");
+  }
+};
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

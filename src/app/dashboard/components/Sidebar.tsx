@@ -28,15 +28,15 @@ const menuItems = [
     path: "/dashboard/connections",
     icon: <PermContactCalendarIcon />,
   },
-  { name: "Credentials", path: "/credentials", icon: <CreditCardIcon /> },
-  {
-    name: "Self Attested Credentials",
-    path: "/suppfdasort",
-    icon: <AccountCircleOutlinedIcon />,
-  },
+  { name: "Credentials", path: "/dashboard", icon: <CreditCardIcon /> },
+  // {
+  //   name: "Self Attested Credentials",
+  //   path: "/suppfdasort",
+  //   icon: <AccountCircleOutlinedIcon />,
+  // },
   // { name: "Support", path: "/d", icon: <SupportAgentOutlinedIcon /> },
-  { name: "About", path: "/dfsa", icon: <HelpOutlineOutlinedIcon /> },
-  { name: "Contact", path: "/fd", icon: <PermPhoneMsgOutlinedIcon /> },
+  // { name: "About", path: "/dfsa", icon: <HelpOutlineOutlinedIcon /> },
+  // { name: "Contact", path: "/fd", icon: <PermPhoneMsgOutlinedIcon /> },
   { name: "FAQ", path: "/dashboard/faq", icon: <PolicyOutlinedIcon /> },
 ];
 
