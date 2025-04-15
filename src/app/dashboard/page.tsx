@@ -111,7 +111,7 @@ export default function DashboardPage() {
       const deepLinkURL = searchParams?.get("url");
       if (deepLinkURL) {
         // If there's a deep link, handle it and return early - skip revocation checks
-        await handleDeepLinkRequest(deepLinkURL);
+        await handleDeepLinkRequest(deepLinkURL, true);
         return; // <-- Early return to avoid running revocation checks
       }
 
@@ -137,7 +137,7 @@ export default function DashboardPage() {
               addressResponse
             );
             const url = addressResponse.data?.proofRequestURL;
-            await handleDeepLinkRequest(url);
+            await handleDeepLinkRequest(url, false);
             return;
           } catch (error) {
             console.error("Error calling API for Permanent Address:", error);
@@ -273,7 +273,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeepLinkRequest = async (url: string) => {
+  const handleDeepLinkRequest = async (url: string, isShortenUrl: boolean) => {
     const tenantId = tenantIdRef.current;
     if (!tenantId) {
       console.error("Tenant ID is missing");
@@ -325,7 +325,7 @@ export default function DashboardPage() {
       );
 
       // Step 2: Now call the acceptCredentialAPI after setting up the listener
-      const payload = { invitationUrl: url, isShortenUrl: true };
+      const payload = { invitationUrl: url, isShortenUrl: isShortenUrl };
       const proofAcceptResponse = await acceptCredentialAPI(payload);
 
       console.log(
