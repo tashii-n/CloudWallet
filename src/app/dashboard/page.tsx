@@ -92,7 +92,7 @@ export default function DashboardPage() {
       const tenantId = await secureGet("tenantId");
       tenantIdRef.current = tenantId;
       const credentials = await fetchCredentials();
-      
+
       if (!tenantId) {
         console.error("Tenant ID is missing");
         return;
@@ -219,7 +219,20 @@ export default function DashboardPage() {
   const handlePostProofVerification = async (data: any) => {
     try {
       console.log("✅ Post-proof verification API called successfully, ", data);
-
+      const holderDID = await secureGet("holderDID");
+      const revocationId = data?.message?.data?.revocation_id;
+      if (holderDID) {
+        const issuanceRevocationResponse = await getRevocationCredentialAPI({
+          holderDID: holderDID,
+          revocationId,
+        });
+        const invitationUrl = issuanceRevocationResponse?.credInviteURL;
+        const acceptInviteResponse = await acceptCredentialAPI({
+          invitationUrl,
+        });
+        console.log("🚀 ~ handlePostProofVerification ~ acceptInviteResponse:", acceptInviteResponse)
+        
+      }
       await fetchCredentials();
     } catch (error) {
       console.error("❌ Error calling post-proof verification API:", error);
@@ -403,7 +416,7 @@ export default function DashboardPage() {
           logoURL={modalProps.logoURL}
           verifierName={modalProps.verifierName}
           recordId={modalProps.recordId}
-          onShareClick={handleProofShared} 
+          onShareClick={handleProofShared}
         />
       )}
 

@@ -48,8 +48,8 @@ export default function Header() {
       }}
     >
       <Box>
-        <strong>Welcome Back,</strong> <br />
-        <span style={{ fontWeight: "bold" }}>Dorji Sonam</span>
+        {/* <strong>Welcome Back,</strong> <br />
+        <span style={{ fontWeight: "bold" }}>Dorji Sonam</span> */}
       </Box>
 
       <Box display="flex" alignItems="center" gap={2}>
