@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
   );
-  const [selectedLogo, setSelectedLogo] = useState();
+  const [selectedLogo, setSelectedLogo] = useState("");
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
     []
   );
@@ -427,9 +427,11 @@ export default function DashboardPage() {
         (credential) => credential.status === status
       );
       setSelectedCredential(null);
+      setSelectedLogo("");
       setFilteredCredentials(filtered);
     } else {
       setSelectedCredential(null);
+      setSelectedLogo("");
       setFilteredCredentials(credentials); // Show all credentials if no status
     }
   };
