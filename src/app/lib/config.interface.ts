@@ -5,4 +5,5 @@ export interface AppConfig {
   ENV: string | undefined;
   ENCRYPTION_KEY: string | undefined;
   BASE_API_URL: string | undefined;
+  WEBSOCKET_URL: string | undefined;
 }

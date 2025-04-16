@@ -6,5 +6,6 @@ export const CONFIG: AppConfig = {
   ENV: process.env.NEXT_PUBLIC_ENV,
   ENCRYPTION_KEY: process.env.NEXT_PUBLIC_ENCRYPTION_KEY,
   BASE_API_URL: process.env.NEXT_PUBLIC_BASE_API_URL,
+  WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
 };
 
