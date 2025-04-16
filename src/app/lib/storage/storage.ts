@@ -124,11 +124,190 @@ const decryptData = async (
   }
 };
 
+// IndexedDB setup and helpers
+const DB_NAME = "authStore";
+const DB_VERSION = 1;
+const AUTH_STORE = "auth";
+const GENERAL_STORE = "general";
+const TAB_TRACKING_KEY = "openTabsCount";
+
+// Initialize and open the IndexedDB database
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      // Create stores if they don't exist
+      if (!db.objectStoreNames.contains(AUTH_STORE)) {
+        db.createObjectStore(AUTH_STORE);
+      }
+
+      if (!db.objectStoreNames.contains(GENERAL_STORE)) {
+        db.createObjectStore(GENERAL_STORE);
+      }
+    };
+
+    request.onsuccess = (event) => {
+      resolve((event.target as IDBOpenDBRequest).result);
+    };
+
+    request.onerror = (event) => {
+      reject((event.target as IDBOpenDBRequest).error);
+    };
+  });
+};
+
+// Store a value in IndexedDB
+const storeInDB = async (
+  storeName: string,
+  key: string,
+  value: any
+): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readwrite");
+    const store = transaction.objectStore(storeName);
+    const request = store.put(value, key);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+
+    // Close the database when the transaction completes
+    transaction.oncomplete = () => db.close();
+  });
+};
+
+// Get a value from IndexedDB
+const getFromDB = async (storeName: string, key: string): Promise<any> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readonly");
+    const store = transaction.objectStore(storeName);
+    const request = store.get(key);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+
+    // Close the database when the transaction completes
+    transaction.oncomplete = () => db.close();
+  });
+};
+
+// Remove a value from IndexedDB
+const removeFromDB = async (storeName: string, key: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readwrite");
+    const store = transaction.objectStore(storeName);
+    const request = store.delete(key);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+
+    // Close the database when the transaction completes
+    transaction.oncomplete = () => db.close();
+  });
+};
+
+// Function to delete all data from both IndexedDB and sessionStorage
+const clearAllData = async (): Promise<void> => {
+  try {
+    // First clear all sessionStorage
+    sessionStorage.clear();
+
+    // Then delete the entire IndexedDB database
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+
+      request.onsuccess = () => {
+        console.log("All data cleared successfully");
+        resolve();
+      };
+
+      request.onerror = (event) => {
+        console.error(
+          "Error deleting database:",
+          (event.target as IDBOpenDBRequest).error
+        );
+        reject((event.target as IDBOpenDBRequest).error);
+      };
+
+      // Handle the case where there are open connections
+      request.onblocked = () => {
+        console.warn(
+          "Database deletion blocked - close all other tabs using this app"
+        );
+        // Still resolve since we cleared sessionStorage
+        resolve();
+      };
+    });
+  } catch (error) {
+    console.error("Failed to clear all data:", error);
+    // Even if there's an error with IndexedDB, we've still cleared sessionStorage
+  }
+};
+
+// Tab tracking functions
+const initTabTracking = async (): Promise<void> => {
+  try {
+    // Get current tab count
+    let tabCount = (await getFromDB(GENERAL_STORE, TAB_TRACKING_KEY)) || 0;
+
+    // Increment for this tab
+    tabCount = parseInt(tabCount, 10) + 1;
+
+    // Save the new count
+    await storeInDB(GENERAL_STORE, TAB_TRACKING_KEY, tabCount);
+
+    // Set up tab closing handler
+    window.addEventListener("beforeunload", handleTabClosing);
+
+    // Handle visibility changes (mainly for mobile browsers)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        // Some mobile browsers don't reliably fire beforeunload
+        // So we mark this tab as potentially closing
+        handleTabClosing();
+      }
+    });
+
+    console.log(`Tab tracking initialized. Current open tabs: ${tabCount}`);
+  } catch (error) {
+    console.error("Failed to initialize tab tracking:", error);
+  }
+};
+
+const handleTabClosing = async (): Promise<void> => {
+  try {
+    // Get and decrement tab count
+    let tabCount = (await getFromDB(GENERAL_STORE, TAB_TRACKING_KEY)) || 0;
+    tabCount = Math.max(0, parseInt(tabCount, 10) - 1);
+
+    if (tabCount <= 0) {
+      // This was the last tab, clear everything
+      await clearAllData();
+      console.log("Last tab closed, all data cleared");
+    } else {
+      // Update the counter
+      await storeInDB(GENERAL_STORE, TAB_TRACKING_KEY, tabCount);
+      console.log(`Tab closed. Remaining tabs: ${tabCount}`);
+    }
+  } catch (error) {
+    console.error("Error in tab closing handler:", error);
+  }
+};
+
+// Store auth data in IndexedDB
 const storeAuthData = async (
   accessToken: string,
   secretKey: string,
   expiresIn: number
 ) => {
+  // Initialize tab tracking if not already done
+  await initTabTracking();
+
   const encryptionKey = CONFIG.ENCRYPTION_KEY;
 
   if (!encryptionKey) {
@@ -140,49 +319,91 @@ const storeAuthData = async (
   const encryptedSecretKey = await encryptData(secretKey, encryptionKey);
   const expirationTime = new Date().getTime() + expiresIn * 1000;
 
+  // Store encrypted values in IndexedDB
+  await storeInDB(AUTH_STORE, "accessToken", encryptedAccessToken);
+  await storeInDB(AUTH_STORE, "secretKey", encryptedSecretKey);
+  await storeInDB(AUTH_STORE, "expirationTime", expirationTime.toString());
+
+  // Also store in sessionStorage as a fallback
   sessionStorage.setItem("accessToken", encryptedAccessToken);
   sessionStorage.setItem("secretKey", encryptedSecretKey);
   sessionStorage.setItem("expirationTime", expirationTime.toString());
 };
 
+// Retrieve auth data from IndexedDB
 const retrieveAuthData = async () => {
-  const encryptedAccessToken = sessionStorage.getItem("accessToken");
-  const encryptedSecretKey = sessionStorage.getItem("secretKey");
+  // Initialize tab tracking if not already done (in case this is called first)
+  await initTabTracking();
 
-  const expirationTime = parseInt(
-    sessionStorage.getItem("expirationTime") || "0",
-    10
-  );
+  try {
+    // Try to get from IndexedDB first
+    const encryptedAccessToken = await getFromDB(AUTH_STORE, "accessToken");
+    const encryptedSecretKey = await getFromDB(AUTH_STORE, "secretKey");
+    const expirationTimeStr = await getFromDB(AUTH_STORE, "expirationTime");
 
-  if (new Date().getTime() > expirationTime) {
-    clearAuthData();
-    return null; // Token expired
-  }
+    // If not found in IndexedDB, try sessionStorage as fallback
+    const accessTokenFromSession = !encryptedAccessToken
+      ? sessionStorage.getItem("accessToken")
+      : null;
+    const secretKeyFromSession = !encryptedSecretKey
+      ? sessionStorage.getItem("secretKey")
+      : null;
+    const expirationTimeFromSession = !expirationTimeStr
+      ? sessionStorage.getItem("expirationTime")
+      : null;
 
-  const encryptionKey = CONFIG.ENCRYPTION_KEY;
+    const finalAccessToken = encryptedAccessToken || accessTokenFromSession;
+    const finalSecretKey = encryptedSecretKey || secretKeyFromSession;
+    const finalExpirationTimeStr =
+      expirationTimeStr || expirationTimeFromSession;
 
-  if (!encryptionKey) {
-    console.error("Encryption key is not defined in the config.");
-    return null; // Handle missing encryption key
-  }
+    const expirationTime = parseInt(finalExpirationTimeStr || "0", 10);
 
-  if (encryptedAccessToken && encryptedSecretKey) {
-    const decryptedAccessToken = await decryptData(
-      encryptedAccessToken,
-      encryptionKey
-    );
-    const decryptedSecretKey = await decryptData(
-      encryptedSecretKey,
-      encryptionKey
-    );
+    if (new Date().getTime() > expirationTime) {
+      clearAuthData();
+      return null; // Token expired
+    }
 
-    return { accessToken: decryptedAccessToken, secretKey: decryptedSecretKey };
+    const encryptionKey = CONFIG.ENCRYPTION_KEY;
+
+    if (!encryptionKey) {
+      console.error("Encryption key is not defined in the config.");
+      return null; // Handle missing encryption key
+    }
+
+    if (finalAccessToken && finalSecretKey) {
+      const decryptedAccessToken = await decryptData(
+        finalAccessToken,
+        encryptionKey
+      );
+      const decryptedSecretKey = await decryptData(
+        finalSecretKey,
+        encryptionKey
+      );
+
+      return {
+        accessToken: decryptedAccessToken,
+        secretKey: decryptedSecretKey,
+      };
+    }
+  } catch (error) {
+    console.error("Error retrieving auth data:", error);
   }
 
   return null; // No valid data found
 };
 
-const clearAuthData = () => {
+// Clear auth data from both IndexedDB and sessionStorage
+const clearAuthData = async () => {
+  try {
+    await removeFromDB(AUTH_STORE, "accessToken");
+    await removeFromDB(AUTH_STORE, "secretKey");
+    await removeFromDB(AUTH_STORE, "expirationTime");
+  } catch (error) {
+    console.error("Error clearing auth data from IndexedDB:", error);
+  }
+
+  // Also clear from sessionStorage
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("secretKey");
   sessionStorage.removeItem("expirationTime");
@@ -191,6 +412,9 @@ const clearAuthData = () => {
 // GENERAL STORAGE
 
 const secureStore = async (key: string, data: string) => {
+  // Initialize tab tracking if not already done
+  await initTabTracking();
+
   const encryptionKey = CONFIG.ENCRYPTION_KEY;
 
   if (!encryptionKey) {
@@ -202,40 +426,84 @@ const secureStore = async (key: string, data: string) => {
   const encryptedData = await encryptData(data, encryptionKey);
   const expirationTime = new Date().getTime() + 24 * 60 * 60 * 1000;
 
+  // Store in IndexedDB
+  await storeInDB(GENERAL_STORE, key, encryptedData);
+  await storeInDB(
+    GENERAL_STORE,
+    `${key}_expirationTime`,
+    expirationTime.toString()
+  );
+
+  // Also store in sessionStorage as fallback
   sessionStorage.setItem(key, encryptedData);
   sessionStorage.setItem(`${key}_expirationTime`, expirationTime.toString());
 };
 
 const secureGet = async (key: string) => {
-  const encryptedData = sessionStorage.getItem(key);
-  const expirationTime = parseInt(
-    sessionStorage.getItem(`${key}_expirationTime`) || "0",
-    10
-  );
+  // Initialize tab tracking if not already done
+  await initTabTracking();
 
-  if (new Date().getTime() > expirationTime) {
-    secureClear(key);
-    return null;
-  }
+  try {
+    // Try IndexedDB first
+    let encryptedData = await getFromDB(GENERAL_STORE, key);
+    let expirationTimeStr = await getFromDB(
+      GENERAL_STORE,
+      `${key}_expirationTime`
+    );
 
-  const encryptionKey = CONFIG.ENCRYPTION_KEY;
+    // If not found in IndexedDB, try sessionStorage
+    if (!encryptedData) {
+      encryptedData = sessionStorage.getItem(key);
+    }
 
-  if (!encryptionKey) {
-    console.error("Encryption key is not defined in the config.");
-    return null;
-  }
+    if (!expirationTimeStr) {
+      expirationTimeStr = sessionStorage.getItem(`${key}_expirationTime`);
+    }
 
-  if (encryptedData) {
-    const decryptedData = await decryptData(encryptedData, encryptionKey);
-    return decryptedData;
+    const expirationTime = parseInt(expirationTimeStr || "0", 10);
+
+    if (new Date().getTime() > expirationTime) {
+      await secureClear(key);
+      return null;
+    }
+
+    const encryptionKey = CONFIG.ENCRYPTION_KEY;
+
+    if (!encryptionKey) {
+      console.error("Encryption key is not defined in the config.");
+      return null;
+    }
+
+    if (encryptedData) {
+      const decryptedData = await decryptData(encryptedData, encryptionKey);
+      return decryptedData;
+    }
+  } catch (error) {
+    console.error("Error retrieving secure data:", error);
   }
 
   return null;
 };
 
-const secureClear = (key: string) => {
+const secureClear = async (key: string) => {
+  try {
+    await removeFromDB(GENERAL_STORE, key);
+    await removeFromDB(GENERAL_STORE, `${key}_expirationTime`);
+  } catch (error) {
+    console.error("Error clearing secure data from IndexedDB:", error);
+  }
+
+  // Also clear from sessionStorage
   sessionStorage.removeItem(key);
   sessionStorage.removeItem(`${key}_expirationTime`);
+};
+
+// Initialize tab tracking (can be called in your app's entry point)
+const setupTabTracking = () => {
+  if (typeof window !== "undefined") {
+    // Only run in browser environment
+    initTabTracking();
+  }
 };
 
 export {
@@ -245,4 +513,6 @@ export {
   secureClear,
   secureStore,
   secureGet,
+  clearAllData,
+  setupTabTracking, // Export the init function for manual initialization
 };

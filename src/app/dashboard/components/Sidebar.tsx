@@ -18,8 +18,9 @@ import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import PermPhoneMsgOutlinedIcon from "@mui/icons-material/PermPhoneMsgOutlined";
 import PolicyOutlinedIcon from "@mui/icons-material/PolicyOutlined";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { clearAllData } from "@/app/lib/storage/storage";
 
 const menuItems = [
   { name: "Home", path: "/dashboard", icon: <HomeIcon /> },
@@ -44,9 +45,9 @@ export default function Sidebar() {
   const router = useRouter(); // Initialize the router
 
   // Logout function
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Clear session storage
-    sessionStorage.clear();
+    await clearAllData();
 
     // Redirect to the login page
     router.push("/login");

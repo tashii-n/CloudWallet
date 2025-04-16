@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { secureGet, secureStore } from "@/app/lib/storage/storage";
+import { clearAllData, secureGet, secureStore } from "@/app/lib/storage/storage";
 import {
   acceptCredentialAPI,
   getCredentialListAPI,
@@ -246,7 +246,7 @@ export default function SignupForm() {
       }
     }
     setIsLoading(false); // Hide the spinner after the process completes
-    sessionStorage.clear();
+    await clearAllData();
     // Onboarding completed successfully
     router.push("/login");
   };

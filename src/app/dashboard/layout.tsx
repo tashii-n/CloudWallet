@@ -7,6 +7,7 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import CircularProgress from "@mui/material/CircularProgress"; // For loading state
 import { getValidCloudAccessToken } from "../lib/auth/auth";
+import { setupTabTracking } from "../lib/storage/storage";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -25,6 +26,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         } else {
           // Set authenticated state to true
           setIsAuthenticated(true);
+
+          // Initialize tab tracking once user is authenticated
+          await setupTabTracking();
         }
       } catch (error) {
         console.error("Authentication check failed:", error);

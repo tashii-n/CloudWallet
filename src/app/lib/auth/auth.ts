@@ -1,6 +1,7 @@
 // authApi.ts
 import axios from "axios";
 import {
+  clearAllData,
   retrieveAuthData,
   secureClear,
   secureGet,
@@ -65,7 +66,7 @@ export const storeCloudAuth = async (
       refreshToken,
       refreshTokenExpirationTime,
     };
-    console.log("🚀 ~ cloudAuth:", cloudAuth)
+    console.log("🚀 ~ cloudAuth:", cloudAuth);
 
     // Store the cloudAuth object in secureStore
     await secureStore("cloudAuth", JSON.stringify(cloudAuth));
@@ -90,18 +91,18 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
     cloudAccessTokenExpirationTime,
     refreshToken: currentRefreshToken,
   } = cloudAuth;
-  
+
   // Check if the cloudAccessToken has expired
   const isTokenExpired = (expirationTime: number): boolean => {
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
     return currentTime > expirationTime;
   };
-  
+
   if (!isTokenExpired(cloudAccessTokenExpirationTime)) {
     // Token is still valid, return it
     return cloudAccessToken;
   }
-  
+
   // Token has expired, refresh it
   console.log("Cloud Access Token has expired. Refreshing...");
   console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", refreshToken);
@@ -124,7 +125,10 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
       refreshToken: newTokens.refresh_token,
       refreshTokenExpirationTime: newRefreshTokenExpirationTime,
     };
-    console.log("🚀 ~ getValidCloudAccessToken ~ updatedCloudAuth:", updatedCloudAuth)
+    console.log(
+      "🚀 ~ getValidCloudAccessToken ~ updatedCloudAuth:",
+      updatedCloudAuth
+    );
 
     // Save the updated cloudAuth data to secureStore
     await secureStore("cloudAuth", JSON.stringify(updatedCloudAuth));
@@ -134,7 +138,7 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
     // Return the new cloudAccessToken
     return newTokens.access_token;
   } catch (error) {
-    secureClear("cloudAuth");
+    await clearAllData();
     console.error("Failed to refresh Cloud Access Token:", error);
     throw new Error("Unable to refresh Cloud Access Token");
   }
