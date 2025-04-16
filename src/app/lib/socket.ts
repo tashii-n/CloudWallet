@@ -1,6 +1,7 @@
 // utils/socket.ts
 import { io, Socket } from "socket.io-client";
 import { getAuthData } from "./auth/auth";
+import { CONFIG } from "./constants";
 
 let socket: Socket | null = null;
 
@@ -12,7 +13,8 @@ export const initSocket = async (): Promise<Socket> => {
   }
 
   if (!socket) {
-    socket = io("13.212.36.126:3018", {
+    const socketUrl = CONFIG.WEBSOCKET_URL;
+    socket = io(socketUrl, {
       auth: { token: authData.accessToken },
       transports: ["websocket", "polling"],
     });
