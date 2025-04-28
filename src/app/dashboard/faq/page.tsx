@@ -5,15 +5,15 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Grid2,
   Tab,
   Tabs,
-  TextField,
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import React, { useState } from "react";
 import faqData from "@/app/lib/data/faqData";
+import SearchBar from "../components/SearchBar";
+
 
 export default function FAQTabs() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -31,6 +31,10 @@ export default function FAQTabs() {
       setExpanded(isExpanded ? panel : false);
     };
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
   const currentCategory = tabIndex === 0 ? "users" : "organizations";
   const filteredFaqs = faqData[currentCategory].filter(
     (faq) =>
@@ -47,34 +51,11 @@ export default function FAQTabs() {
         <Tab label="For Users" />
         <Tab label="For Organizations" />
       </Tabs>
-      <TextField
-        fullWidth
-        margin="normal"
-        variant="outlined"
-        placeholder="Search FAQs..."
-        sx={{
-          // Root class for the input field
-          "& .MuiOutlinedInput-root": {
-            // Class for the border around the input field
-            "& .MuiOutlinedInput-notchedOutline": {
-              // borderColor: "primary.main",
-              borderRadius: 5,
-            },
-          },
-          // Class for the label of the input field
-          "&:hover": {
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "primary.main",
-            },
-            borderColor: "primary.main",
-            color: "#2e2e2e",
-            fontWeight: "bold",
-          },
-          mb: 4,
-        }}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+      
+      {/* Replace TextField with SearchBar component */}
+      <Box mt={2} mb={4}>
+        <SearchBar onSearchChange={handleSearchChange} />
+      </Box>
 
       {filteredFaqs.length > 0 ? (
         filteredFaqs.map((faq, index) => (

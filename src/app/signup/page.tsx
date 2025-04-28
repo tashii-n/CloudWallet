@@ -54,6 +54,7 @@ export default function SignUpPage() {
               alt="Login Image"
               width={450}
               height={400}
+              priority
             />
           </Box>
         </Box>

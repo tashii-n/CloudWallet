@@ -63,6 +63,7 @@ export default function Home() {
               alt="Landing Page Image"
               width={500}
               height={350}
+              priority
             />
           </Grid2>
           <Grid2 container size={{ md: 12 }}>

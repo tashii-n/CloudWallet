@@ -64,6 +64,7 @@ export default function LoginPage() {
             alt="Login Image"
             width={400}
             height={450}
+            priority
           />
         </Box>
 
@@ -93,6 +94,7 @@ export default function LoginPage() {
               alt="NDI Logo"
               width={80}
               height={80}
+              priority
             />
             <Typography
               variant="h4"

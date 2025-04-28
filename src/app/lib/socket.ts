@@ -23,8 +23,12 @@ export const initSocket = async (): Promise<Socket> => {
       console.log("✅ Socket connected with ID:", socket?.id);
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+    socket.on("disconnect", (reason) => {
+      console.log("❌ Socket disconnected, reason:", reason);
+    });
+    
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket connection error:", error.message, error);
     });
   } else {
     socket.auth = { token: authData.accessToken };

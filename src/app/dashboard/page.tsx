@@ -23,6 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ProofShareModal from "./components/ProofShareModal";
 import { getSocket, initSocket } from "../lib/socket";
 import IssuanceModal from "./components/IssuanceModal";
+import SearchBar from "./components/SearchBar";
 
 interface Credential {
   connection: any;
@@ -63,6 +64,13 @@ export default function DashboardPage() {
   const socketRef = useRef<any>(null);
   const tenantIdRef = useRef<string | null>(null);
   const initialSocketMessageReceivedRef = useRef<boolean>(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    // You can filter data, trigger API calls, etc. here
+  };
 
   const handleCloseModal = () => {
     setProofModalOpen(false);
@@ -290,7 +298,7 @@ export default function DashboardPage() {
                 "Socket event timeout: No Verification message received"
               )
             );
-          }, 20000); // 20 seconds timeout
+          }, 60000); // 20 seconds timeout
 
           // Set up a listener for the Verification message
           const handleVerificationMessage = (data: any) => {
@@ -342,6 +350,7 @@ export default function DashboardPage() {
       // Step 4: Wait for the initial socket event response (recordId)
       try {
         const recordId = await initialSocketEventPromise;
+        console.log("🚀 ~ handleDeepLinkRequest ~ recordId:", recordId)
 
         // Step 5: Set modal props once both socket and API data are available
         setModalProps((prev) => ({
@@ -458,11 +467,17 @@ export default function DashboardPage() {
       )}
 
       <Grid2 size={12} display={"flex"} justifyContent={"space-between"} mb={3}>
-        <Typography variant="h5" fontWeight={500} mb={3}>
+        <Typography variant="h5" fontWeight={500}>
           Credential Overview
         </Typography>
       </Grid2>
 
+      {/* Search bar here */}
+      <Grid2 container mb={2} justifyContent={"end"}>
+        <Grid2 size={5}>
+          <SearchBar onSearchChange={handleSearchChange} />
+        </Grid2>
+      </Grid2>
       <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
         {cardData.map((card, index) => (
           <Grid2 size={2.4} key={index}>

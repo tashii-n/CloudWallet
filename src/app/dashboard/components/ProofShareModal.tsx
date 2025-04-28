@@ -548,7 +548,7 @@ export default function ProofShareModal({
                 </Button>
                 <Button
                   onClick={handleShare}
-                  // disabled={loading || anyRevoked || hasMissingFields}
+                  disabled={loading || anyRevoked || hasMissingFields}
                   sx={{
                     borderRadius: "30px",
                     minWidth: "180px",
