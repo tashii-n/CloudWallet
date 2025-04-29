@@ -327,6 +327,7 @@ export default function DashboardPage() {
 
       // Step 2: Now call the acceptCredentialAPI after setting up the listener
       const payload = { invitationUrl: url, isShortenUrl: isShortenUrl };
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       const proofAcceptResponse = await acceptCredentialAPI(payload);
 
       console.log(
@@ -350,7 +351,7 @@ export default function DashboardPage() {
       // Step 4: Wait for the initial socket event response (recordId)
       try {
         const recordId = await initialSocketEventPromise;
-        console.log("🚀 ~ handleDeepLinkRequest ~ recordId:", recordId)
+        console.log("🚀 ~ handleDeepLinkRequest ~ recordId:", recordId);
 
         // Step 5: Set modal props once both socket and API data are available
         setModalProps((prev) => ({
