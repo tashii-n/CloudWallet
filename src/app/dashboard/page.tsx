@@ -473,12 +473,12 @@ export default function DashboardPage() {
         </Typography>
       </Grid2>
 
-      {/* Search bar here */}
+      {/* Search bar here
       <Grid2 container mb={2} justifyContent={"end"}>
         <Grid2 size={5}>
           <SearchBar onSearchChange={handleSearchChange} />
         </Grid2>
-      </Grid2>
+      </Grid2> */}
       <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
         {cardData.map((card, index) => (
           <Grid2 size={2.4} key={index}>
