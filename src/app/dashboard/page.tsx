@@ -282,13 +282,20 @@ export default function DashboardPage() {
     }
 
     try {
+      // Step 1: Make sure socket is initialized and listener is set up
       if (!socketRef.current) {
         const socket = await initSocket();
         socketRef.current = socket;
-
-        setupSocketListener(tenantId);
       }
 
+      // Explicitly set up the listener and wait for it to complete
+      await new Promise<void>((resolve) => {
+        setupSocketListener(tenantId);
+        // The listener is now ready
+        resolve();
+      });
+
+      // Step 2: Set up the promise to listen for the Verification message
       const initialSocketEventPromise = new Promise<string>(
         (resolve, reject) => {
           // Set a timeout to reject the promise if no message is received
@@ -298,11 +305,10 @@ export default function DashboardPage() {
                 "Socket event timeout: No Verification message received"
               )
             );
-          }, 60000); // 20 seconds timeout
+          }, 60000); // 60 seconds timeout
 
-          // Set up a listener for the Verification message
+          // Set up a specific listener for the Verification message
           const handleVerificationMessage = (data: any) => {
-            // Check specifically for Verification type
             if (
               data?.message?.type === "Verification" &&
               data?.message?.recordId
@@ -317,25 +323,66 @@ export default function DashboardPage() {
               // Remove this specific listener since we got what we needed
               socketRef.current.off(tenantId, handleVerificationMessage);
             }
-            // If it's not a Verification message, keep listening
           };
 
-          // Add this listener separately
+          // Add this dedicated listener
           socketRef.current.on(tenantId, handleVerificationMessage);
         }
       );
 
-      // Step 2: Now call the acceptCredentialAPI after setting up the listener
+      // Socket.IO specific verification before API call
+      if (!socketRef.current) {
+        throw new Error("Socket is not initialized before API call");
+      }
+
+      // Check if the socket is connected (Socket.IO specific)
+      if (!socketRef.current.connected) {
+        console.warn("Socket is disconnected. Attempting to reconnect...");
+
+        // Wait for reconnection if needed
+        await new Promise<void>((resolve, reject) => {
+          const reconnectTimeout = setTimeout(() => {
+            reject(new Error("Socket reconnection timeout"));
+          }, 5000);
+
+          socketRef.current.once("connect", () => {
+            clearTimeout(reconnectTimeout);
+            resolve();
+          });
+
+          // Force reconnection attempt
+          socketRef.current.connect();
+        });
+      }
+
+      // Verify that we have listeners for this event (Socket.IO specific)
+      // Socket.IO v3+ method to check listeners
+      const hasListeners = socketRef.current.hasListeners(tenantId);
+
+      if (!hasListeners) {
+        console.warn(
+          "No listeners detected for tenant ID. Re-establishing listener..."
+        );
+        setupSocketListener(tenantId);
+
+        // Wait a moment for the listener to register
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      console.log(
+        "✅ Socket.IO connection and listeners verified. Proceeding with API call."
+      );
+
+      // Step 3: Now that the listener is set up and verified, call the API
       const payload = { invitationUrl: url, isShortenUrl: isShortenUrl };
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const proofAcceptResponse = await acceptCredentialAPI(payload);
-
       console.log(
         "✅ Proof request handled successfully:",
         proofAcceptResponse
       );
 
-      // Step 3: Extract logoURL and verifierName from the API response
+      // Step 4: Extract logoURL and verifierName from the API response
       const responseLogoURL =
         proofAcceptResponse?.outOfBandRecord?.outOfBandInvitation?.imageUrl;
       const responseVerifierName =
@@ -348,12 +395,11 @@ export default function DashboardPage() {
         verifierName: responseVerifierName || "",
       }));
 
-      // Step 4: Wait for the initial socket event response (recordId)
+      // Step 5: Wait for the initial socket event response (recordId)
       try {
         const recordId = await initialSocketEventPromise;
         console.log("🚀 ~ handleDeepLinkRequest ~ recordId:", recordId);
 
-        // Step 5: Set modal props once both socket and API data are available
         setModalProps((prev) => ({
           ...prev,
           recordId: recordId,
@@ -367,7 +413,6 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("❌ Error handling DeepLinkRequest:", error);
-      // Don't disconnect socket on error - just log the error
     }
   };
 

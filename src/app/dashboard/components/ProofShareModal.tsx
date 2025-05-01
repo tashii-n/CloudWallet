@@ -256,6 +256,11 @@ export default function ProofShareModal({
     }
   };
 
+  // Function to create a unique key for each dropdown item
+  const getCompositeKey = (item: ValueOption) => {
+    return `${item.value}_${item.id}_${item.revocationStatus || 'active'}`;
+  };
+
   return (
     <>
       <Modal
@@ -352,9 +357,11 @@ export default function ProofShareModal({
               Object.entries(requestedData).map(([label, values]) => {
                 const isMultiple =
                   values.length > 1 && values[0].value !== "Not Found";
-                const value = selectedData[label]?.value || "";
-                const selectedItem =
-                  values.find((val) => val.value === value) || values[0];
+                
+                // Create a composite value that includes both value and id to ensure uniqueness
+                const selectedItem = selectedData[label] || values[0];
+                // For select fields, use composite key; for non-select fields, use just the value
+                const displayValue = isMultiple ? getCompositeKey(selectedItem) : selectedItem.value;
 
                 return (
                   <TextField
@@ -364,79 +371,80 @@ export default function ProofShareModal({
                     label={label}
                     variant="outlined"
                     name={label}
-                    value={value}
+                    value={displayValue}
                     onChange={(e) => {
-                      const selectedValue = values.find(
-                        (v) => v.value === e.target.value
-                      );
-                      if (selectedValue) {
-                        setSelectedData((prev) => ({
-                          ...prev,
-                          [label]: selectedValue,
-                        }));
+                      if (isMultiple) {
+                        // For dropdown fields, find item by composite key
+                        const selectedValue = e.target.value;
+                        const selectedItem = values.find(item => 
+                          getCompositeKey(item) === selectedValue
+                        );
+                        
+                        if (selectedItem) {
+                          setSelectedData(prev => ({
+                            ...prev,
+                            [label]: selectedItem
+                          }));
+                        }
+                      } else {
+                        // For non-dropdown fields, find by value (should not happen but just in case)
+                        const selectedValue = e.target.value;
+                        const selectedItem = values.find(v => v.value === selectedValue);
+                        
+                        if (selectedItem) {
+                          setSelectedData(prev => ({
+                            ...prev,
+                            [label]: selectedItem
+                          }));
+                        }
                       }
                     }}
                     sx={{ marginBottom: "16px" }}
                     disabled={
                       values.length === 1 || values[0].value === "Not Found"
                     }
-                    // For single item fields, display status in InputProps
-                    // InputProps={{
-                    //   endAdornment: !isMultiple && selectedItem?.revocationStatus &&
-                    //     selectedItem.revocationStatus !== "ACTIVE" &&
-                    //     selectedItem.revocationStatus !== "NOT_FOUND" ? (
-                    //     <Typography color="red">
-                    //       ({selectedItem.revocationStatus})
-                    //     </Typography>
-                    //   ) : null
-                    // }}
-                    // For dropdown fields, use renderValue
                     slotProps={{
                       select: {
-                        renderValue: (selected) => {
-                          const selectedItem = values.find(
-                            (val) => val.value === selected
-                          );
-                          return (
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                              alignItems="center"
-                              justifyContent={"space-between"}
-                              sx={{ width: "100%" }}
-                            >
-                              <Stack direction={"row"} spacing={2}>
-                                {selectedItem?.orgLogo ? (
-                                  <Image
-                                    src={selectedItem.orgLogo}
-                                    width={25}
-                                    height={25}
-                                    alt="logo"
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <Image
-                                    src="/images/ndilogodark.svg"
-                                    width={25}
-                                    height={25}
-                                    alt="logo"
-                                    unoptimized
-                                  />
-                                )}
-                                <Typography sx={{ flexGrow: 1 }}>
-                                  {selectedItem?.value}
-                                </Typography>
-                              </Stack>
-                              {selectedItem?.revocationStatus &&
-                              selectedItem.revocationStatus !== "ACTIVE" &&
-                              selectedItem.revocationStatus !== "NOT_FOUND" ? (
-                                <Typography color="red">
-                                  ({selectedItem.revocationStatus})
-                                </Typography>
-                              ) : null}
+                        // Only for dropdown fields - render the actual item data 
+                        renderValue: () => (
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            justifyContent={"space-between"}
+                            sx={{ width: "100%" }}
+                          >
+                            <Stack direction={"row"} spacing={2}>
+                              {selectedItem?.orgLogo ? (
+                                <Image
+                                  src={selectedItem.orgLogo}
+                                  width={25}
+                                  height={25}
+                                  alt="logo"
+                                  unoptimized
+                                />
+                              ) : (
+                                <Image
+                                  src="/images/ndilogodark.svg"
+                                  width={25}
+                                  height={25}
+                                  alt="logo"
+                                  unoptimized
+                                />
+                              )}
+                              <Typography sx={{ flexGrow: 1 }}>
+                                {selectedItem?.value}
+                              </Typography>
                             </Stack>
-                          );
-                        },
+                            {selectedItem?.revocationStatus &&
+                            selectedItem.revocationStatus !== "ACTIVE" &&
+                            selectedItem.revocationStatus !== "NOT_FOUND" ? (
+                              <Typography color="red">
+                                ({selectedItem.revocationStatus})
+                              </Typography>
+                            ) : null}
+                          </Stack>
+                        ),
                       },
                       input: {
                         endAdornment:
@@ -481,8 +489,8 @@ export default function ProofShareModal({
                   >
                     {values.map((val) => (
                       <MenuItem
-                        key={val.id}
-                        value={val.value}
+                        key={getCompositeKey(val)}
+                        value={getCompositeKey(val)}
                         sx={{
                           display: "flex",
                           alignItems: "center",

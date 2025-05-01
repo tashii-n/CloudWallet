@@ -7,9 +7,24 @@ interface CredentialCardProps {
     credentialsId?: string;
     name: string;
     iconUrl?: string;
+    status?: string;
   };
   onClick?: () => void;
 }
+
+// Helper to get icon URL based on status
+const getStatusIcon = (status?: string) => {
+  switch (status) {
+    case "ACTIVE":
+      return "/images/cardactiveicon.svg";
+    case "REVOKED":
+      return "/images/cardrevokedicon.svg";
+    case "SUSPENDED":
+      return "/images/cardinactiveicon.svg";
+    default:
+      return "/images/cardunknownstatusicon.svg"; // fallback icon
+  }
+};
 
 export default function CredentialCard({
   credential,
@@ -54,11 +69,11 @@ export default function CredentialCard({
             alignItems="center"
           >
             <Stack direction="column" spacing={1}>
-              <Image
-                src="/images/cardactiveicon.svg"
+            <Image
+                src={getStatusIcon(credential.status)}
                 width={30}
                 height={30}
-                alt="Active Credential Icon..."
+                alt={`${status ?? "unknown"} credential status icon`}
               />
               <Image
                 src="/images/star0.svg"
