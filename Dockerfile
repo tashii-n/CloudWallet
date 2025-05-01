@@ -1,22 +1,37 @@
-FROM node:18 AS base
-#RUN apk add --no-cache \
- #   build-base \
- #   g++ \
- #   cairo-dev \
- #   jpeg-dev \
- #   pango-dev \
- #   giflib-dev
+# Use the official Node.js image with Alpine
+FROM node:18-alpine AS builder
+
 WORKDIR /usr/src/app
 
+# Copy package files first to leverage Docker caching
 COPY package*.json ./
-#RUN npm install -g npm@10.2.4
-#RUN npm i -g nodemon
-#RUN npm install canvas
-#RUN npm install
 
-COPY . .
+# Install dependencies
 RUN npm ci
+
+# Copy the rest of the application
+COPY . .
+
+# Build the Next.js app
 RUN npm run build
-EXPOSE 4003
-#CMD npm start
-CMD [ "npm","run","start" ]
+
+# Start a new lightweight container for the production environment
+FROM node:18-alpine AS runner
+
+WORKDIR /usr/src/app
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder /usr/src/app/package.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/.next ./.next
+COPY --from=builder /usr/src/app/public ./public
+
+# Expose the port
+EXPOSE 3000
+
+# Set environment variables for production
+ENV NODE_ENV=production
+ENV PORT=4003
+
+# Run the production server
+CMD ["npm", "start"]

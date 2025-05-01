@@ -1,11 +1,12 @@
 version: '3.8'
 services:
-  ndi-cloud-wallet-frontend:
-    image: ${IMAGE_NAME}
+  app:
+    build: .
     container_name: ndi-cloud-wallet-frontend
+    image: ndi-cloud-wallet-frontend:latest
     ports:
-      - "4003:4003"
-    working_dir: /
-    env_file:
-      - .env
+      - "4003:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
     restart: unless-stopped
