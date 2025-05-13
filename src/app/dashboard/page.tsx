@@ -24,6 +24,7 @@ import ProofShareModal from "./components/ProofShareModal";
 import { getSocket, initSocket } from "../lib/socket";
 import IssuanceModal from "./components/IssuanceModal";
 import SearchBar from "./components/SearchBar";
+import SelfAttestedCred from "./components/SelfAttestedCred";
 
 interface Credential {
   connection: any;
@@ -524,7 +525,16 @@ export default function DashboardPage() {
           <SearchBar onSearchChange={handleSearchChange} />
         </Grid2>
       </Grid2> */}
-      <Grid2 container spacing={2} sx={{ fontFamily: "Inter, sans-serif" }}>
+      <Grid2 container justifyContent={"end"}>
+        <SelfAttestedCred />
+      </Grid2>
+
+      <Grid2
+        container
+        mt={3}
+        spacing={2}
+        sx={{ fontFamily: "Inter, sans-serif" }}
+      >
         {cardData.map((card, index) => (
           <Grid2 size={2.4} key={index}>
             <Card

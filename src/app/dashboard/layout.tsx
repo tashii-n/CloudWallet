@@ -38,24 +38,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
     };
 
-    checkAuth();
+    // checkAuth();
   }, [router]);
 
   // Show a loading spinner while checking authentication
-  if (isAuthenticated === null) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress size={100} />
-      </Box>
-    );
-  } else if (isAuthenticated === true) {
+  // if (isAuthenticated === null) {
+  //   return (
+  //     <Box
+  //       sx={{
+  //         display: "flex",
+  //         justifyContent: "center",
+  //         alignItems: "center",
+  //         height: "100vh",
+  //       }}
+  //     >
+  //       <CircularProgress size={100} />
+  //     </Box>
+  //   );
+  // } else if (isAuthenticated === true) {
     return (
       <Box sx={{ display: "flex", height: "100vh", bgcolor: "#F4F6F8" }}>
         <Sidebar />
@@ -74,6 +74,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Box>
       </Box>
     );
-  }
-  return <div></div>;
+  // }
+  // return <div></div>;
 }
