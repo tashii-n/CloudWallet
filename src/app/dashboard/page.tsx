@@ -35,6 +35,7 @@ interface Credential {
   revocationCredentialsId: string;
   revocationId: string;
   acceptedDate: string;
+  selfAttested: boolean;
 }
 
 interface ModalProps {
@@ -65,7 +66,7 @@ export default function DashboardPage() {
   const socketRef = useRef<any>(null);
   const tenantIdRef = useRef<string | null>(null);
   const initialSocketMessageReceivedRef = useRef<boolean>(false);
-
+  const [isSelfAttested, setIsSelfAttested] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchChange = (query: string) => {
@@ -440,10 +441,22 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCardClick = async (credentialId: string): Promise<void> => {
+  const handleCardClick = async (
+    credentialId: string,
+    selfAttested: boolean
+  ): Promise<void> => {
     try {
-      const credentialDetails = await getCredentialDetailsAPI(credentialId);
+      let credentialDetails;
+      if (selfAttested == true) {
+        credentialDetails = await getCredentialDetailsAPI(
+          credentialId,
+          selfAttested
+        );
+      } else {
+        credentialDetails = await getCredentialDetailsAPI(credentialId);
+      }
       setSelectedCredential(credentialDetails);
+      setIsSelfAttested(selfAttested); // Store the flag
     } catch (error) {
       console.error("Error fetching credential details:", error);
     }
@@ -459,7 +472,7 @@ export default function DashboardPage() {
       },
       {
         title: "Self Attested",
-        value: credentials.filter((c) => c.status === "self-attested").length,
+        value: credentials.filter((c) => c.selfAttested === true).length,
       },
       {
         title: "Suspended",
@@ -479,9 +492,16 @@ export default function DashboardPage() {
   // Handle the click on a status card to filter the list based on status
   const handleStatusCardClick = (status?: string) => {
     if (status) {
-      const filtered = credentials.filter(
-        (credential) => credential.status === status
-      );
+      let filtered;
+      if (status === "SELF-ATTESTED") {
+        filtered = credentials.filter(
+          (credential) => credential.selfAttested === true
+        );
+      } else {
+        filtered = credentials.filter(
+          (credential) => credential.status === status
+        );
+      }
       setSelectedCredential(null);
       setSelectedLogo("");
       setFilteredCredentials(filtered);
@@ -577,9 +597,13 @@ export default function DashboardPage() {
                 <Grid2 size={5}>
                   <CredentialCard
                     credential={{
-                      name:
-                        selectedCredential?.credential?.jsonld?.type?.[1] || "",
-                      iconUrl: selectedLogo,
+                      name: isSelfAttested
+                        ? selectedCredential?.credential?.type?.[1] || ""
+                        : selectedCredential?.credential?.jsonld?.type?.[1] ||
+                          "",
+                      iconUrl: isSelfAttested
+                        ? "/images/ndilogodark.svg"
+                        : selectedLogo,
                     }}
                   />
                 </Grid2>
@@ -588,8 +612,10 @@ export default function DashboardPage() {
                     <Typography variant="h6">Credential Attributes</Typography>
                   </Grid2>
                   {Object.keys(
-                    selectedCredential?.credential?.jsonld?.credentialSubject ||
-                      {}
+                    isSelfAttested
+                      ? selectedCredential?.credential?.credentialSubject || {}
+                      : selectedCredential?.credential?.jsonld
+                          ?.credentialSubject || {}
                   )
                     .filter(
                       (field) => field !== "revocation_id" && field !== "id"
@@ -603,8 +629,11 @@ export default function DashboardPage() {
                           name={field}
                           disabled
                           value={
-                            selectedCredential?.credential?.jsonld
-                              ?.credentialSubject?.[field] || ""
+                            isSelfAttested
+                              ? selectedCredential?.credential
+                                  ?.credentialSubject?.[field] || ""
+                              : selectedCredential?.credential?.jsonld
+                                  ?.credentialSubject?.[field] || ""
                           }
                         />
                       </Grid2>
@@ -634,8 +663,11 @@ export default function DashboardPage() {
                 <CredentialCard
                   credential={credential}
                   onClick={() => {
-                    handleCardClick(credential.credentialsId);
-                    setSelectedLogo(credential.connection.imageUrl);
+                    handleCardClick(
+                      credential.credentialsId,
+                      credential.selfAttested
+                    );
+                    setSelectedLogo(credential.connection?.imageUrl);
                   }}
                 />
               </Grid2>

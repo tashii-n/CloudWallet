@@ -5,6 +5,8 @@ interface CustomNumberInputProps {
   name: string;
   label: string;
   value: string; // Accept value prop
+  required?: boolean;
+  error?: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void; // Accept onChange prop
 }
 
@@ -13,6 +15,8 @@ export default function CustomNumberInput({
   name,
   label,
   value,
+  required,
+  error,
   onChange,
 }: CustomNumberInputProps) {
   return (
@@ -25,6 +29,8 @@ export default function CustomNumberInput({
       label={label}
       value={value} // Bind value to the prop
       onChange={onChange} // Handle onChange event
+      required={required}
+      error={error}
       sx={{
         "& input[type=number]": {
           MozAppearance: "textfield",

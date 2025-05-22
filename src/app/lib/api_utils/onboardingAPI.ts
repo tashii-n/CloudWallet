@@ -504,38 +504,40 @@ export const getCredentialListAPI = async (params: {
   }
 };
 
-export const getCredentialDetailsAPI = async (credentialRecordId: string) => {
+export const getCredentialDetailsAPI = async (
+  credentialRecordId: string,
+  selfAttested?: boolean
+) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) {
       throw new Error("API URL is missing in environment variables");
     }
 
-    // Get authentication data
     const cloudAccessToken = await getValidCloudAccessToken();
 
-    // Construct headers with bearer token
     const headers = {
       Authorization: `Bearer ${cloudAccessToken}`,
       "Content-Type": "application/json",
     };
 
-    // Prepare the API request URL
-    const url = `${apiUrl}/cloud-wallet/v1/credential?credentialRecordId=${credentialRecordId}`; // Assuming this is the correct endpoint
+    // Start constructing the URL
+    let url = `${apiUrl}/cloud-wallet/v1/credential?credentialRecordId=${credentialRecordId}`;
 
-    // Prepare API request configuration
+    // Append selfAttested only if it is defined
+    if (typeof selfAttested !== "undefined") {
+      url += `&selfAttested=${selfAttested}`;
+    }
+
     const config: AxiosRequestConfig = {
       method: "get",
-      url: url,
-      headers: headers,
+      url,
+      headers,
     };
 
     console.log("Sending API Request:", config);
 
-    // Make the API call
     const response = await axios(config);
-
-    // Extract the API response data
     const responsePayload = response?.data?.data;
 
     console.log("Credential Details Responseapi:", responsePayload);
@@ -908,7 +910,6 @@ export const getPermanentAddressAPI = async () => {
     // Create URL query params
     const queryParams = new URLSearchParams({
       requestType: "PERMANENT_ADDRESS",
-      
     });
 
     // API request configuration
@@ -932,6 +933,46 @@ export const getPermanentAddressAPI = async () => {
   }
 };
 
+export const addSelfAttestedAPI = async (
+  payload: Record<string, any>,
+  credentialType: string
+) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    const encodedCredentialType = encodeURIComponent(credentialType);
+    const url = `${apiUrl}/cloud-wallet/v1/self-attested-credential?credentialType=${encodedCredentialType}`;
+
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url,
+      headers,
+      data: payload,
+    };
+
+    console.log("Sending Self Attested Request:", config);
+
+    const response = await axios(config);
+
+    const responsePayload = response?.data;
+
+    console.log("Self Attested Response:", responsePayload);
+    return responsePayload;
+  } catch (error) {
+    console.error("Self Attested API call failed:", error);
+    throw new Error("Unable to add credential");
+  }
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

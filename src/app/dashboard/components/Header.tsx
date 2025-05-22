@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -11,12 +11,22 @@ import {
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AddIcon from "@mui/icons-material/Add";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy"; // Importing copy icon
+import { secureGet } from "@/app/lib/storage/storage";
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [holderDid, setHolderDid] = useState<string>("Dorji Sonam"); // State to store TextField value
+  const [holderDid, setHolderDid] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchHolderDID = async () => {
+      const holderDIDSession = await secureGet("holderDID");
+      setHolderDid(holderDIDSession);
+    };
+
+    fetchHolderDID();
+  }, []);
   const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -28,7 +38,9 @@ export default function Header() {
   const open = Boolean(anchorEl);
   const id = open ? "simple-popover" : undefined;
 
-  const handleCopy = (value: string) => {
+  const handleCopy = (value: string | null) => {
+    if (!value) return;
+
     navigator.clipboard.writeText(value).catch((error) => {
       console.error("Error copying text: ", error);
     });
@@ -41,19 +53,19 @@ export default function Header() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        py:2,
+        py: 2,
         px: 4,
         backgroundColor: "#F4F6F8",
         boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.1)",
       }}
     >
       <Box>
-        {/* <strong>Welcome Back,</strong> <br />
-        <span style={{ fontWeight: "bold" }}>Dorji Sonam</span> */}
+        {/* <strong>Welcome Back,</strong> <br /> */}
+        {/* <span style={{ fontWeight: "bold" }}>Dorji Sonam</span> */}
       </Box>
 
       <Box display="flex" alignItems="center" gap={2}>
-        <Button
+        {/* <Button
           variant="contained"
           startIcon={<AddIcon />}
           sx={{ backgroundColor: "primary.main#", borderRadius: 10 }}
@@ -63,10 +75,10 @@ export default function Header() {
 
         <Badge badgeContent={1} color="error">
           <NotificationsIcon />
-        </Badge>
+        </Badge> */}
 
         <Avatar sx={{ bgcolor: "#4CAF50" }} onClick={handlePopoverOpen}>
-          TN
+          <AccountCircleIcon />
         </Avatar>
 
         {/* Custom Dropdown UI using Popover */}

@@ -8,6 +8,7 @@ interface CredentialCardProps {
     name: string;
     iconUrl?: string;
     status?: string;
+    // selfAttested?: boolean
   };
   onClick?: () => void;
 }
@@ -20,9 +21,9 @@ const getStatusIcon = (status?: string) => {
     case "REVOKED":
       return "/images/cardrevokedicon.svg";
     case "SUSPENDED":
-      return "/images/cardinactiveicon.svg";
+      return "/images/cardsuspendedicon.svg";
     default:
-      return "/images/cardunknownstatusicon.svg"; // fallback icon
+      return "/images/cardactiveicon.svg"; // fallback icon
   }
 };
 

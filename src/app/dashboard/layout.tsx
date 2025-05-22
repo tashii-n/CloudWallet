@@ -7,7 +7,6 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import CircularProgress from "@mui/material/CircularProgress"; // For loading state
 import { getValidCloudAccessToken } from "../lib/auth/auth";
-import { setupTabTracking } from "../lib/storage/storage";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,9 +25,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         } else {
           // Set authenticated state to true
           setIsAuthenticated(true);
-
-          // Initialize tab tracking once user is authenticated
-          await setupTabTracking();
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
@@ -38,24 +34,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // checkAuth();
+    checkAuth();
   }, [router]);
 
   // Show a loading spinner while checking authentication
-  // if (isAuthenticated === null) {
-  //   return (
-  //     <Box
-  //       sx={{
-  //         display: "flex",
-  //         justifyContent: "center",
-  //         alignItems: "center",
-  //         height: "100vh",
-  //       }}
-  //     >
-  //       <CircularProgress size={100} />
-  //     </Box>
-  //   );
-  // } else if (isAuthenticated === true) {
+  if (isAuthenticated === null) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress size={100} />
+      </Box>
+    );
+  } else if (isAuthenticated === true) {
     return (
       <Box sx={{ display: "flex", height: "100vh", bgcolor: "#F4F6F8" }}>
         <Sidebar />
@@ -74,6 +70,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Box>
       </Box>
     );
-  // }
-  // return <div></div>;
+  }
+  return <div></div>;
 }
