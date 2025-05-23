@@ -258,7 +258,7 @@ export default function ProofShareModal({
 
   // Function to create a unique key for each dropdown item
   const getCompositeKey = (item: ValueOption) => {
-    return `${item.value}_${item.id}_${item.revocationStatus || 'active'}`;
+    return `${item.value}_${item.id}_${item.revocationStatus || "active"}`;
   };
 
   return (
@@ -357,11 +357,13 @@ export default function ProofShareModal({
               Object.entries(requestedData).map(([label, values]) => {
                 const isMultiple =
                   values.length > 1 && values[0].value !== "Not Found";
-                
+
                 // Create a composite value that includes both value and id to ensure uniqueness
                 const selectedItem = selectedData[label] || values[0];
                 // For select fields, use composite key; for non-select fields, use just the value
-                const displayValue = isMultiple ? getCompositeKey(selectedItem) : selectedItem.value;
+                const displayValue = isMultiple
+                  ? getCompositeKey(selectedItem)
+                  : selectedItem.value;
 
                 return (
                   <TextField
@@ -376,25 +378,27 @@ export default function ProofShareModal({
                       if (isMultiple) {
                         // For dropdown fields, find item by composite key
                         const selectedValue = e.target.value;
-                        const selectedItem = values.find(item => 
-                          getCompositeKey(item) === selectedValue
+                        const selectedItem = values.find(
+                          (item) => getCompositeKey(item) === selectedValue
                         );
-                        
+
                         if (selectedItem) {
-                          setSelectedData(prev => ({
+                          setSelectedData((prev) => ({
                             ...prev,
-                            [label]: selectedItem
+                            [label]: selectedItem,
                           }));
                         }
                       } else {
                         // For non-dropdown fields, find by value (should not happen but just in case)
                         const selectedValue = e.target.value;
-                        const selectedItem = values.find(v => v.value === selectedValue);
-                        
+                        const selectedItem = values.find(
+                          (v) => v.value === selectedValue
+                        );
+
                         if (selectedItem) {
-                          setSelectedData(prev => ({
+                          setSelectedData((prev) => ({
                             ...prev,
-                            [label]: selectedItem
+                            [label]: selectedItem,
                           }));
                         }
                       }
@@ -405,7 +409,7 @@ export default function ProofShareModal({
                     }
                     slotProps={{
                       select: {
-                        // Only for dropdown fields - render the actual item data 
+                        // Only for dropdown fields - render the actual item data
                         renderValue: () => (
                           <Stack
                             direction="row"
@@ -415,14 +419,24 @@ export default function ProofShareModal({
                             sx={{ width: "100%" }}
                           >
                             <Stack direction={"row"} spacing={2}>
-                              {selectedItem?.orgLogo ? (
+                              {selectedItem?.orgLogo === "NotFound" ? (
                                 <Image
-                                  src={selectedItem.orgLogo}
+                                  src="/images/ndilogodark.svg"
                                   width={25}
                                   height={25}
                                   alt="logo"
                                   unoptimized
                                 />
+                              ) : selectedItem?.orgLogo ? (
+                                <>
+                                  <Image
+                                    src={selectedItem.orgLogo}
+                                    width={25}
+                                    height={25}
+                                    alt="logo"
+                                    unoptimized
+                                  />
+                                </>
                               ) : (
                                 <Image
                                   src="/images/ndilogodark.svg"
@@ -459,7 +473,7 @@ export default function ProofShareModal({
                         startAdornment:
                           !isMultiple &&
                           selectedItem.revocationStatus !== "NOT_FOUND" ? (
-                            selectedItem?.orgLogo ? (
+                            selectedItem?.orgLogo === "NotFound" ? (
                               <Box
                                 mr={2}
                                 display={"flex"}
@@ -467,13 +481,23 @@ export default function ProofShareModal({
                                 justifyContent={"center"}
                               >
                                 <Image
-                                  src={selectedItem.orgLogo}
+                                  src="/images/ndilogodark.svg"
                                   width={25}
                                   height={25}
                                   alt="logo"
                                   unoptimized
                                 />
                               </Box>
+                            ) : selectedItem?.orgLogo ? (
+                              <>
+                                <Image
+                                  src={selectedItem.orgLogo}
+                                  width={25}
+                                  height={25}
+                                  alt="logo"
+                                  unoptimized
+                                />
+                              </>
                             ) : (
                               <Image
                                 src="/images/ndilogodark.svg"
@@ -498,14 +522,24 @@ export default function ProofShareModal({
                           width: "100%",
                         }}
                       >
-                        {val?.orgLogo ? (
+                        {val?.orgLogo === "NotFound" ? (
                           <Image
-                            src={val.orgLogo}
+                            src="/images/ndilogodark.svg"
                             width={25}
                             height={25}
                             alt="logo"
                             unoptimized
                           />
+                        ) : val?.orgLogo ? (
+                          <>
+                            <Image
+                              src={val.orgLogo}
+                              width={25}
+                              height={25}
+                              alt="logo"
+                              unoptimized
+                            />
+                          </>
                         ) : (
                           <Image
                             src="/images/ndilogodark.svg"

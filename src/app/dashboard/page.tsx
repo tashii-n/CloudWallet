@@ -473,6 +473,7 @@ export default function DashboardPage() {
       {
         title: "Self Attested",
         value: credentials.filter((c) => c.selfAttested === true).length,
+        status: "SELF-ATTESTED",
       },
       {
         title: "Suspended",

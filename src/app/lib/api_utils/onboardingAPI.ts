@@ -424,6 +424,8 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
       secretKey,
       JSON.stringify(transformedData)
     );
+    
+    // console.log("🚀 ~ loginAPI ~ encryptedData:", encryptedData)
 
     // Construct headers with bearer token
     const headers = {
