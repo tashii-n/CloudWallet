@@ -489,7 +489,12 @@ export default function ProofShareModal({
                                 />
                               </Box>
                             ) : selectedItem?.orgLogo ? (
-                              <>
+                              <Box
+                                mr={2} // Add this Box wrapper with margin
+                                display={"flex"}
+                                alignItems={"center"}
+                                justifyContent={"center"}
+                              >
                                 <Image
                                   src={selectedItem.orgLogo}
                                   width={25}
@@ -497,15 +502,22 @@ export default function ProofShareModal({
                                   alt="logo"
                                   unoptimized
                                 />
-                              </>
+                              </Box>
                             ) : (
-                              <Image
-                                src="/images/ndilogodark.svg"
-                                width={25}
-                                height={25}
-                                alt="logo"
-                                unoptimized
-                              />
+                              <Box
+                                mr={2} // Add this Box wrapper with margin
+                                display={"flex"}
+                                alignItems={"center"}
+                                justifyContent={"center"}
+                              >
+                                <Image
+                                  src="/images/ndilogodark.svg"
+                                  width={25}
+                                  height={25}
+                                  alt="logo"
+                                  unoptimized
+                                />
+                              </Box>
                             )
                           ) : null,
                       },
