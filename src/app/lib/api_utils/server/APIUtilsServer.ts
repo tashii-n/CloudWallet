@@ -1,8 +1,10 @@
-import { getAuthData, getValidCloudAccessToken } from "../auth/auth";
-import { CONFIG } from "../constants";
-import { encryptPayload, decryptPayload } from "../cryptography/dataCrypt.js";
+"use server"
+
 import axios, { AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { decryptPayload, encryptPayload } from "../../cryptography/dataCrypt";
+import { CONFIG } from "../../constants";
+import { getAuthData, getValidCloudAccessToken } from "../../auth/auth";
 
 export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
   try {
@@ -442,6 +444,7 @@ export const loginAPI = async (jsonData: Record<string, any>) => {
 
     // Make the API call
     const response = await axios(config);
+    console.log("🚀 ~ loginAPI ~ response:", response)
 
     const responsePayload = response?.data.data;
 
