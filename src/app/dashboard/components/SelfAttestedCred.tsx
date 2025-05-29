@@ -34,7 +34,11 @@ const modalStyle = {
   p: 4,
 };
 
-export default function DropdownModalButton() {
+interface DropdownModalButtonProps {
+  onCredentialAdded?: (credentialType: string) => void;
+}
+
+export default function DropdownModalButton({ onCredentialAdded }: DropdownModalButtonProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openModal, setOpenModal] = useState<string | null>(null);
 
@@ -78,7 +82,9 @@ export default function DropdownModalButton() {
   // Success and error message states
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
   const [modalAlert, setModalAlert] = useState<{
     show: boolean;
     message: string;
@@ -389,13 +395,16 @@ export default function DropdownModalButton() {
       console.log("Payload:", payload);
       const response = await addSelfAttestedAPI(payload, modalType);
       console.log("Self-attested credential added:", response);
-      
+
       // Show success message and close modal after a brief delay
       showSuccessMessage(`${modalType} credential added successfully!`);
+      
+      if (onCredentialAdded) {
+        await onCredentialAdded(modalType);
+      }
       setTimeout(() => {
         handleCloseModal();
       }, 1000);
-      
     } catch (error) {
       console.error("Failed to add self-attested credential:", error);
       showErrorMessage(
@@ -474,10 +483,12 @@ export default function DropdownModalButton() {
           </Typography>
 
           {modalAlert.show && (
-            <Alert 
-              severity={modalAlert.severity} 
+            <Alert
+              severity={modalAlert.severity}
               sx={{ mb: 3 }}
-              onClose={() => setModalAlert({ show: false, message: "", severity: "success" })}
+              onClose={() =>
+                setModalAlert({ show: false, message: "", severity: "success" })
+              }
             >
               {modalAlert.message}
             </Alert>
@@ -554,7 +565,7 @@ export default function DropdownModalButton() {
               onClick={() => handleShare("Mobile Number")}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sharing..." : "Share"}
+              {isSubmitting ? "Adding..." : "Add"}
             </Button>
           </Stack>
         </Box>
@@ -595,10 +606,12 @@ export default function DropdownModalButton() {
           </Typography>
 
           {modalAlert.show && (
-            <Alert 
-              severity={modalAlert.severity} 
+            <Alert
+              severity={modalAlert.severity}
               sx={{ mb: 3 }}
-              onClose={() => setModalAlert({ show: false, message: "", severity: "success" })}
+              onClose={() =>
+                setModalAlert({ show: false, message: "", severity: "success" })
+              }
             >
               {modalAlert.message}
             </Alert>
@@ -664,7 +677,7 @@ export default function DropdownModalButton() {
               onClick={() => handleShare("Allergy")}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sharing..." : "Share"}
+              {isSubmitting ? "Adding..." : "Add"}
             </Button>
           </Stack>
         </Box>
@@ -705,10 +718,12 @@ export default function DropdownModalButton() {
           </Typography>
 
           {modalAlert.show && (
-            <Alert 
-              severity={modalAlert.severity} 
+            <Alert
+              severity={modalAlert.severity}
               sx={{ mb: 3 }}
-              onClose={() => setModalAlert({ show: false, message: "", severity: "success" })}
+              onClose={() =>
+                setModalAlert({ show: false, message: "", severity: "success" })
+              }
             >
               {modalAlert.message}
             </Alert>
@@ -763,7 +778,7 @@ export default function DropdownModalButton() {
               onClick={() => handleShare("Email")}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sharing..." : "Share"}
+              {isSubmitting ? "Adding..." : "Add"}
             </Button>
           </Stack>
         </Box>
@@ -804,10 +819,12 @@ export default function DropdownModalButton() {
           </Typography>
 
           {modalAlert.show && (
-            <Alert 
-              severity={modalAlert.severity} 
+            <Alert
+              severity={modalAlert.severity}
               sx={{ mb: 3 }}
-              onClose={() => setModalAlert({ show: false, message: "", severity: "success" })}
+              onClose={() =>
+                setModalAlert({ show: false, message: "", severity: "success" })
+              }
             >
               {modalAlert.message}
             </Alert>
@@ -980,7 +997,7 @@ export default function DropdownModalButton() {
               onClick={() => handleShare("Current Address")}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sharing..." : "Share"}
+              {isSubmitting ? "Adding..." : "Add"}
             </Button>
           </Stack>
         </Box>
@@ -991,12 +1008,12 @@ export default function DropdownModalButton() {
         open={showSnackbar}
         autoHideDuration={4000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbarSeverity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbarMessage}
         </Alert>

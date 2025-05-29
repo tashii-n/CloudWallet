@@ -337,7 +337,7 @@ export default function ProofShareModal({
             ) : Object.keys(requestedData).length === 0 ? (
               <>
                 <Typography>
-                  No matching credentials found for this request.
+                  No matching credentials found were for this request.
                 </Typography>
               </>
             ) : status ? (

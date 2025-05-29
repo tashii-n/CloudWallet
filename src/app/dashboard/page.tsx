@@ -513,6 +513,12 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCredentialAdded = async (credentialType: string) => {
+    console.log(`${credentialType} credential was added successfully`);
+    // Refresh the credentials list
+    await fetchCredentials();
+  };
+
   return (
     <Box>
       {proofModalOpen && (
@@ -547,7 +553,7 @@ export default function DashboardPage() {
         </Grid2>
       </Grid2> */}
       <Grid2 container justifyContent={"end"}>
-        <SelfAttestedCred />
+        <SelfAttestedCred onCredentialAdded={handleCredentialAdded}/>
       </Grid2>
 
       <Grid2
