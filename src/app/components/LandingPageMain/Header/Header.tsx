@@ -14,8 +14,13 @@ import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
 import styles from "./header.module.css";
 import Image from "next/image";
+import Link from "next/link";
 
-const pages = ["How it Works", "FAQ", "Contact Us"];
+const pages = [
+  // { name: "How it Works", href: "/how-it-works" },
+  { name: "FAQ", href: "/faq" },
+  // { name: "Contact Us", href: "/contact" }
+];
 
 export default function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
@@ -40,29 +45,27 @@ export default function ResponsiveAppBar() {
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} /> */}
+          {/* Logo and brand name */}
           <Typography
             variant="h6"
             noWrap
             component="a"
-            href="/" // The link for both the image and text
+            href="/"
             sx={{
-              display: "flex", // Align image and text horizontally
-              alignItems: "center", // Vertically align the logo and text
-              textDecoration: "none", // Remove underline from link
+              display: "flex",
+              alignItems: "center",
+              textDecoration: "none",
               fontFamily: "Belleza",
               fontWeight: 500,
             }}
           >
             <Image
-              src="/images/ndilogodark.svg" // Replace with your logo path
+              src="/images/ndilogodark.svg"
               alt="NDI Logo"
               width={50}
               height={50}
             />
             <span style={{ marginLeft: "15px" }}>
-              {" "}
-              {/* Spacing between logo and text */}
               Bhutan{"  "}
               <span className={styles.ndigreen}>
                 NDI <br />
@@ -72,6 +75,7 @@ export default function ResponsiveAppBar() {
             </span>
           </Typography>
 
+          {/* Mobile navigation */}
           <Box
             sx={{
               flexGrow: 1,
@@ -106,20 +110,24 @@ export default function ResponsiveAppBar() {
               sx={{ display: { xs: "block", md: "none" } }}
             >
               {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography sx={{ textAlign: "center", color: "black" }}>
-                    {page}
-                  </Typography>
+                <MenuItem key={page.name} onClick={handleCloseNavMenu}>
+                  <Link href={page.href} style={{ textDecoration: "none" }}>
+                    <Typography sx={{ textAlign: "center", color: "black" }}>
+                      {page.name}
+                    </Typography>
+                  </Link>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
+
+          {/* Mobile logo (duplicate for responsive design) */}
           <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
           <Typography
             variant="h5"
             noWrap
             component="a"
-            href="#app-bar-with-responsive-menu"
+            href="/"
             sx={{
               mr: 2,
               display: { xs: "flex", md: "none" },
@@ -133,6 +141,8 @@ export default function ResponsiveAppBar() {
           >
             Bhutan NDI Cloud Wallet
           </Typography>
+
+          {/* Desktop navigation */}
           <Box
             sx={{
               flexGrow: 1,
@@ -142,22 +152,30 @@ export default function ResponsiveAppBar() {
             }}
           >
             {pages.map((page) => (
-              <Button
-                key={page}
-                onClick={handleCloseNavMenu}
-                sx={{
-                  my: 2,
-                  color: "black",
-                  display: "block",
-                  fontWeight: 600,
-                  fontFamily: "Inter",
-                  textTransform: "none",
-                  fontSize: "1rem",
-                  px: 3,
-                }}
+              <Link 
+                key={page.name} 
+                href={page.href} 
+                style={{ textDecoration: "none" }}
               >
-                {page}
-              </Button>
+                <Button
+                  onClick={handleCloseNavMenu}
+                  sx={{
+                    my: 2,
+                    color: "black",
+                    display: "block",
+                    fontWeight: 600,
+                    fontFamily: "Inter",
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    px: 3,
+                    "&:hover": {
+                      backgroundColor: "rgba(0, 0, 0, 0.04)",
+                    }
+                  }}
+                >
+                  {page.name}
+                </Button>
+              </Link>
             ))}
           </Box>
         </Toolbar>
