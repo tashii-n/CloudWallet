@@ -60,6 +60,7 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose, onLivenessSuccess 
           fontFamily: "Inter, sans-serif",
         },
         url: "https://qaregula.bhutanndi.com",
+        // url: "https://stageregula.tech.gov.bt",
       };
     }
   }, []);

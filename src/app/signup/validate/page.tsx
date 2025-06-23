@@ -211,7 +211,7 @@ export default function BiometricValidatePage() {
                     </Typography>
                     <Image
                       unoptimized
-                      src="/images/spinner.gif"
+                      src="/images/NDIlogospinner.gif"
                       width={170}
                       height={170}
                       alt={""}

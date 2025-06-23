@@ -8,6 +8,7 @@ import {
   CardContent,
   Grid2,
   TextField,
+  Stack,
 } from "@mui/material";
 import CredentialCard from "./components/CredentialCard";
 import {
@@ -25,6 +26,8 @@ import { getSocket, initSocket } from "../lib/socket";
 import IssuanceModal from "./components/IssuanceModal";
 import SearchBar from "./components/SearchBar";
 import SelfAttestedCred from "./components/SelfAttestedCred";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteCredentialModal from "./components/DeleteCredential";
 
 interface Credential {
   connection: any;
@@ -49,6 +52,7 @@ export default function DashboardPage() {
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
   );
+  const [selectedID, setSelectedID] = useState<any | null>(null);
   const [selectedLogo, setSelectedLogo] = useState("");
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
     []
@@ -457,6 +461,7 @@ export default function DashboardPage() {
       }
       setSelectedCredential(credentialDetails);
       setIsSelfAttested(selfAttested); // Store the flag
+      setSelectedID(credentialId);
     } catch (error) {
       console.error("Error fetching credential details:", error);
     }
@@ -519,6 +524,24 @@ export default function DashboardPage() {
     await fetchCredentials();
   };
 
+  const handleCredentialDeleted = async () => {
+    // Clear the selected credential state
+    setSelectedCredential(null);
+    setSelectedID(null);
+    setSelectedLogo("");
+    setIsSelfAttested(false);
+
+    // Refresh the credentials list
+    await fetchCredentials();
+
+    // Reset filtered credentials to show all credentials
+    // This ensures the UI updates properly after deletion
+    const refreshedCredentials = await fetchCredentials();
+    // if (refreshedCredentials) {
+    //   setFilteredCredentials(refreshedCredentials);
+    // }
+  };
+
   return (
     <Box>
       {proofModalOpen && (
@@ -553,7 +576,7 @@ export default function DashboardPage() {
         </Grid2>
       </Grid2> */}
       <Grid2 container justifyContent={"end"}>
-        <SelfAttestedCred onCredentialAdded={handleCredentialAdded}/>
+        <SelfAttestedCred onCredentialAdded={handleCredentialAdded} />
       </Grid2>
 
       <Grid2
@@ -616,7 +639,35 @@ export default function DashboardPage() {
                 </Grid2>
                 <Grid2 container size={7} spacing={3}>
                   <Grid2 size={12}>
-                    <Typography variant="h6">Credential Attributes</Typography>
+                    <Stack direction={"row"} justifyContent={"space-between"}>
+                      <Typography variant="h6">
+                        Credential Attributes
+                      </Typography>
+                      {(() => {
+                        const credentialName = isSelfAttested
+                          ? selectedCredential?.credential?.type?.[1] || ""
+                          : selectedCredential?.credential?.jsonld?.type?.[1] ||
+                            "";
+
+                        // Only show delete button if it's not a protected credential
+                        const isProtectedCredential =
+                          credentialName === "Permanent Address" ||
+                          credentialName === "Foundational ID";
+
+                        return !isProtectedCredential ? (
+                          <DeleteCredentialModal
+                            credentialId={selectedID}
+                            isSelfAttested={isSelfAttested}
+                            credentialName={credentialName}
+                            onDeleteSuccess={handleCredentialDeleted}
+                            onDeleteError={(error) => {
+                              console.error("Delete error:", error);
+                              // Optionally show additional error handling here
+                            }}
+                          />
+                        ) : null;
+                      })()}
+                    </Stack>
                   </Grid2>
                   {Object.keys(
                     isSelfAttested

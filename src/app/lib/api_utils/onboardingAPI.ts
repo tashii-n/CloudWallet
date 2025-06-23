@@ -39,7 +39,7 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
       secretKey,
       JSON.stringify(transformedData)
     );
-    // console.log("🚀 ~ onboardingValidateAPI ~ data:", data);
+    console.log("🚀 ~ onboardingValidateAPI ~ data:", data);
 
     // Construct headers with bearer token
     const headers = {
@@ -975,6 +975,48 @@ export const addSelfAttestedAPI = async (
     throw new Error("Unable to add credential");
   }
 };
+
+export const deleteCredential = async (
+  credentialRecordId: string,
+  isSelfAttested: boolean
+) => {
+  try {
+    const apiUrl = CONFIG.BASE_API_URL;
+    if (!apiUrl) {
+      throw new Error("API URL is missing in environment variables");
+    }
+
+    const cloudAccessToken = await getValidCloudAccessToken();
+
+    const headers = {
+      Authorization: `Bearer ${cloudAccessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    const endpoint = isSelfAttested
+      ? `/cloud-wallet/v1/credential/{credentialRecordId}?credentialRecordId=${credentialRecordId}&selfAttested=${isSelfAttested}`
+      : `/cloud-wallet/v1/credential/{credentialRecordId}?credentialRecordId=${credentialRecordId}`;
+
+    const url = `${apiUrl}${endpoint}`;
+
+    const config: AxiosRequestConfig = {
+      method: "delete",
+      url,
+      headers,
+    };
+
+    console.log("Sending Delete Credential Request:", config);
+
+    const response = await axios(config);
+
+    console.log("Delete Credential Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Delete Credential API call failed:", error);
+    throw new Error("Unable to delete credential");
+  }
+};
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
