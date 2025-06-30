@@ -17,7 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const pages = [
-  // { name: "How it Works", href: "/how-it-works" },
+  { name: "How it Works", href: "/how-it-works" },
   { name: "FAQ", href: "/faq" },
   // { name: "Contact Us", href: "/contact" }
 ];
