@@ -71,7 +71,6 @@ const HowItWorks = () => {
     <Box
       sx={{
         py: 8,
-        backgroundColor: "#f8fffe",
         minHeight: "100vh",
       }}
     >
@@ -255,8 +254,8 @@ const HowItWorks = () => {
           </Typography>
 
           <iframe
-            width="600"
-            height="315"
+            width="800"
+            height="415"
             src="https://www.youtube.com/embed/hzBgpzzot7w?si=HEaPq16qRVCp9sx_"
             title="YouTube video player"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
