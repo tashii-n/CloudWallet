@@ -19,7 +19,7 @@ import Link from "next/link";
 const pages = [
   { name: "How it Works", href: "/how-it-works" },
   { name: "FAQ", href: "/faq" },
-  // { name: "Contact Us", href: "/contact" }
+  { name: "Contact Us", href: "/contact-us" }
 ];
 
 export default function ResponsiveAppBar() {

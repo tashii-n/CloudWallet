@@ -3,18 +3,15 @@
 import React, { useState } from "react";
 import Footer from "../components/LandingPageMain/Footer/footer";
 import Header from "../components/LandingPageMain/Header/Header";
-import FAQTabs from "../components/FAQ/faq";
 import { Box, Typography } from "@mui/material";
+import ContactUs from "../components/ContactUs/contact";
 
 export default function FAQ() {
   return (
     <>
       <Header />
-      <Box mx="auto" maxWidth={1300} >
-        <Typography variant="h4" ml={2} fontWeight={500} mt={5} mb={3} color="primary">
-          Frequently Asked Questions
-        </Typography>
-        <FAQTabs />
+      <Box mx={3}>
+        <ContactUs/>
       </Box>
       <Footer />
     </>

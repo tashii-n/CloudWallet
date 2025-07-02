@@ -4,7 +4,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <Box textAlign={"center"} mt={8} mb={4}>
+    <Box textAlign={"center"} mt={8} bgcolor={"#141B29"} color={"#FFFFFF"} py={4}>
       <p>
         <small>
           Powered by Bhutan NDI - {currentYear} © Copyright All Rights Reserved -{" "}
