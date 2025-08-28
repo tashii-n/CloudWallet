@@ -3,7 +3,7 @@
 import Directions from "@/app/components/LandingPageMain/Directions/Directions";
 import Footer from "@/app/components/LandingPageMain/Footer/footer";
 import Header from "@/app/components/LandingPageMain/Header/Header";
-import { Box, Checkbox, Grid2, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Grid2, Typography } from "@mui/material";
 import Image from "next/image";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
@@ -42,6 +42,7 @@ export default function BiometricValidatePage() {
           onboardingUniqueId: onboardingData["onboardingUniqueId"],
           image: imageData,
         };
+        
 
         // console.log(onboardingData["onboardingUniqueId"])
 
@@ -54,8 +55,8 @@ export default function BiometricValidatePage() {
 
         apiCalled.current = true;
 
-        await secureClear("imageData")
-        
+        await secureClear("imageData");
+
         setTimeout(() => {
           setValidateSuccess(true);
         }, 2000);
@@ -72,9 +73,9 @@ export default function BiometricValidatePage() {
           //   "Scenario is not 'NEW_PERSON_ONBOARDING'. Redirect not triggered."
           // );
           setNewUser(false);
-          setTimeout(() => {
-            router.push("/");
-          }, 4000);
+          // setTimeout(() => {
+          //   router.push("/");
+          // }, 4000);
         }
       } catch (error) {
         console.error(`Error on attempt ${attempt}:`, error);
@@ -263,10 +264,26 @@ export default function BiometricValidatePage() {
                           alt={"Validation Success Image"}
                         />
                         <Grid2 size={8} mx="auto">
-                          <Typography variant="body1" color="grey">
-                            It seems you already have an account. You will be
-                            redirected to the home page shortly.
+                          <Typography variant="body1" color="grey" gutterBottom mb={3}>
+                            Looks like you already have an account with us.
+                            Please log in to continue.
                           </Typography>
+                          <Button
+                            href="/login"
+                            variant="contained"
+                            sx={{
+                              minWidth: "250px",
+                              backgroundColor: "#c43e3d",
+                              textTransform: "none",
+                              color: "white",
+                              minHeight: "60px",
+                              borderRadius: "50px",
+                            }}
+                          >
+                            <Typography variant="body1">
+                              Go to Login
+                            </Typography>
+                          </Button>
                         </Grid2>
                       </>
                     )}

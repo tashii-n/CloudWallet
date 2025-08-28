@@ -14,6 +14,7 @@ import {
 } from "@/app/lib/api_utils/onboardingAPI";
 import { retryAPI } from "@/app/lib/api_utils/helperFunction";
 import { storeCloudAuth } from "@/app/lib/auth/auth";
+import Link from "next/link";
 
 const FaceLivenessDynamic = dynamic(
   () => import("@/app/components/Liveness/Liveness"),
@@ -76,7 +77,6 @@ export default function BiometricPage() {
       } else {
         router.push("/dashboard");
       }
-      
     } catch (error) {
       console.error(`Error on attempt ${attempt}:`, error);
 
@@ -90,6 +90,7 @@ export default function BiometricPage() {
       } else {
         setShowLiveness(false);
         setLoginFailed(true);
+
         await secureClear("cloudAuth");
         console.error("Max retries reached. API call failed.");
       }
@@ -97,6 +98,7 @@ export default function BiometricPage() {
       setIsLoading(false); // Hide loading spinner
     }
   };
+
   return (
     <Box
       display="flex"
@@ -274,6 +276,10 @@ export default function BiometricPage() {
                   >
                     <Typography variant="body1">Scan My Face</Typography>
                   </Button>
+                  <br />
+                  <Typography variant="body2">
+                    Don't have an account? <Link href="/signup" className="ndigreen">Sign Up</Link>
+                  </Typography>
                 </>
               ) : (
                 <>

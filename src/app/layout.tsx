@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme.js";
-
+import { ToastProvider } from "./components/ToastContent/toastContent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +25,9 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
+            <ToastProvider>
               {children}
+            </ToastProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

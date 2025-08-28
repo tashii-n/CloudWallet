@@ -12,7 +12,7 @@ const theme = createTheme({
       disabled: "rgba(0, 0, 0, 0.75)", // Darker color for disabled text
     },
     primary: {
-      main: "#5AC894", // Primary color (blue)
+      main: "#5AC894", // Primary color (ndi green)
     },
     secondary: {
       main: "#124143", // Secondary color (pink)

@@ -14,7 +14,11 @@ import { useEffect, useState } from "react";
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { clearAllData, secureGet, secureStore } from "@/app/lib/storage/storage";
+import {
+  clearAllData,
+  secureGet,
+  secureStore,
+} from "@/app/lib/storage/storage";
 import {
   acceptCredentialAPI,
   getCredentialListAPI,
@@ -48,6 +52,17 @@ const ONBOARDING_STEPS = {
   GET_TENANT_ID: "GET_TENANT_ID",
   GET_CREDENTIAL_LIST: "GET_CREDENTIAL_LIST",
   ACCEPT_REVOCATION_CREDENTIALS: "ACCEPT_REVOCATION_CREDENTIALS",
+};
+
+const STEP_MESSAGES = {
+  [ONBOARDING_STEPS.REGISTER]: "Registering your account...",
+  [ONBOARDING_STEPS.CREATE_WALLET]: "Creating your secure wallet...",
+  [ONBOARDING_STEPS.CREATE_DID]: "Generating your digital identity...",
+  [ONBOARDING_STEPS.ISSUE_CREDENTIALS]: "Issuing your credentials...",
+  [ONBOARDING_STEPS.GET_TENANT_ID]: "Getting tenant information...",
+  [ONBOARDING_STEPS.GET_CREDENTIAL_LIST]: "Retrieving credential list...",
+  [ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS]:
+    "Processing revocation credentials...",
 };
 
 export default function SignupForm() {
@@ -187,7 +202,10 @@ export default function SignupForm() {
         take: 10,
         skip: 0,
       });
-      console.log("🚀 ~ getCredentialList ~ credentialList:", credentialListResponse)
+      console.log(
+        "🚀 ~ getCredentialList ~ credentialList:",
+        credentialListResponse
+      );
       if (credentialListResponse?.length) {
         console.log("✅ Credential List Found:", credentialListResponse);
         // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
@@ -218,7 +236,7 @@ export default function SignupForm() {
                 revocationId: credential.revocationId,
               }
             );
-            
+
             console.log(
               `✅ Revocation Credential for ${credential.name}:`,
               revocationResponse
@@ -353,6 +371,16 @@ export default function SignupForm() {
             alt="Loading..."
             unoptimized
           />
+          <Typography
+            variant="h6"
+            sx={{
+              mt: 2,
+              textAlign: "center",
+              color: "#fff",
+            }}
+          >
+            {STEP_MESSAGES[currentStep || ONBOARDING_STEPS.REGISTER]}
+          </Typography>
         </Box>
       </Backdrop>
       <Typography
