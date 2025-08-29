@@ -34,7 +34,7 @@ export default function BiometricPage() {
   const router = useRouter();
   const [showLiveness, setShowLiveness] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginFailed, setLoginFailed] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(true);
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const apiCalled = useRef(false); // Prevent duplicate API calls
   const maxRetries = 2;
@@ -212,7 +212,7 @@ export default function BiometricPage() {
       await acceptRevocationCredentialsForLogin();
     } catch (error) {
       console.error("Error during onboarding process:", error);
-    } 
+    }
   };
 
   // Helper function for creating wallet during login
@@ -571,9 +571,9 @@ export default function BiometricPage() {
                   </Button>
                   <br />
                   <Typography variant="body2">
-                    Don't have an account?{" "}
-                    <Link href="/signup" className="ndigreen">
-                      Sign Up
+                    Want to go back?{" "}
+                    <Link href="/" className="ndigreen">
+                      Return to Home Page
                     </Link>
                   </Typography>
                 </>
