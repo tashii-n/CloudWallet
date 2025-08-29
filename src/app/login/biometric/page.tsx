@@ -34,7 +34,7 @@ export default function BiometricPage() {
   const router = useRouter();
   const [showLiveness, setShowLiveness] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginFailed, setLoginFailed] = useState(true);
+  const [loginFailed, setLoginFailed] = useState(false);
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const apiCalled = useRef(false); // Prevent duplicate API calls
   const maxRetries = 2;
