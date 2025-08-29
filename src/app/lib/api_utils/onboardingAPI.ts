@@ -4,7 +4,7 @@ import { encryptPayload, decryptPayload } from "../cryptography/dataCrypt.js";
 import axios, { AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { secureGet } from "../storage/storage";
-import './axiosInterceptor'; // Adjust path as needed
+import "./axiosInterceptor"; // Adjust path as needed
 
 export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
   try {
@@ -34,6 +34,7 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
       idNumber: jsonData.idNumber,
       biometric: false,
     };
+    // console.log("🚀 ~ onboardingValidateAPI ~ transformedData:", transformedData)
 
     // Encrypt JSON data using the secret key
     const data = await encryptPayload(
@@ -64,7 +65,7 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
     const responsePayload = response?.data.data;
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
-    // console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
+    console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
 
     return decryptedData;
   } catch (error) {
@@ -99,12 +100,14 @@ export const onboardingBiometricAPI = async (jsonData: Record<string, any>) => {
       deviceId: deviceId,
       Image: jsonData.image || "",
     };
+    // console.log("🚀 ~ onboardingBiometricAPI ~ transformedData:", transformedData)
 
     // Encrypt JSON data using the secret key
     const encryptedData = await encryptPayload(
       secretKey,
       JSON.stringify(transformedData)
     );
+    // console.log("🚀 ~ onboardingBiometricAPI ~ encryptedData:", encryptedData)
 
     // Construct headers with bearer token
     const headers = {
@@ -128,7 +131,9 @@ export const onboardingBiometricAPI = async (jsonData: Record<string, any>) => {
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
 
+    console.log("🚀 ~ onboardingBiometricAPI ~ decryptedData:", decryptedData)
     return decryptedData;
+    
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to make API call");
@@ -1018,47 +1023,44 @@ export const deleteCredential = async (
   }
 };
 
-export const getCloudWalletStatus = async (tenantId: string) => {
+export const getCloudWalletStatus = async () => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) throw new Error("API URL is missing in environment variables");
 
-    const authData = await getAuthData();
-    const { accessToken } = authData;
+    const cloudAccessToken = await getValidCloudAccessToken();
+    if (!cloudAccessToken) throw new Error("Access token is missing");
 
-    if (!accessToken) throw new Error("Access token is missing");
-
-    // Construct headers
     const headers = {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${cloudAccessToken}`,
       "Content-Type": "application/json",
     };
 
-    // Create URL query params
-    const queryParams = new URLSearchParams({
-      tenantId: "PERMANENT_ADDRESS",
-    });
-
-    // API request configuration
     const config: AxiosRequestConfig = {
       method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/check-cloud-wallet-status?${queryParams.toString()}`,
+      url: `${apiUrl}/cloud-wallet/v1/check-cloud-wallet-status`,
       headers,
     };
 
-    console.log("API Request (Permanent Address Reissuance):", config);
+    console.log("API Request (Cloud Wallet Status):", config);
 
-    // Make API call
     const response = await axios(config);
-    console.log("API Response (Permanent Address Reissuance):", response.data);
+    console.log("API Response (Cloud Wallet Status):", response.data);
 
-    // Return only the data array from response
-    return response.data;
-  } catch (error) {
+    return response; // ✅ Return the full response
+  } catch (error: any) {
     console.error("API call failed:", error);
-    throw new Error("Unable to issue permanent address");
+
+    // ✅ If server responded with an error, return that response
+    if (error.response) {
+      return error.response;
+    }
+
+    // Otherwise throw the error
+    throw error;
   }
 };
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -3,7 +3,15 @@
 import Directions from "@/app/components/LandingPageMain/Directions/Directions";
 import Footer from "@/app/components/LandingPageMain/Footer/footer";
 import Header from "@/app/components/LandingPageMain/Header/Header";
-import { Box, Button, Checkbox, Grid2, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Grid2,
+  Link,
+  List,
+  Typography,
+} from "@mui/material";
 import Image from "next/image";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
@@ -42,9 +50,8 @@ export default function BiometricValidatePage() {
           onboardingUniqueId: onboardingData["onboardingUniqueId"],
           image: imageData,
         };
-        
 
-        // console.log(onboardingData["onboardingUniqueId"])
+        console.log(onboardingData["onboardingUniqueId"]);
 
         // console.log(`Attempt ${attempt}: Calling Biometric API`, requestData);
 
@@ -255,35 +262,68 @@ export default function BiometricValidatePage() {
                           fontWeight={600}
                           color="primary.main"
                         >
-                          Invalid
+                          Account Already Exists
                         </Typography>
                         <Image
                           src="/images/error.svg"
-                          width={200}
-                          height={200}
+                          width={170}
+                          height={170}
                           alt={"Validation Success Image"}
                         />
-                        <Grid2 size={8} mx="auto">
-                          <Typography variant="body1" color="grey" gutterBottom mb={3}>
-                            Looks like you already have an account with us.
-                            Please log in to continue.
-                          </Typography>
-                          <Button
+                        <Grid2 size={9} mx="auto" color="grey" fontSize={14.5}>
+                          {/* <Typography
+                            variant="body1"
+                            color="grey"
+                            gutterBottom
+                            mb={3}
+                          >
+                            You already have an account with us. <br />
+                            If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
+                          </Typography> */}
+                          <p>It seems you already have an account with us.</p>
+                          <br />
+                          <ul>
+                            <li>
+                              If your account is set up in Edge Wallet, please
+                              log in through the Edge Wallet app. Go to{" "}
+                            <Link href="/" className="ndigreen">
+                              home
+                            </Link>{" "}
+                            page.
+                            </li>
+                            <li>
+                              If your account is in the Cloud Wallet, you can
+                              log in{" "}
+                              <Link href="/login" className="ndigreen">
+                                here
+                              </Link>{" "}
+                              to continue.
+                            </li>
+                          </ul>
+                          {/* <br />
+                          <p>
+                            Go to{" "}
+                            <Link href="/" className="ndigreen">
+                              home
+                            </Link>{" "}
+                            page
+                          </p> */}
+                          {/* <Button
+                        
                             href="/login"
                             variant="contained"
                             sx={{
                               minWidth: "250px",
-                              backgroundColor: "#c43e3d",
+                              backgroundColor: "",
                               textTransform: "none",
                               color: "white",
                               minHeight: "60px",
                               borderRadius: "50px",
+                              mt
                             }}
                           >
-                            <Typography variant="body1">
-                              Go to Login
-                            </Typography>
-                          </Button>
+                            <Typography variant="body1">Go to Login</Typography>
+                          </Button> */}
                         </Grid2>
                       </>
                     )}
