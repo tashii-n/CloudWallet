@@ -541,7 +541,7 @@ export default function BiometricPage() {
                     color="#c43e3d"
                     fontWeight={600}
                     mb={3}
-                    letterSpacing={1}
+                    letterSpacing={0.5}
                   >
                     LOGIN FAILED !
                   </Typography>
@@ -554,20 +554,21 @@ export default function BiometricPage() {
                   <Typography variant="body2" mt={3}>
                     Click the button below to try again.
                   </Typography>
+                  
                   <br />
                   <Button
                     onClick={() => setShowLiveness(true)}
                     variant="contained"
                     sx={{
-                      minWidth: "250px",
+                      minWidth: "200px",
                       backgroundColor: "#c43e3d",
                       textTransform: "none",
                       color: "white",
-                      minHeight: "60px",
+                      minHeight: "50px",
                       borderRadius: "50px",
                     }}
                   >
-                    <Typography variant="body1">Scan My Face</Typography>
+                    <Typography variant="body1">Try Again</Typography>
                   </Button>
                   <br />
                   <Typography variant="body2">

@@ -8,7 +8,7 @@ import {
   Button,
   Checkbox,
   Grid2,
-  Link,
+  // Link,
   List,
   Typography,
 } from "@mui/material";
@@ -19,6 +19,7 @@ import { useEffect, useState, useRef } from "react";
 import { secureClear, secureGet, secureStore } from "@/app/lib/storage/storage";
 import { onboardingBiometricAPI } from "@/app/lib/api_utils/onboardingAPI";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function BiometricValidatePage() {
   const [validateSuccess, setValidateSuccess] = useState(false);
@@ -281,25 +282,23 @@ export default function BiometricValidatePage() {
                             If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
                           </Typography> */}
                           <p>It seems you already have an account with us.</p>
-                          <br />
-                          <ul>
-                            <li>
-                              If your account is set up in Edge Wallet, please
-                              log in through the Edge Wallet app. Go to{" "}
-                            <Link href="/" className="ndigreen">
-                              home
-                            </Link>{" "}
-                            page.
-                            </li>
-                            <li>
-                              If your account is in the Cloud Wallet, you can
-                              log in{" "}
-                              <Link href="/login" className="ndigreen">
-                                here
-                              </Link>{" "}
-                              to continue.
-                            </li>
-                          </ul>
+
+                          <Typography
+                            variant="body2"
+                            gutterBottom
+                            fontWeight={600}
+                            my={2}
+                          >
+                            If you have registered in the NDI Wallet App, please
+                            continue with the Mobile Wallet.
+                          </Typography>
+
+                          <Typography variant="body2">
+                            <Link href="/login" className="ndigreen" >
+                              <u>Click here to login.</u>
+                            </Link>
+                          </Typography>
+
                           {/* <br />
                           <p>
                             Go to{" "}
