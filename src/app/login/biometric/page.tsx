@@ -4,7 +4,7 @@ import Footer from "@/app/components/LandingPageMain/Footer/footer";
 import Header from "@/app/components/LandingPageMain/Header/Header";
 import { Backdrop, Box, Button, Grid2, Stack, Typography } from "@mui/material";
 import Image from "next/image";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { secureClear, secureGet, secureStore } from "@/app/lib/storage/storage";
@@ -36,25 +36,99 @@ export default function BiometricPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
-  const apiCalled = useRef(false); // Prevent duplicate API calls
+  const [onboardingStep, setOnboardingStep] = useState<
+    "NONE" | "DID_FAIL" | "FOUNDATIONAL_ID_FAIL"
+  >("NONE");
+
+  // Use refs for cleanup and preventing race conditions
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRefs = useRef<NodeJS.Timeout[]>([]);
+  const apiInProgressRef = useRef(false);
   const maxRetries = 2;
 
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
+    timeoutRefs.current = [];
+    apiInProgressRef.current = false;
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
+
+  // Safe session storage with error handling
+  const safeSessionStorage = {
+    getItem: (key: string): string | null => {
+      try {
+        return sessionStorage.getItem(key);
+      } catch (error) {
+        console.error(`Failed to get ${key} from session storage:`, error);
+        return null;
+      }
+    },
+    setItem: (key: string, value: string): boolean => {
+      try {
+        sessionStorage.setItem(key, value);
+        return true;
+      } catch (error) {
+        console.error(`Failed to set ${key} in session storage:`, error);
+        return false;
+      }
+    },
+    removeItem: (key: string): void => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch (error) {
+        console.error(`Failed to remove ${key} from session storage:`, error);
+      }
+    },
+  };
+
+  // Safe delay with cleanup
+  const safeDelay = (ms: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(resolve, ms);
+      timeoutRefs.current.push(timeout);
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.signal.addEventListener("abort", () => {
+          clearTimeout(timeout);
+          reject(new Error("Operation aborted"));
+        });
+      }
+    });
+  };
+
   /**
-   * 🔹 Run biometric validation (with retries)
+   * 🔹 Run biometric validation (with retries and proper error handling)
    */
-  const fetchBiometricValidation = async (attempt = 1) => {
-    if (apiCalled.current) return; // Prevent duplicate API calls
+  const fetchBiometricValidation = async (attempt = 1): Promise<any> => {
+    if (apiInProgressRef.current) {
+      throw new Error("Biometric validation already in progress");
+    }
+
     try {
+      apiInProgressRef.current = true;
+
       const onboardingDataString = await secureGet("onboardingData");
       const onboardingData = onboardingDataString
         ? JSON.parse(onboardingDataString)
         : null;
 
       if (!onboardingData) {
-        throw new Error("No onboarding data found in session storage");
+        throw new Error("No onboarding data found in secure storage");
       }
 
-      const imageData = sessionStorage.getItem("imageData") || "";
+      const imageData = safeSessionStorage.getItem("imageData");
+      if (!imageData) {
+        throw new Error("No image data found in session storage");
+      }
 
       const requestData = {
         idNumber: onboardingData["ID Number"],
@@ -68,42 +142,63 @@ export default function BiometricPage() {
         onboardingData["onboardingUniqueId"]
       );
 
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       const response = await onboardingBiometricAPI(requestData);
       console.log("✅ Biometric validation response:", response);
 
-      apiCalled.current = true;
-
-      return response; // ✅ Return response instead of redirecting
+      return response;
     } catch (error) {
       console.error(`Error on attempt ${attempt}:`, error);
 
-      if (attempt < maxRetries) {
+      if (attempt < maxRetries && !abortControllerRef.current?.signal.aborted) {
         const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
         console.log(`Retrying in ${delay / 1000} seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return fetchBiometricValidation(attempt + 1);
+
+        try {
+          await safeDelay(delay);
+          return fetchBiometricValidation(attempt + 1);
+        } catch (delayError) {
+          throw new Error("Operation was cancelled during retry delay");
+        }
       } else {
-        console.error("❌ Max retries reached. API call failed.");
+        console.error("❌ Max retries reached or operation aborted.");
         throw error;
       }
+    } finally {
+      apiInProgressRef.current = false;
     }
   };
 
   /**
-   * 🔹 Liveness Success Handler
+   * 🔹 Liveness Success Handler (improved error handling)
    */
-  const handleLivenessSuccess = async (livenessResponse: any, attempt = 1) => {
+  const handleLivenessSuccess = async (
+    livenessResponse: any
+  ): Promise<void> => {
+    if (isLoading || apiInProgressRef.current) {
+      console.warn("Operation already in progress, skipping...");
+      return;
+    }
+
     try {
       const imageData = livenessResponse?.images?.[0];
-      if (!imageData)
+      if (!imageData) {
         throw new Error("No image data found in liveness response");
+      }
 
-      sessionStorage.setItem("imageData", imageData);
+      if (!safeSessionStorage.setItem("imageData", imageData)) {
+        throw new Error("Failed to store image data in session storage");
+      }
 
       const idNumber = await secureGet("idNumber");
-      if (!idNumber) throw new Error("ID Number missing from session storage");
+      if (!idNumber) {
+        throw new Error("ID Number missing from secure storage");
+      }
 
       setIsLoading(true);
+      setLoginFailed(false);
 
       const jsonData = { idNumber, image: imageData };
       const response = await loginAPI(jsonData);
@@ -116,7 +211,9 @@ export default function BiometricPage() {
       );
 
       let responseTenantId, holderDID;
+
       try {
+        // ✅ Try to get DID
         const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
         responseTenantId = getDidResponse.hashTenantID;
         holderDID = getDidResponse.did;
@@ -124,53 +221,78 @@ export default function BiometricPage() {
         await secureStore("tenantId", responseTenantId);
         await secureStore("holderDID", holderDID);
         console.log("✅ Existing wallet found - Tenant ID:", responseTenantId);
-      } catch {
-        console.log("❌ No existing DID found, checking wallet status...");
-        const walletStatusResponse = await retryAPI(getCloudWalletStatus, {});
-        console.log(
-          "🚀 ~ handleLivenessSuccess ~ walletStatusResponse:",
-          walletStatusResponse
-        );
 
-        if (walletStatusResponse?.status === 404) {
-          setIsLoading(false);
-          setShowOnboardingForm(true); // Show onboarding form
-          return;
-        } else {
-          throw new Error("Wallet exists but DID retrieval failed");
+        try {
+          // 🔍 Fetch credential list
+          const credentialList = await getCredentialListForLogin();
+          const hasFoundationalId = credentialList.some(
+            (cred: any) => cred.name === "Foundational ID"
+          );
+
+          if (!hasFoundationalId) {
+            console.log("❌ Foundational ID credential not found.");
+            setOnboardingStep("FOUNDATIONAL_ID_FAIL");
+            setShowOnboardingForm(true);
+            return;
+          }
+
+          console.log("✅ Foundational ID credential found.");
+        } catch (err) {
+          console.error("Error fetching credential list:", err);
+          throw err;
+        }
+      } catch (didError) {
+        // ❌ No DID found, check wallet status
+        console.log("❌ No existing DID found, checking wallet status...");
+
+        try {
+          const walletStatusResponse = await retryAPI(getCloudWalletStatus, {});
+          console.log(
+            "🚀 ~ handleLivenessSuccess ~ walletStatusResponse:",
+            walletStatusResponse
+          );
+
+          if (walletStatusResponse?.status === 404) {
+            setOnboardingStep("DID_FAIL");
+            setShowOnboardingForm(true);
+            return;
+          } else {
+            throw new Error("Wallet exists but DID retrieval failed");
+          }
+        } catch (walletError) {
+          console.error("Failed to check wallet status:", walletError);
+          throw new Error("Failed to verify wallet and DID status");
         }
       }
 
-      const redirectUrl = sessionStorage.getItem("redirectUrl");
-      sessionStorage.removeItem("redirectUrl");
-
-      router.push(redirectUrl || "/dashboard");
+      // 🔀 Redirect after everything is validated
+      const redirectUrl =
+        safeSessionStorage.getItem("redirectUrl") || "/dashboard";
+      safeSessionStorage.removeItem("redirectUrl");
+      router.push(redirectUrl);
     } catch (error) {
-      console.error(`Error on attempt ${attempt}:`, error);
-      if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Retrying in ${delay / 1000} seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        handleLivenessSuccess(livenessResponse, attempt + 1);
-      } else {
-        setShowLiveness(false);
-        setLoginFailed(true);
-        await secureClear("cloudAuth");
-      }
+      console.error("❌ Error in handleLivenessSuccess:", error);
+      setShowLiveness(false);
+      setLoginFailed(true);
+      await secureClear("cloudAuth");
     } finally {
       setIsLoading(false);
     }
   };
 
   /**
-   * 🔹 Onboarding Success Handler
-   * - Run onboarding process
-   * - Then run biometric validation
+   * 🔹 Onboarding Success Handler (improved with proper error handling)
    */
-  const handleOnboardingSuccess = async () => {
+  const handleOnboardingSuccess = async (): Promise<void> => {
+    if (isLoading || apiInProgressRef.current) {
+      console.warn("Onboarding already in progress, skipping...");
+      return;
+    }
+
     try {
       setShowOnboardingForm(false);
       setIsLoading(true);
+      setLoginFailed(false);
 
       console.log("🔍 Starting biometric validation...");
       const biometricResult = await fetchBiometricValidation();
@@ -183,208 +305,281 @@ export default function BiometricPage() {
         );
         await completeOnboardingProcess();
         console.log("🎉 Onboarding complete!");
-
         router.push("/dashboard");
       } else {
         throw new Error(
-          "Biometric validation failed. Cannot complete onboarding."
+          `Biometric validation failed with scenario: ${biometricResult?.scenario || "unknown"}`
         );
       }
     } catch (error) {
       console.error("❌ Error after onboarding success:", error);
-      setIsLoading(false);
       setLoginFailed(true);
     } finally {
-      // setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   /**
-   * 🔹 Onboarding Process (wallet, DID, creds)
+   * 🔹 Onboarding Process (wallet, DID, creds) - improved error handling
    */
-  const completeOnboardingProcess = async () => {
+  const completeOnboardingProcess = async (): Promise<void> => {
     try {
-      setIsLoading(true);
-      await createWalletForLogin();
-      await createDIDForLogin();
+      if (onboardingStep === "DID_FAIL") {
+        console.log("🔧 Creating wallet and DID...");
+        await createWalletForLogin();
+        await createDIDForLogin();
+      }
+
+      // Both flows continue from here
+      console.log("🔧 Getting tenant ID and issuing credentials...");
       await getTenantIdForLogin();
       await issueCredentialsForLogin();
       await acceptRevocationCredentialsForLogin();
+
+      console.log("✅ Onboarding process completed successfully");
     } catch (error) {
-      console.error("Error during onboarding process:", error);
+      console.error("❌ Error during onboarding process:", error);
+      throw error; // Re-throw to be handled by caller
     }
   };
 
   // Helper function for creating wallet during login
-  const createWalletForLogin = async () => {
-    const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
-      label: "Credential Wallet",
-    });
-    console.log("✅ Wallet Created during login:", walletResponse);
-    return walletResponse;
+  const createWalletForLogin = async (): Promise<any> => {
+    try {
+      const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
+        label: "Credential Wallet",
+      });
+      console.log("✅ Wallet Created during login:", walletResponse);
+      return walletResponse;
+    } catch (error) {
+      console.error("❌ Failed to create wallet:", error);
+      throw new Error("Failed to create wallet during login");
+    }
   };
 
   // Helper function for creating DID during login
-  const createDIDForLogin = async () => {
-    const didResponse = await retryAPI(onboardingDIDAPI, {});
-    const holderDID = didResponse.did;
-    console.log("✅ New Holder DID created during login:", holderDID);
-    await secureStore("holderDID", holderDID);
-    return holderDID;
+  const createDIDForLogin = async (): Promise<string> => {
+    try {
+      const didResponse = await retryAPI(onboardingDIDAPI, {});
+      const holderDID = didResponse.did;
+
+      if (!holderDID) {
+        throw new Error("No DID returned from API");
+      }
+
+      console.log("✅ New Holder DID created during login:", holderDID);
+      await secureStore("holderDID", holderDID);
+      return holderDID;
+    } catch (error) {
+      console.error("❌ Failed to create DID:", error);
+      throw new Error("Failed to create DID during login");
+    }
   };
 
   // Helper function for getting tenant ID during login
-  const getTenantIdForLogin = async () => {
-    const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
-    const responseTenantId = getDidResponse.hashTenantID;
-    console.log("✅ New Tenant ID created during login:", responseTenantId);
-    await secureStore("tenantId", responseTenantId);
-    return responseTenantId;
+  const getTenantIdForLogin = async (): Promise<string> => {
+    try {
+      const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
+      const responseTenantId = getDidResponse.hashTenantID;
+
+      if (!responseTenantId) {
+        throw new Error("No tenant ID returned from API");
+      }
+
+      console.log("✅ Tenant ID retrieved during login:", responseTenantId);
+      await secureStore("tenantId", responseTenantId);
+      return responseTenantId;
+    } catch (error) {
+      console.error("❌ Failed to get tenant ID:", error);
+      throw new Error("Failed to retrieve tenant ID during login");
+    }
   };
 
   // Helper function for issuing credentials during login
-  const issueCredentialsForLogin = async () => {
-    const holderDID = await secureGet("holderDID");
-    if (!holderDID)
-      throw new Error("Missing holderDID for credential issuance.");
-
-    // Retrieve the stored onboarding data (from the form)
-    const storedData = await secureGet("onboardingData");
-    if (!storedData) {
-      console.warn("No onboarding data found, skipping credential issuance");
-      return;
-    }
-
-    const parsedData = JSON.parse(storedData);
-
-    // Prepare the payload for the API
-    const payload = {
-      ...parsedData, // Include all the onboarding data
-      credentialType: "jsonld", // Specify the credential type
-      holderDID, // Include the holderDID
-    };
-
-    // Call the API to issue credentials
-    const credentialsResponse = await retryAPI(
-      onboardingInitialCredentialsAPI,
-      payload
-    );
-    console.log("✅ Credentials Issued during login:", credentialsResponse);
-
-    // Accept each issued credential
-    if (credentialsResponse?.length) {
-      for (const credential of credentialsResponse) {
-        console.log(`Accepting credential during login: ${credential.name}`);
-        try {
-          const acceptResponse = await retryAPI(acceptCredentialAPI, {
-            invitationUrl: credential.url,
-          });
-          console.log(
-            `✅ Credential ${credential.name} Accepted during login:`,
-            acceptResponse
-          );
-        } catch (error) {
-          console.error(
-            `❌ Error Accepting ${credential.name} during login:`,
-            error
-          );
-        }
+  const issueCredentialsForLogin = async (): Promise<void> => {
+    try {
+      const holderDID = await secureGet("holderDID");
+      if (!holderDID) {
+        throw new Error("Missing holderDID for credential issuance");
       }
+
+      const storedData = await secureGet("onboardingData");
+      if (!storedData) {
+        console.warn("No onboarding data found, skipping credential issuance");
+        return;
+      }
+
+      const parsedData = JSON.parse(storedData);
+      const payload = {
+        ...parsedData,
+        credentialType: "jsonld",
+        holderDID,
+      };
+
+      const credentialsResponse = await retryAPI(
+        onboardingInitialCredentialsAPI,
+        payload
+      );
+      console.log("✅ Credentials Issued during login:", credentialsResponse);
+
+      // Accept each issued credential
+      if (credentialsResponse?.length) {
+        const acceptPromises = credentialsResponse.map(
+          async (credential: any) => {
+            console.log(
+              `Accepting credential during login: ${credential.name}`
+            );
+            try {
+              const acceptResponse = await retryAPI(acceptCredentialAPI, {
+                invitationUrl: credential.url,
+              });
+              console.log(
+                `✅ Credential ${credential.name} accepted:`,
+                acceptResponse
+              );
+              return acceptResponse;
+            } catch (error) {
+              console.error(`❌ Error accepting ${credential.name}:`, error);
+              throw error;
+            }
+          }
+        );
+
+        await Promise.all(acceptPromises);
+      }
+    } catch (error) {
+      console.error("❌ Failed to issue credentials:", error);
+      throw new Error("Failed to issue credentials during login");
     }
   };
 
   // Helper function for getting credential list during login
-  const getCredentialListForLogin = async () => {
+  const getCredentialListForLogin = async (): Promise<any[]> => {
     const tenantId = await secureGet("tenantId");
-    if (!tenantId) throw new Error("Missing tenantId for credential list.");
-
-    let attempts = 0;
-    while (attempts < 10) {
-      console.log(
-        `⏳ Fetching Credential List during login... Attempt ${attempts + 1}`
-      );
-      const credentialListResponse = await getCredentialListAPI({
-        tenantId,
-        take: 10,
-        skip: 0,
-      });
-      console.log(
-        "🚀 ~ getCredentialListForLogin ~ credentialList:",
-        credentialListResponse
-      );
-      if (credentialListResponse?.length) {
-        console.log(
-          "✅ Credential List Found during login:",
-          credentialListResponse
-        );
-        return credentialListResponse;
-      }
-
-      attempts++;
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+    if (!tenantId) {
+      throw new Error("Missing tenantId for credential list");
     }
 
-    throw new Error(
-      "❌ Credential List still empty after 10 attempts during login"
-    );
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        console.log(
+          `⏳ Fetching Credential List... Attempt ${attempts + 1}/${maxAttempts}`
+        );
+
+        const credentialListResponse = await getCredentialListAPI({
+          tenantId,
+          take: 10,
+          skip: 0,
+        });
+
+        console.log(
+          "🚀 ~ getCredentialListForLogin ~ credentialList:",
+          credentialListResponse
+        );
+
+        if (
+          Array.isArray(credentialListResponse) &&
+          credentialListResponse.length > 0
+        ) {
+          console.log("✅ Credential List Found:", credentialListResponse);
+          return credentialListResponse;
+        }
+
+        if (attempts === maxAttempts - 1) {
+          console.warn("⚠️ Credential list empty after all retries");
+          return [];
+        }
+
+        attempts++;
+        await safeDelay(2000);
+      } catch (error) {
+        console.error(
+          `❌ Error fetching credential list (attempt ${attempts + 1}):`,
+          error
+        );
+
+        if (attempts === maxAttempts - 1) {
+          throw new Error("Failed to fetch credential list after all retries");
+        }
+
+        attempts++;
+        await safeDelay(2000);
+      }
+    }
+
+    return [];
   };
 
   // Helper function for accepting revocation credentials during login
-  const acceptRevocationCredentialsForLogin = async () => {
-    const tenantId = await secureGet("tenantId");
-    const holderDID = await secureGet("holderDID");
+  const acceptRevocationCredentialsForLogin = async (): Promise<void> => {
+    try {
+      const tenantId = await secureGet("tenantId");
+      const holderDID = await secureGet("holderDID");
 
-    if (!tenantId || !holderDID)
-      throw new Error("Missing required data for revocation credentials.");
+      if (!tenantId || !holderDID) {
+        throw new Error("Missing required data for revocation credentials");
+      }
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    const credentialList = await getCredentialListForLogin();
+      // Wait for credentials to be processed
+      await safeDelay(5000);
 
-    if (credentialList?.length) {
-      for (const credential of credentialList) {
-        if (credential.revocationId) {
-          console.log(
-            `Calling Revocation API during login for: ${credential.name}`
-          );
-          try {
-            const revocationResponse = await retryAPI(
-              getRevocationCredentialAPI,
-              {
-                holderDID: holderDID,
-                revocationId: credential.revocationId,
-              }
-            );
+      const credentialList = await getCredentialListForLogin();
 
-            console.log(
-              `✅ Revocation Credential during login for ${credential.name}:`,
-              revocationResponse
-            );
+      if (credentialList?.length) {
+        const revocationPromises = credentialList
+          .filter((credential) => credential.revocationId)
+          .map(async (credential) => {
+            console.log(`Processing revocation for: ${credential.name}`);
 
-            const invitationUrl = revocationResponse?.credInviteURL;
-            if (invitationUrl) {
-              const acceptResponse = await retryAPI(acceptCredentialAPI, {
-                invitationUrl,
-              });
+            try {
+              const revocationResponse = await retryAPI(
+                getRevocationCredentialAPI,
+                {
+                  holderDID: holderDID,
+                  revocationId: credential.revocationId,
+                }
+              );
+
               console.log(
-                `✅ Revocation Credential Accepted during login: ${credential.name}`,
-                acceptResponse
+                `✅ Revocation credential for ${credential.name}:`,
+                revocationResponse
               );
-            } else {
+
+              const invitationUrl = revocationResponse?.credInviteURL;
+              if (invitationUrl) {
+                const acceptResponse = await retryAPI(acceptCredentialAPI, {
+                  invitationUrl,
+                });
+                console.log(
+                  `✅ Revocation credential accepted: ${credential.name}`,
+                  acceptResponse
+                );
+                return acceptResponse;
+              } else {
+                throw new Error(`Missing credInviteURL for ${credential.name}`);
+              }
+            } catch (error) {
               console.error(
-                `❌ Missing credInviteURL for ${credential.name} during login`
+                `❌ Error with revocation credential for ${credential.name}:`,
+                error
               );
+              throw error;
             }
-          } catch (error) {
-            console.error(
-              `❌ Error with Revocation Credential during login for ${credential.name}:`,
-              error
-            );
-          }
+          });
+
+        if (revocationPromises.length > 0) {
+          await Promise.all(revocationPromises);
         }
       }
-    }
 
-    console.log("✅ Complete onboarding process finished during login");
+      console.log("✅ Complete revocation credential process finished");
+    } catch (error) {
+      console.error("❌ Failed to accept revocation credentials:", error);
+      throw new Error("Failed to accept revocation credentials during login");
+    }
   };
 
   return (
@@ -537,45 +732,60 @@ export default function BiometricPage() {
               ) : loginFailed ? (
                 <>
                   <Typography
-                    variant="h5"
+                    variant="h6"
                     color="#c43e3d"
                     fontWeight={600}
-                    mb={3}
-                    letterSpacing={0.5}
+                    mb={2}
+                    letterSpacing={0.2}
                   >
                     LOGIN FAILED !
                   </Typography>
                   <Image
                     src="/images/errorred.svg"
-                    width={170}
-                    height={170}
-                    alt="Biometric Avatar"
+                    width={130}
+                    height={130}
+                    alt="Login Error Logo"
                   />
                   <Typography variant="body2" mt={3}>
                     Click the button below to try again.
                   </Typography>
-                  
+
                   <br />
                   <Button
                     onClick={() => setShowLiveness(true)}
                     variant="contained"
                     sx={{
-                      minWidth: "200px",
+                      minWidth: "170px",
                       backgroundColor: "#c43e3d",
                       textTransform: "none",
                       color: "white",
-                      minHeight: "50px",
+                      minHeight: "44px",
                       borderRadius: "50px",
                     }}
                   >
-                    <Typography variant="body1">Try Again</Typography>
+                    <Typography variant="body2">Try Again</Typography>
                   </Button>
                   <br />
-                  <Typography variant="body2">
-                    Want to go back?{" "}
-                    <Link href="/" className="ndigreen">
-                      Return to Home Page
+
+                  <Typography variant="body2" mt={5}>
+                    Don't have an account?{" "}
+                    <Link href="/signup" className="ndigreen">
+                      <strong>Sign Up</strong>
                     </Link>
+                  </Typography>
+                  <Typography
+                    mt={3}
+                    variant="caption"
+                    bgcolor="#fff7e5"
+                    py={1}
+                    px={2}
+                    borderRadius={5}
+                    color="#e6b944"
+                  >
+                    <strong>
+                      Note: If you already have a NDI Mobile Wallet account,
+                      please continue there.
+                    </strong>
                   </Typography>
                 </>
               ) : (

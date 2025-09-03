@@ -24,6 +24,7 @@ import Link from "next/link";
 export default function BiometricValidatePage() {
   const [validateSuccess, setValidateSuccess] = useState(false);
   const [newUser, setNewUser] = useState(false);
+  const [userState, setUserState] = useState("");
 
   const apiCalled = useRef(false);
   const maxRetries = 4; // Maximum number of retry attempts
@@ -70,12 +71,21 @@ export default function BiometricValidatePage() {
         }, 2000);
         if (response && scenario === "NEW_USER_ONBOARDING") {
           setNewUser(true);
+          setUserState("NewUser");
           const pid = response?.personId;
           await secureStore("personId", pid);
 
           setTimeout(() => {
             router.push("/signup/review");
           }, 3000);
+        } else if (
+          response &&
+          (scenario === "UPDATE_ONBOARDING_BACKUP_DIFF_DEVICE" ||
+            scenario === "UPDATE_ONBOARDING_NO_BACKUP_DIFF_DEVICE")
+        ) {
+          setUserState("EdgeWalletAccount");
+          const pid = response?.personId;
+          await secureStore("personId", pid);
         } else {
           // console.log(
           //   "Scenario is not 'NEW_PERSON_ONBOARDING'. Redirect not triggered."
@@ -228,7 +238,7 @@ export default function BiometricValidatePage() {
                   </Box>
                 ) : (
                   <Box>
-                    {newUser ? (
+                    {userState == "NewUser" ? (
                       <>
                         <Typography
                           variant="h5"
@@ -254,23 +264,24 @@ export default function BiometricValidatePage() {
                           </Typography>
                         </Grid2>
                       </>
-                    ) : (
+                    ) : userState === "EdgeWalletAccount" ? (
                       <>
+                        <Image
+                          src="/images/error.svg"
+                          width={140}
+                          height={140}
+                          alt={"Validation Success Image"}
+                        />
                         <Typography
-                          variant="h5"
+                          variant="h6"
                           component="h2"
-                          mt={1}
+                          // mt={1}
+                          mb={2}
                           fontWeight={600}
                           color="primary.main"
                         >
                           Account Already Exists
                         </Typography>
-                        <Image
-                          src="/images/error.svg"
-                          width={170}
-                          height={170}
-                          alt={"Validation Success Image"}
-                        />
                         <Grid2 size={9} mx="auto" color="grey" fontSize={14.5}>
                           {/* <Typography
                             variant="body1"
@@ -281,23 +292,120 @@ export default function BiometricValidatePage() {
                             You already have an account with us. <br />
                             If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
                           </Typography> */}
-                          <p>It seems you already have an account with us.</p>
+                          <Typography variant="body2" mb={3}>
+                            It seems you already have an account in the NDI
+                            Mobile Wallet.
+                          </Typography>
 
-                          <Typography
+                          {/* <Typography
                             variant="body2"
                             gutterBottom
                             fontWeight={600}
                             my={2}
                           >
-                            If you have registered in the NDI Wallet App, please
-                            continue with the Mobile Wallet.
+                            Please continue with the NDI Mobile Wallet to avail
+                            our services.
+                          </Typography> */}
+
+                          {/* <Typography variant="body2">
+                            <Link href="/" className="ndigreen">
+                              <u>Go to home.</u>
+                            </Link>
+                          </Typography> */}
+                          <Link href="/" passHref>
+                            <Button
+                              // type="submit"
+                              variant="contained"
+                              
+                              sx={{ color: "white", borderRadius: 20, py:1, px:3 }}
+                            >
+                              Go to Home
+                            </Button>
+                          </Link>
+
+                          {/* <br />
+                          <p>
+                            Go to{" "}
+                            <Link href="/" className="ndigreen">
+                              home
+                            </Link>{" "}
+                            page
+                          </p> */}
+                          {/* <Button
+                        
+                            href="/login"
+                            variant="contained"
+                            sx={{
+                              minWidth: "250px",
+                              backgroundColor: "",
+                              textTransform: "none",
+                              color: "white",
+                              minHeight: "60px",
+                              borderRadius: "50px",
+                              mt
+                            }}
+                          >
+                            <Typography variant="body1">Go to Login</Typography>
+                          </Button> */}
+                        </Grid2>
+                      </>
+                    ) : (
+                      <>
+                        <Image
+                          src="/images/error.svg"
+                          width={140}
+                          height={140}
+                          alt={"Validation Success Image"}
+                        />
+                        <Typography
+                          variant="h6"
+                          component="h2"
+                          // mt={1}
+                          mb={2}
+                          fontWeight={600}
+                          color="primary.main"
+                        >
+                          Account Already Exists
+                        </Typography>
+                        <Grid2 size={9} mx="auto" color="grey" fontSize={14.5}>
+                          {/* <Typography
+                            variant="body1"
+                            color="grey"
+                            gutterBottom
+                            mb={3}
+                          >
+                            You already have an account with us. <br />
+                            If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
+                          </Typography> */}
+                          <Typography variant="body2" mb={3}>
+                            Looks like you already have an account with us. Please log in to continue.
                           </Typography>
 
-                          <Typography variant="body2">
-                            <Link href="/login" className="ndigreen" >
-                              <u>Click here to login.</u>
+                          {/* <Typography
+                            variant="body2"
+                            gutterBottom
+                            fontWeight={600}
+                            my={2}
+                          >
+                            Please continue with the NDI Mobile Wallet to avail
+                            our services.
+                          </Typography> */}
+
+                          {/* <Typography variant="body2">
+                            <Link href="/" className="ndigreen">
+                              <u>Go to home.</u>
                             </Link>
-                          </Typography>
+                          </Typography> */}
+                          <Link href="/login" passHref>
+                            <Button
+                              // type="submit"
+                              variant="contained"
+                              
+                              sx={{ color: "white", borderRadius: 20, py:1, px:3 }}
+                            >
+                              Go to Login
+                            </Button>
+                          </Link>
 
                           {/* <br />
                           <p>
