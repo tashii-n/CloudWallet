@@ -20,6 +20,7 @@ import { secureClear, secureGet, secureStore } from "@/app/lib/storage/storage";
 import { onboardingBiometricAPI } from "@/app/lib/api_utils/onboardingAPI";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BiometricAnimation from "@/app/components/Common/biometricanimation";
 
 export default function BiometricValidatePage() {
   const [validateSuccess, setValidateSuccess] = useState(false);
@@ -221,20 +222,27 @@ export default function BiometricValidatePage() {
                 pb={validateSuccess ? 6 : 10}
               >
                 {!validateSuccess ? (
-                  <Box>
+                  <Box
+                    alignItems={"center"}
+                    justifyContent={"center"}
+                    textAlign={"center"}
+                  >
                     <Typography variant="h6" component="h2" gutterBottom>
                       Validating your photo
                     </Typography>
                     <Typography variant="body2" mb={5}>
                       Please wait while your photo is being validated with DCRC
                     </Typography>
-                    <Image
+                    {/* <Image
                       unoptimized
                       src="/images/NDIlogospinner.gif"
                       width={170}
                       height={170}
                       alt={""}
-                    />
+                    /> */}
+                    <Box display="flex" justifyContent="center">
+                      <BiometricAnimation height={170} width={179} />
+                    </Box>
                   </Box>
                 ) : (
                   <Box>
@@ -315,8 +323,12 @@ export default function BiometricValidatePage() {
                             <Button
                               // type="submit"
                               variant="contained"
-                              
-                              sx={{ color: "white", borderRadius: 20, py:1, px:3 }}
+                              sx={{
+                                color: "white",
+                                borderRadius: 20,
+                                py: 1,
+                                px: 3,
+                              }}
                             >
                               Go to Home
                             </Button>
@@ -377,7 +389,8 @@ export default function BiometricValidatePage() {
                             If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
                           </Typography> */}
                           <Typography variant="body2" mb={3}>
-                            Looks like you already have an account with us. Please log in to continue.
+                            Looks like you already have an account with us.
+                            Please log in to continue.
                           </Typography>
 
                           {/* <Typography
@@ -399,8 +412,12 @@ export default function BiometricValidatePage() {
                             <Button
                               // type="submit"
                               variant="contained"
-                              
-                              sx={{ color: "white", borderRadius: 20, py:1, px:3 }}
+                              sx={{
+                                color: "white",
+                                borderRadius: 20,
+                                py: 1,
+                                px: 3,
+                              }}
                             >
                               Go to Login
                             </Button>

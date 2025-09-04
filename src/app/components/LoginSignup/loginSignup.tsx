@@ -7,8 +7,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
   Stack,
   Button,
   SelectChangeEvent,
@@ -87,7 +85,6 @@ export default function OnboardingFormPopup({
   const [selectedIDType, setSelectedIDType] = useState<string>("Citizenship");
   const [cidNumber, setCidNumber] = useState<string>("");
   const [dob, setDob] = useState<Dayjs | null>(null);
-  const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [validateFailed, setValidateFailed] = useState<boolean>(false);
 
@@ -139,10 +136,18 @@ export default function OnboardingFormPopup({
     setDob(date);
   };
 
-  const handleAgreeToTermsChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setAgreeToTerms(event.target.checked);
+  // Check if all required fields are filled
+  const isFormValid = () => {
+    return (
+      fullname.trim() !== "" &&
+      selectedGender !== "" &&
+      selectedCitizenship !== "" &&
+      selectedIDType !== "" &&
+      cidNumber.trim() !== "" &&
+      selectedDzongkhag !== "" &&
+      selectedGewog !== "" &&
+      dob !== null
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -219,8 +224,8 @@ export default function OnboardingFormPopup({
             gutterBottom
             mb={2}
           >
-            Some additional information is required to set up your digital wallet
-            and complete your login.
+            Some additional information is required to set up your digital
+            wallet and complete your login.
           </Typography>
 
           <Box
@@ -253,6 +258,7 @@ export default function OnboardingFormPopup({
                     onChange={handleGenderChange}
                     label="Gender"
                     name="gender"
+                    required
                   >
                     <MenuItem value={"Male"}>Male</MenuItem>
                     <MenuItem value={"Female"}>Female</MenuItem>
@@ -320,6 +326,7 @@ export default function OnboardingFormPopup({
                   label="Citizenship ID Number"
                   value={cidNumber}
                   onChange={handleCidNumberChange}
+                  required
                 />
               </Grid2>
 
@@ -332,6 +339,7 @@ export default function OnboardingFormPopup({
                     value={selectedDzongkhag}
                     onChange={handleDzongkhagChange}
                     label="Dzongkhag"
+                    required
                   >
                     {dzongkhags.map((dzongkhag) => (
                       <MenuItem
@@ -355,6 +363,7 @@ export default function OnboardingFormPopup({
                     onChange={handleGewogChange}
                     label="Gewog"
                     disabled={!gewogs.length}
+                    required
                   >
                     {gewogs.map((gewog) => (
                       <MenuItem key={gewog.gewogName} value={gewog.gewogName}>
@@ -366,30 +375,6 @@ export default function OnboardingFormPopup({
               </Grid2>
             </Grid2>
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  color="primary"
-                  required
-                  checked={agreeToTerms}
-                  onChange={handleAgreeToTermsChange}
-                />
-              }
-              label={
-                <>
-                  I agree to the{" "}
-                  <a
-                    href="https://www.bhutanndi.com/terms-of-services"
-                    style={{ color: "#5AC994" }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Terms and Privacy
-                  </a>
-                </>
-              }
-            />
-
             <Stack
               direction="row"
               spacing={3}
@@ -398,7 +383,6 @@ export default function OnboardingFormPopup({
             >
               <Button
                 type="submit"
-                disabled={!agreeToTerms}
                 variant="contained"
                 sx={{
                   minWidth: "200px",

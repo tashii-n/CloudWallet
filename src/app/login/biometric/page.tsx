@@ -232,6 +232,7 @@ export default function BiometricPage() {
           if (!hasFoundationalId) {
             console.log("❌ Foundational ID credential not found.");
             setOnboardingStep("FOUNDATIONAL_ID_FAIL");
+            setIsLoading(false)
             setShowOnboardingForm(true);
             return;
           }
@@ -254,6 +255,7 @@ export default function BiometricPage() {
 
           if (walletStatusResponse?.status === 404) {
             setOnboardingStep("DID_FAIL");
+            setIsLoading(false)
             setShowOnboardingForm(true);
             return;
           } else {
@@ -275,9 +277,8 @@ export default function BiometricPage() {
       setShowLiveness(false);
       setLoginFailed(true);
       await secureClear("cloudAuth");
-    } finally {
       setIsLoading(false);
-    }
+    } 
   };
 
   /**
@@ -313,9 +314,8 @@ export default function BiometricPage() {
     } catch (error) {
       console.error("❌ Error after onboarding success:", error);
       setLoginFailed(true);
-    } finally {
       setIsLoading(false);
-    }
+    } 
   };
 
   /**
