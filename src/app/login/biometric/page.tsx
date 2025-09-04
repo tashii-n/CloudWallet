@@ -297,9 +297,8 @@ export default function BiometricPage() {
       console.log("🔍 Starting biometric validation...");
       const biometricResult = await fetchBiometricValidation();
 
-      if (
-        biometricResult?.scenario === "UPDATE_ONBOARDING_NO_BACKUP_SAME_DEVICE"
-      ) {
+      console.log("🚀 ~ handleOnboardingSuccess ~ biometricResult?.scenario:", biometricResult?.scenario)
+      if (biometricResult?.scenario === "ONBOARDING_SAME_DEVICE_CLOUD_WALLET") {
         console.log(
           "✅ Biometric validation successful, completing onboarding..."
         );
@@ -784,8 +783,8 @@ export default function BiometricPage() {
                     color="#e6b944"
                   >
                     <strong>
-                      Note: If you already have a NDI Mobile Wallet account,
-                      please continue there.
+                      Note: If you already have a NDI Mobile Wallet, please
+                      continue in the NDI Mobile App.
                     </strong>
                   </Typography>
                 </>
