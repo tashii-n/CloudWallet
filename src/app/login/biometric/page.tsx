@@ -339,6 +339,7 @@ export default function BiometricPage() {
       console.log("✅ Onboarding process completed successfully");
     } catch (error) {
       console.error("❌ Error during onboarding process:", error);
+      setLoginFailed(true);
       throw error; // Re-throw to be handled by caller
     }
   };

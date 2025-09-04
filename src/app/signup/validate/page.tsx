@@ -293,8 +293,7 @@ export default function BiometricValidatePage() {
                             If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
                           </Typography> */}
                           <Typography variant="body2" mb={3}>
-                            It seems you already have an account in the NDI
-                            Mobile Wallet.
+                            Please continue in the NDI Mobile App.
                           </Typography>
 
                           {/* <Typography
