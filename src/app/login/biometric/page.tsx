@@ -137,16 +137,10 @@ export default function BiometricPage() {
         image: imageData,
       };
 
-      console.log(
-        "🔍 Onboarding Unique ID:",
-        onboardingData["onboardingUniqueId"]
-      );
-
       // Create new abort controller for this request
       abortControllerRef.current = new AbortController();
 
       const response = await onboardingBiometricAPI(requestData);
-      console.log("✅ Biometric validation response:", response);
 
       return response;
     } catch (error) {
@@ -220,7 +214,7 @@ export default function BiometricPage() {
 
         await secureStore("tenantId", responseTenantId);
         await secureStore("holderDID", holderDID);
-        console.log("✅ Existing wallet found - Tenant ID:", responseTenantId);
+        console.log("✅ Existing wallet found");
 
         try {
           // 🔍 Fetch credential list
@@ -232,7 +226,7 @@ export default function BiometricPage() {
           if (!hasFoundationalId) {
             console.log("❌ Foundational ID credential not found.");
             setOnboardingStep("FOUNDATIONAL_ID_FAIL");
-            setIsLoading(false)
+            setIsLoading(false);
             setShowOnboardingForm(true);
             return;
           }
@@ -248,14 +242,10 @@ export default function BiometricPage() {
 
         try {
           const walletStatusResponse = await retryAPI(getCloudWalletStatus, {});
-          console.log(
-            "🚀 ~ handleLivenessSuccess ~ walletStatusResponse:",
-            walletStatusResponse
-          );
 
           if (walletStatusResponse?.status === 404) {
             setOnboardingStep("DID_FAIL");
-            setIsLoading(false)
+            setIsLoading(false);
             setShowOnboardingForm(true);
             return;
           } else {
@@ -278,7 +268,7 @@ export default function BiometricPage() {
       setLoginFailed(true);
       await secureClear("cloudAuth");
       setIsLoading(false);
-    } 
+    }
   };
 
   /**
@@ -298,7 +288,6 @@ export default function BiometricPage() {
       console.log("🔍 Starting biometric validation...");
       const biometricResult = await fetchBiometricValidation();
 
-      console.log("🚀 ~ handleOnboardingSuccess ~ biometricResult?.scenario:", biometricResult?.scenario)
       if (biometricResult?.scenario === "ONBOARDING_SAME_DEVICE_CLOUD_WALLET") {
         console.log(
           "✅ Biometric validation successful, completing onboarding..."
@@ -315,7 +304,7 @@ export default function BiometricPage() {
       console.error("❌ Error after onboarding success:", error);
       setLoginFailed(true);
       setIsLoading(false);
-    } 
+    }
   };
 
   /**
@@ -349,7 +338,7 @@ export default function BiometricPage() {
       const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
         label: "Credential Wallet",
       });
-      console.log("✅ Wallet Created during login:", walletResponse);
+      console.log("✅ Wallet Created during login:");
       return walletResponse;
     } catch (error) {
       console.error("❌ Failed to create wallet:", error);
@@ -367,7 +356,7 @@ export default function BiometricPage() {
         throw new Error("No DID returned from API");
       }
 
-      console.log("✅ New Holder DID created during login:", holderDID);
+      console.log("✅ New Holder DID created during login:");
       await secureStore("holderDID", holderDID);
       return holderDID;
     } catch (error) {
@@ -386,7 +375,7 @@ export default function BiometricPage() {
         throw new Error("No tenant ID returned from API");
       }
 
-      console.log("✅ Tenant ID retrieved during login:", responseTenantId);
+      console.log("✅ Tenant ID retrieved during login:");
       await secureStore("tenantId", responseTenantId);
       return responseTenantId;
     } catch (error) {
@@ -420,7 +409,7 @@ export default function BiometricPage() {
         onboardingInitialCredentialsAPI,
         payload
       );
-      console.log("✅ Credentials Issued during login:", credentialsResponse);
+      console.log("✅ Credentials Issued during login:");
 
       // Accept each issued credential
       if (credentialsResponse?.length) {
@@ -433,10 +422,7 @@ export default function BiometricPage() {
               const acceptResponse = await retryAPI(acceptCredentialAPI, {
                 invitationUrl: credential.url,
               });
-              console.log(
-                `✅ Credential ${credential.name} accepted:`,
-                acceptResponse
-              );
+              console.log(`✅ Credential ${credential.name} accepted:`);
               return acceptResponse;
             } catch (error) {
               console.error(`❌ Error accepting ${credential.name}:`, error);
@@ -475,16 +461,10 @@ export default function BiometricPage() {
           skip: 0,
         });
 
-        console.log(
-          "🚀 ~ getCredentialListForLogin ~ credentialList:",
-          credentialListResponse
-        );
-
         if (
           Array.isArray(credentialListResponse) &&
           credentialListResponse.length > 0
         ) {
-          console.log("✅ Credential List Found:", credentialListResponse);
           return credentialListResponse;
         }
 
@@ -543,10 +523,7 @@ export default function BiometricPage() {
                 }
               );
 
-              console.log(
-                `✅ Revocation credential for ${credential.name}:`,
-                revocationResponse
-              );
+              console.log(`✅ Revocation credential for ${credential.name}:`);
 
               const invitationUrl = revocationResponse?.credInviteURL;
               if (invitationUrl) {
@@ -554,8 +531,7 @@ export default function BiometricPage() {
                   invitationUrl,
                 });
                 console.log(
-                  `✅ Revocation credential accepted: ${credential.name}`,
-                  acceptResponse
+                  `✅ Revocation credential accepted: ${credential.name}`
                 );
                 return acceptResponse;
               } else {

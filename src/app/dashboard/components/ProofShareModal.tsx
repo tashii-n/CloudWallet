@@ -242,7 +242,7 @@ export default function ProofShareModal({
         proofRecordId: recordId,
       };
 
-      console.log("📤 Proof Payload:", JSON.stringify(payload, null, 2));
+      // console.log("📤 Proof Payload:", JSON.stringify(payload, null, 2));
       await acceptProofRequestAPI(payload);
 
       setSuccessMessage(true);

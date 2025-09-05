@@ -41,7 +41,6 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
       secretKey,
       JSON.stringify(transformedData)
     );
-    console.log("🚀 ~ onboardingValidateAPI ~ data:", data);
 
     // Construct headers with bearer token
     const headers = {
@@ -65,7 +64,6 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
     const responsePayload = response?.data.data;
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
-    console.log("🚀 ~ onboardingValidateAPI ~ decryptedData:", decryptedData);
 
     return decryptedData;
   } catch (error) {
@@ -131,9 +129,7 @@ export const onboardingBiometricAPI = async (jsonData: Record<string, any>) => {
     const decryptedResponse = await decryptPayload(secretKey, responsePayload);
     const decryptedData = JSON.parse(decryptedResponse);
 
-    console.log("🚀 ~ onboardingBiometricAPI ~ decryptedData:", decryptedData)
     return decryptedData;
-    
   } catch (error) {
     console.error("API call failed:", error);
     throw new Error("Unable to make API call");
@@ -157,10 +153,6 @@ export const onboardingRegisterAPI = async (jsonData: Record<string, any>) => {
     const transformedData = {
       onboardingUniqueId: jsonData.onboardingUniqueId || "",
     };
-    console.log(
-      "🚀 ~ onboardingRegisterAPI ~ transformedData:",
-      transformedData
-    );
 
     // Construct headers with bearer token
     const headers = {
@@ -328,7 +320,6 @@ export const onboardingInitialCredentialsAPI = async (
       credentialType: "jsonld",
       holderDID: jsonData["holderDID"],
     };
-    console.log(transformedData);
 
     // Encrypt the payload using the secret key
     const encryptedData = await encryptPayload(
@@ -350,11 +341,8 @@ export const onboardingInitialCredentialsAPI = async (
       data: { data: encryptedData },
     };
 
-    console.log("Sending API Request:", config);
-
     // Make the API call
     const { data } = await axios(config);
-    console.log(data);
     return data?.data;
   } catch (error) {
     console.error("API call failed:", error);
@@ -394,8 +382,6 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
       headers: headers,
       data: transformedData,
     };
-
-    console.log("Sending API Request:", config);
 
     // Make the API call
     const response = await axios(config);
@@ -498,11 +484,8 @@ export const getCredentialListAPI = async (params: {
       headers,
     };
 
-    console.log("API Request:", config);
-
     // Make API call
     const response = await axios(config);
-    console.log("API Response:", response.data);
 
     // Return only the data array from response
     return response.data?.data || [];
@@ -543,12 +526,9 @@ export const getCredentialDetailsAPI = async (
       headers,
     };
 
-    console.log("Sending API Request:", config);
-
     const response = await axios(config);
     const responsePayload = response?.data?.data;
 
-    console.log("Credential Details Responseapi:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("API call failed:", error);
@@ -590,7 +570,6 @@ export const getRevocationCredentialAPI = async (params: {
 
     // Make the API call
     const response = await axios(config);
-    console.log("✅ Revocation Credential Response:", response.data);
 
     return response.data;
   } catch (error) {
@@ -636,7 +615,6 @@ export const refreshToken = async (refreshToken: string | any) => {
       headers: headers,
       data: requestData,
     };
-    console.log("🚀 ~ refreshToken ~ config:", config);
 
     // Make the API call
     const response = await axios(config);
@@ -686,11 +664,8 @@ export const getProofRequestListAPI = async (params: {
       headers,
     };
 
-    console.log("API Request:", config);
-
     // Make API call
     const response = await axios(config);
-    console.log("API Response:", response.data);
 
     // Return only the data array from response
     return response.data?.data || [];
@@ -726,15 +701,12 @@ export const getProofPresentationAPI = async (proofRecordId: string) => {
       headers: headers,
     };
 
-    console.log("Sending API Request:", config);
-
     // Make the API call
     const response = await axios(config);
 
     // Extract the API response data
     const responsePayload = response?.data?.data;
 
-    console.log("Proof Presentation Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("API call failed:", error);
@@ -768,15 +740,12 @@ export const getCredentialsForRequestAPI = async (proofRecordId: string) => {
       headers: headers,
     };
 
-    console.log("Sending API Request:", config);
-
     // Make the API call
     const response = await axios(config);
 
     // Extract the API response data
     const responsePayload = response?.data?.data;
 
-    console.log("Credentials For Request Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("API call failed:", error);
@@ -807,13 +776,10 @@ export const acceptProofRequestAPI = async (payload: Record<string, any>) => {
       data: payload,
     };
 
-    console.log("Sending Accept Proof Request:", config);
-
     const response = await axios(config);
 
     const responsePayload = response?.data;
 
-    console.log("Accept Proof Request Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("Accept Proof Request API call failed:", error);
@@ -849,13 +815,10 @@ export const declineProofRequestAPI = async (proofRecordId: string) => {
       data: payload,
     };
 
-    console.log("Sending Reject Proof Request:", config);
-
     const response = await axios(config);
 
     const responsePayload = response?.data;
 
-    console.log("Reject Proof Request Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("Reject Proof Request API call failed:", error);
@@ -885,13 +848,10 @@ export const getConnectionsAPI = async () => {
       headers,
     };
 
-    console.log("Connections API Request:", config);
-
     const response = await axios(config);
 
     const responsePayload = response?.data;
 
-    console.log("Connections API Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("Get Connections API call failed:", error);
@@ -927,11 +887,8 @@ export const getPermanentAddressAPI = async () => {
       headers,
     };
 
-    console.log("API Request (Permanent Address Reissuance):", config);
-
     // Make API call
     const response = await axios(config);
-    console.log("API Response (Permanent Address Reissuance):", response.data);
 
     // Return only the data array from response
     return response.data;
@@ -968,13 +925,10 @@ export const addSelfAttestedAPI = async (
       data: payload,
     };
 
-    console.log("Sending Self Attested Request:", config);
-
     const response = await axios(config);
 
     const responsePayload = response?.data;
 
-    console.log("Self Attested Response:", responsePayload);
     return responsePayload;
   } catch (error) {
     console.error("Self Attested API call failed:", error);
@@ -1011,11 +965,8 @@ export const deleteCredential = async (
       headers,
     };
 
-    console.log("Sending Delete Credential Request:", config);
-
     const response = await axios(config);
 
-    console.log("Delete Credential Response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Delete Credential API call failed:", error);
@@ -1042,10 +993,7 @@ export const getCloudWalletStatus = async () => {
       headers,
     };
 
-    console.log("API Request (Cloud Wallet Status):", config);
-
     const response = await axios(config);
-    console.log("API Response (Cloud Wallet Status):", response.data);
 
     return response; // ✅ Return the full response
   } catch (error: any) {
@@ -1060,7 +1008,6 @@ export const getCloudWalletStatus = async () => {
     throw error;
   }
 };
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

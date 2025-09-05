@@ -392,9 +392,9 @@ export default function DropdownModalButton({ onCredentialAdded }: DropdownModal
     }
 
     try {
-      console.log("Payload:", payload);
+      // console.log("Payload:", payload);
       const response = await addSelfAttestedAPI(payload, modalType);
-      console.log("Self-attested credential added:", response);
+      console.log("Self-attested credential added");
 
       // Show success message and close modal after a brief delay
       showSuccessMessage(`${modalType} credential added successfully!`);

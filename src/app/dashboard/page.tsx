@@ -139,10 +139,7 @@ export default function DashboardPage() {
         if (!permanentAddressExists && holderDID) {
           try {
             const addressResponse = await getPermanentAddressAPI();
-            console.log(
-              "🚀 ~ setupComponent ~ addressResponse:",
-              addressResponse
-            );
+
             const url = addressResponse.data?.proofRequestURL;
             await handleDeepLinkRequest(url, false);
             return;
@@ -160,19 +157,13 @@ export default function DashboardPage() {
                   revocationId: credential.revocationId,
                 });
 
-                console.log(
-                  "🚀 ~ setupComponent ~ revocationResponse:",
-                  revocationResponse
-                );
-
                 const invitationUrl = revocationResponse?.credInviteURL;
                 if (invitationUrl) {
                   const acceptResponse = await acceptCredentialAPI({
                     invitationUrl,
                   });
                   console.log(
-                    `✅ Revocation Credential Accepted: ${credential.name}`,
-                    acceptResponse
+                    `✅ Revocation Credential Accepted: ${credential.name}`
                   );
                 } else {
                   console.error(
@@ -214,7 +205,7 @@ export default function DashboardPage() {
 
     // Set up the new listener
     socketRef.current.on(tenantId, async (data: any) => {
-      console.log("📥 Socket message received for tenant:", data);
+      console.log("📥 Socket message received for tenant");
       console.log(
         "🚀 ~ socketRef.current.on ~ waitingForVerificationref:():",
         waitingForVerificationRef.current
@@ -228,7 +219,7 @@ export default function DashboardPage() {
       ) {
         initialSocketMessageReceivedRef.current = true;
         const recordId = data.message.recordId;
-        console.log("Verification message with Record ID received:", recordId);
+        console.log("Verification message with Record ID received:");
 
         // If we have all the data needed, open the modal
         if (modalProps.logoURL && modalProps.verifierName) {
@@ -243,7 +234,7 @@ export default function DashboardPage() {
           "🚀 ~ socketRef.current.on ~ waitingForVerificationRef.current:",
           waitingForVerificationRef.current
         );
-        console.log("✅ Verification message received:", data);
+        console.log("✅ Verification message received:");
         if (data?.message?.type === "Issuance") {
           setWaitingForVerification(false);
           await handlePostProofVerification(data);
@@ -254,7 +245,7 @@ export default function DashboardPage() {
 
   const handlePostProofVerification = async (data: any) => {
     try {
-      console.log("✅ Post-proof verification API called successfully, ", data);
+      console.log("✅ Post-proof verification API called successfully, ");
       const holderDID = await secureGet("holderDID");
       const revocationId = data?.message?.data?.revocation_id;
       setIssuanceCredentialData(data?.message?.data);
@@ -267,10 +258,7 @@ export default function DashboardPage() {
         const acceptInviteResponse = await acceptCredentialAPI({
           invitationUrl,
         });
-        console.log(
-          "🚀 ~ handlePostProofVerification ~ acceptInviteResponse:",
-          acceptInviteResponse
-        );
+        console.log("🚀 ~ handlePostProofVerification ~ acceptInviteResponse:");
       }
       setProofModalOpen(false);
       setIssuanceModalOpen(true);
@@ -321,10 +309,7 @@ export default function DashboardPage() {
             ) {
               clearTimeout(timeoutId);
               initialSocketMessageReceivedRef.current = true;
-              console.log(
-                "Verification message with Record ID received:",
-                data.message.recordId
-              );
+              console.log("Verification message with Record ID received:");
               resolve(data.message.recordId);
               // Remove this specific listener since we got what we needed
               socketRef.current.off(tenantId, handleVerificationMessage);
@@ -383,10 +368,7 @@ export default function DashboardPage() {
       const payload = { invitationUrl: url, isShortenUrl: isShortenUrl };
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const proofAcceptResponse = await acceptCredentialAPI(payload);
-      console.log(
-        "✅ Proof request handled successfully:",
-        proofAcceptResponse
-      );
+      console.log("✅ Proof request handled successfully:");
 
       // Step 4: Extract logoURL and verifierName from the API response
       const responseLogoURL =
@@ -404,7 +386,7 @@ export default function DashboardPage() {
       // Step 5: Wait for the initial socket event response (recordId)
       try {
         const recordId = await initialSocketEventPromise;
-        console.log("🚀 ~ handleDeepLinkRequest ~ recordId:", recordId);
+        console.log("🚀 ~ handleDeepLinkRequest ~ recordId:");
 
         setModalProps((prev) => ({
           ...prev,
@@ -424,7 +406,7 @@ export default function DashboardPage() {
 
   const fetchCredentials = async (status?: string) => {
     const tenantId = tenantIdRef.current;
-    console.log("🚀 ~ fetchCredentials ~ tenantId:", tenantId);
+    console.log("🚀 ~ fetchCredentials ~ tenantId:");
 
     if (!tenantId) {
       console.error("Tenant ID is missing");

@@ -34,9 +34,7 @@ const getAuthData = async () => {
         },
       }
     );
-    console.log(
-      `${CONFIG.AUTH_BASE_API_URL}?env=${CONFIG.ENV}&identifier=${CONFIG.IDENTIFIER}`
-    );
+    
 
     const { accessToken, secretKey, expiresIn } = response.data;
     await storeAuthData(accessToken, secretKey, expiresIn);
@@ -66,7 +64,6 @@ export const storeCloudAuth = async (
       refreshToken,
       refreshTokenExpirationTime,
     };
-    console.log("🚀 ~ cloudAuth:", cloudAuth);
 
     // Store the cloudAuth object in secureStore
     await secureStore("cloudAuth", JSON.stringify(cloudAuth));
@@ -104,8 +101,8 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
   }
 
   // Token has expired, refresh it
-  console.log("Cloud Access Token has expired. Refreshing...");
-  console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", refreshToken);
+  // console.log("Cloud Access Token has expired. Refreshing...");
+  // console.log("🚀 ~ getValidCloudAccessToken ~ refreshToken:", refreshToken);
 
   try {
     // Call the refreshToken function to get new tokens
@@ -125,10 +122,7 @@ export const getValidCloudAccessToken = async (): Promise<string> => {
       refreshToken: newTokens.refresh_token,
       refreshTokenExpirationTime: newRefreshTokenExpirationTime,
     };
-    console.log(
-      "🚀 ~ getValidCloudAccessToken ~ updatedCloudAuth:",
-      updatedCloudAuth
-    );
+    
 
     // Save the updated cloudAuth data to secureStore
     await secureStore("cloudAuth", JSON.stringify(updatedCloudAuth));

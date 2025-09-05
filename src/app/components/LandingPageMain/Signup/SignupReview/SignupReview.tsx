@@ -104,7 +104,7 @@ export default function SignupForm() {
     const response = await retryAPI(onboardingRegisterAPI, {
       onboardingUniqueId,
     });
-    console.log("🚀 ~ registerAndGetToken ~ response:", response);
+    console.log("🚀 ~ registerAndGetToken ~ Token Received");
 
     await storeCloudAuth(
       response.access_token,
@@ -121,7 +121,7 @@ export default function SignupForm() {
     const walletResponse = await retryAPI(onboardingWalletCreationAPI, {
       label: "Credential Wallet",
     });
-    console.log("✅ Wallet Created:", walletResponse);
+    console.log("✅ Wallet Created:");
     setCurrentStep(ONBOARDING_STEPS.CREATE_DID); // Move to the next step
   };
 
@@ -129,7 +129,7 @@ export default function SignupForm() {
   const createDID = async () => {
     const didResponse = await retryAPI(onboardingDIDAPI, {});
     const holderDID = didResponse.did;
-    console.log("✅ Holder DID:", holderDID);
+    console.log("✅ Holder DID received");
     await secureStore("holderDID", holderDID);
     setHolderDID(holderDID); // Store holderDID for later steps
     setCurrentStep(ONBOARDING_STEPS.ISSUE_CREDENTIALS); // Move to the next step
@@ -157,19 +157,19 @@ export default function SignupForm() {
       onboardingInitialCredentialsAPI,
       payload
     );
-    console.log("✅ Credentials Issued:", credentialsResponse);
+    console.log("✅ Credentials Issued:");
 
     // Accept each issued credential
     if (credentialsResponse?.length) {
       for (const credential of credentialsResponse) {
-        console.log(`Accepting credential: ${credential.name}`);
+        console.log(`Accepting credential`);
         try {
           const acceptResponse = await retryAPI(acceptCredentialAPI, {
             invitationUrl: credential.url,
           });
           console.log(
-            `✅ Credential ${credential.name} Accepted:`,
-            acceptResponse
+            `✅ Credential ${credential.name} Accepted:`
+            
           );
         } catch (error) {
           console.error(`❌ Error Accepting ${credential.name}:`, error);
@@ -185,7 +185,7 @@ export default function SignupForm() {
   const getTenantId = async () => {
     const getDidResponse = await retryAPI(onboardingGetDIDAPI, {});
     const responseTenantId = getDidResponse.hashTenantID;
-    console.log("✅ Tenant ID:", responseTenantId);
+    console.log("✅ Tenant ID:");
     setTenantId(responseTenantId); // Store tenantId for later steps
     setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
   };
@@ -203,11 +203,11 @@ export default function SignupForm() {
         skip: 0,
       });
       console.log(
-        "🚀 ~ getCredentialList ~ credentialList:",
-        credentialListResponse
+        "🚀 ~ getCredentialList ~ credentialList:"
+        
       );
       if (credentialListResponse?.length) {
-        console.log("✅ Credential List Found:", credentialListResponse);
+        console.log("✅ Credential List Found:");
         // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
         return credentialListResponse;
       }
@@ -238,8 +238,7 @@ export default function SignupForm() {
             );
 
             console.log(
-              `✅ Revocation Credential for ${credential.name}:`,
-              revocationResponse
+              `✅ Revocation Credential for ${credential.name}:`
             );
 
             const invitationUrl = revocationResponse?.credInviteURL;
@@ -248,8 +247,7 @@ export default function SignupForm() {
                 invitationUrl,
               });
               console.log(
-                `✅ Revocation Credential Accepted: ${credential.name}`,
-                acceptResponse
+                `✅ Revocation Credential Accepted: ${credential.name}`
               );
             } else {
               console.error(`❌ Missing credInviteURL for ${credential.name}`);

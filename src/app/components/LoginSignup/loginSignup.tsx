@@ -167,7 +167,7 @@ export default function OnboardingFormPopup({
       setIsLoading(true);
       const response = await onboardingValidateAPI(formData);
       await secureStore("onboardingData", JSON.stringify(response));
-      console.log("🚀 ~ handleSubmit ~ response:", response);
+    //   console.log("🚀 ~ handleSubmit ~ response:", response);
 
       setIsLoading(false);
       onSuccess(); // Call the success callback to proceed with onboarding

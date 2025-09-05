@@ -139,7 +139,7 @@ export default function SignupForm() {
       setIsLoading(true);
       const response = await onboardingValidateAPI(formData);
       secureStore("onboardingData", JSON.stringify(response));
-      console.log("🚀 ~ handleSubmit ~ response:", response)
+      // console.log("🚀 ~ handleSubmit ~ response:", response)
       
       router.push("/signup/biometric");
       setIsLoading(false);

@@ -1,7 +1,5 @@
 "use client";
-import {
-  Box,
-} from "@mui/material";
+import { Box } from "@mui/material";
 import Footer from "../components/LandingPageMain/Footer/footer";
 import Header from "../components/LandingPageMain/Header/Header";
 import Image from "next/image";
