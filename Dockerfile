@@ -27,8 +27,7 @@ COPY --from=builder /usr/src/app/.next ./.next
 COPY --from=builder /usr/src/app/public ./public
 
 # Expose the port
-EXPOSE 3000
-
+EXPOSE 4003
 # Set environment variables for production
 ENV NODE_ENV=production
 ENV PORT=4003
