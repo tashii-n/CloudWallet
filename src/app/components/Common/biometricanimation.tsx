@@ -1,5 +1,5 @@
 import Lottie from "lottie-react";
-import animationData from "../../lib/data/FaceMatch.json"; // adjust path
+import animationData from "../../lib/data/MatchingFace.json"; // adjust path
 
 export default function BiometricAnimation({ width = 300, height = 300 }) {
   return (

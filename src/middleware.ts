@@ -6,6 +6,11 @@ export function middleware(req: NextRequest) {
   console.log("MIDDLEWARE HIT:", req.nextUrl.pathname); // Debug
   const ua = req.headers.get("user-agent") || "";
 
+  // ✅ Skip blocking in development mode
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
+
   // Check for force-web bypass parameter
   const forceWeb = req.nextUrl.searchParams.get("force-web");
 
@@ -23,11 +28,6 @@ export function middleware(req: NextRequest) {
     // Redirect to a dedicated "mobile-blocked" page with app download info
     return NextResponse.redirect(new URL("/mobile-blocked", req.url));
   }
-
-  // Optional: Also block tablets (uncomment if needed)
-  // if (isTablet && !forceWeb) {
-  //   return NextResponse.redirect(new URL('/mobile-blocked', req.url));
-  // }
 
   return NextResponse.next();
 }
