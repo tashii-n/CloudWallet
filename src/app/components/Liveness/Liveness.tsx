@@ -6,6 +6,7 @@ import {
   FaceLivenessDetailType,
   FaceLivenessWebComponent,
 } from "@regulaforensics/vp-frontend-face-components";
+import { CONFIG } from "@/app/lib/constants";
 
 interface FaceLivenessProps {
   onClose: () => void;
@@ -59,7 +60,7 @@ const FaceLiveness: React.FC<FaceLivenessProps> = ({ onClose, onLivenessSuccess 
           processingScreenProgress: "#5AC894",
           fontFamily: "Inter, sans-serif",
         },
-        url: "https://qaregula.bhutanndi.com",
+        url: CONFIG.REGULA_URL,
         // url: "https://stageregula.tech.gov.bt",
       };
     }

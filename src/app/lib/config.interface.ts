@@ -6,4 +6,5 @@ export interface AppConfig {
   ENCRYPTION_KEY: string | undefined;
   BASE_API_URL: string | undefined;
   WEBSOCKET_URL: string | undefined;
+  REGULA_URL: string | undefined;
 }
