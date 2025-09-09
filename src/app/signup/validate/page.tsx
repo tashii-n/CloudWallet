@@ -23,6 +23,9 @@ import Link from "next/link";
 import BiometricAnimation from "@/app/components/Common/biometricanimation";
 
 export default function BiometricValidatePage() {
+  const [validationStatus, setValidationStatus] = useState<
+    "idle" | "success" | "failed"
+  >("idle");
   const [validateSuccess, setValidateSuccess] = useState(false);
   const [newUser, setNewUser] = useState(false);
   const [userState, setUserState] = useState("");
@@ -67,7 +70,9 @@ export default function BiometricValidatePage() {
 
         setTimeout(() => {
           setValidateSuccess(true);
+          setValidationStatus("success");
         }, 2000);
+
         if (response && scenario === "NEW_USER_ONBOARDING") {
           setNewUser(true);
           setUserState("NewUser");
@@ -105,6 +110,9 @@ export default function BiometricValidatePage() {
 
           fetchBiometricValidation(attempt + 1);
         } else {
+          setValidationStatus("failed");
+          apiCalled.current = true;
+          await secureClear("imageData");
           console.error("Max retries reached. API call failed.");
         }
       }
@@ -219,7 +227,7 @@ export default function BiometricValidatePage() {
                 borderRadius={5}
                 pb={validateSuccess ? 6 : 10}
               >
-                {!validateSuccess ? (
+                {validationStatus === "idle" ? (
                   <Box
                     alignItems={"center"}
                     justifyContent={"center"}
@@ -242,7 +250,7 @@ export default function BiometricValidatePage() {
                       <BiometricAnimation height={170} width={179} />
                     </Box>
                   </Box>
-                ) : (
+                ) : validationStatus === "success" ? (
                   <Box>
                     {userState == "NewUser" ? (
                       <>
@@ -364,7 +372,7 @@ export default function BiometricValidatePage() {
                           src="/images/error.svg"
                           width={140}
                           height={140}
-                          alt={"Validation Success Image"}
+                          alt={"Validation Error Image"}
                         />
                         <Typography
                           variant="h6"
@@ -420,8 +428,75 @@ export default function BiometricValidatePage() {
                               Go to Login
                             </Button>
                           </Link>
+                        </Grid2>
+                      </>
+                    )}
+                    {/* Success */}
+                  </Box>
+                ) : (
+                  <>
+                    <Image
+                      src="/images/error.svg"
+                      width={140}
+                      height={140}
+                      alt={"Validation Error Image"}
+                    />
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      // mt={1}
+                      mb={2}
+                      fontWeight={600}
+                      color="primary.main"
+                    >
+                      Validation Failed
+                    </Typography>
+                    <Grid2 size={9} mx="auto" color="grey" fontSize={14.5}>
+                      {/* <Typography
+                            variant="body1"
+                            color="grey"
+                            gutterBottom
+                            mb={3}
+                          >
+                            You already have an account with us. <br />
+                            If your account is set up in Edge Wallet, please log in through the Edge Wallet app.
+                          </Typography> */}
+                      <Typography variant="body2" mb={3}>
+                        There seems to be an issue with validating your photo.
+                        Please try again later or contact 1199 for assistance.
+                      </Typography>
 
-                          {/* <br />
+                      {/* <Typography
+                            variant="body2"
+                            gutterBottom
+                            fontWeight={600}
+                            my={2}
+                          >
+                            Please continue with the NDI Mobile Wallet to avail
+                            our services.
+                          </Typography> */}
+
+                      {/* <Typography variant="body2">
+                            <Link href="/" className="ndigreen">
+                              <u>Go to home.</u>
+                            </Link>
+                          </Typography> */}
+                      <Link href="/" passHref>
+                        <Button
+                          // type="submit"
+                          variant="contained"
+                          sx={{
+                            color: "white",
+                            borderRadius: 20,
+                            py: 1,
+                            px: 3,
+                          }}
+                        >
+                          Go to Home
+                        </Button>
+                      </Link>
+
+                      {/* <br />
                           <p>
                             Go to{" "}
                             <Link href="/" className="ndigreen">
@@ -429,7 +504,7 @@ export default function BiometricValidatePage() {
                             </Link>{" "}
                             page
                           </p> */}
-                          {/* <Button
+                      {/* <Button
                         
                             href="/login"
                             variant="contained"
@@ -445,11 +520,8 @@ export default function BiometricValidatePage() {
                           >
                             <Typography variant="body1">Go to Login</Typography>
                           </Button> */}
-                        </Grid2>
-                      </>
-                    )}
-                    {/* Success */}
-                  </Box>
+                    </Grid2>
+                  </>
                 )}
               </Box>
             </Box>
