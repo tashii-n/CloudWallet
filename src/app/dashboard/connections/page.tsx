@@ -26,13 +26,15 @@ interface Connection {
 export default function FAQTabs() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [connectionCount, setConnectionCount] = useState<number>(0);
+  const excludedLabels = ["Revocation", "Revocation SP", "RSP"];
 
   useEffect(() => {
     const getConnections = async () => {
       try {
         const response = await getConnectionsAPI();
         const connectionList = response?.data?.filter(
-          (connection: Connection) => connection.theirLabel !== "RSP"
+          (connection: Connection) =>
+            !excludedLabels.includes(connection.theirLabel)
         );
         setConnections(connectionList || []);
         setConnectionCount(connectionList?.length || 0);
@@ -60,7 +62,7 @@ export default function FAQTabs() {
                 border: "2px solid",
                 borderColor: "primary.main",
                 borderRadius: 3,
-                height: 120, 
+                height: 120,
                 display: "flex",
                 alignItems: "center",
               }}
