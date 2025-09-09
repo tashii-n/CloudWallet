@@ -134,8 +134,24 @@ export default function ContactUs() {
         </Grid2>
 
         {/* Inquiry section */}
-        <Grid2 size={6} bgcolor={"#F8F8F8"} padding={3} borderRadius={3}>
-          <Typography variant="h4" color="primary.main" fontWeight={600} mb={3}>
+        {/* bgcolor={"#F8F8F8"} */}
+        <Grid2
+          size={6}
+          padding={3}
+          borderRadius={3}
+          display={"flex"}
+          flexDirection={"column"}
+          alignItems={"center"}
+          justifyContent={"center"}
+        >
+          <Image
+            src="/images/contactuslandingimage.png"
+            alt="Contact Us Image"
+            width={540}
+            height={350}
+          />
+
+          {/* <Typography variant="h4" color="primary.main" fontWeight={600} mb={3}>
             General Inquiry
           </Typography>
           <Typography mb={2}>
@@ -146,7 +162,6 @@ export default function ContactUs() {
           <Box>
             <Grid2 container spacing={2}>
               <Grid2 size={6}>
-                {/* <FormControl> */}
                 <InputLabel shrink={false} htmlFor={"firstname"}>
                   <Typography variant="subtitle2" gutterBottom>
                     First Name *
@@ -166,7 +181,6 @@ export default function ContactUs() {
                     },
                   }}
                 />
-                {/* </FormControl> */}
               </Grid2>
               <Grid2 size={6}>
                 <InputLabel shrink={false} htmlFor={"lastname"}>
@@ -265,7 +279,7 @@ export default function ContactUs() {
                 </Button>
               </Grid2>
             </Grid2>
-          </Box>
+          </Box> */}
         </Grid2>
       </Grid2>
     </Box>
