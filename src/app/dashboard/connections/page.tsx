@@ -43,7 +43,7 @@ export default function FAQTabs() {
         const connectionList = response?.data?.filter(
           (connection: Connection) =>
             !(
-              excludedLabels.includes(connection.theirLabel) ||
+              excludedLabels.includes(connection.theirLabel) &&
               connection.connectionTypes?.includes(revocationCred)
             )
         );
