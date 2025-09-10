@@ -10,3 +10,17 @@ export const CONFIG: AppConfig = {
   REGULA_URL: process.env.NEXT_PUBLIC_REGULA_URL,
 };
 
+export const CONNECTION_TYPES = {
+  REVOCATION_CREDENTIAL: "Revocation Credential",
+  // Add other types here
+} as const;
+
+
+export const REVOCATION_EXCLUDED_LABELS = {
+  REVOCATION: "Revocation",
+  REVOCATION_SP: "Revocation SP",
+  RSP: "RSP",
+  // Add other excluded labels here
+} as const;
+
+

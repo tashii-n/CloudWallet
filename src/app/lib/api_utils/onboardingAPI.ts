@@ -1,5 +1,5 @@
 import { getAuthData, getValidCloudAccessToken } from "../auth/auth";
-import { CONFIG } from "../constants";
+import { CONFIG, CONNECTION_TYPES } from "../constants";
 import { encryptPayload, decryptPayload } from "../cryptography/dataCrypt.js";
 import axios, { AxiosRequestConfig } from "axios";
 import { v4 as uuidv4 } from "uuid";
@@ -350,7 +350,10 @@ export const onboardingInitialCredentialsAPI = async (
   }
 };
 
-export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
+export const acceptCredentialAPI = async (
+  jsonData: Record<string, any>,
+  isRevocation?: boolean
+) => {
   try {
     const apiUrl = CONFIG.BASE_API_URL;
     if (!apiUrl) {
@@ -361,7 +364,7 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
     const cloudAccessToken = await getValidCloudAccessToken();
 
     // Construct the required JSON structure
-    const transformedData = {
+    const transformedData: Record<string, any> = {
       autoAcceptConnection: true,
       autoAcceptInvitation: true,
       reuseConnection: true,
@@ -369,6 +372,12 @@ export const acceptCredentialAPI = async (jsonData: Record<string, any>) => {
       isShortenURL: jsonData.isShortenUrl || false,
     };
 
+    // Add connectionType with data if isRevocation is provided
+    if (isRevocation === true) {
+      transformedData.connectionType = CONNECTION_TYPES.REVOCATION_CREDENTIAL;
+    }
+
+    // console.log("🚀 ~ acceptCredentialAPI ~ transformedData:", transformedData)
     // Construct headers with bearer token
     const headers = {
       Authorization: `Bearer ${cloudAccessToken}`,

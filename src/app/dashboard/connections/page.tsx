@@ -11,6 +11,10 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import {
+  CONNECTION_TYPES,
+  REVOCATION_EXCLUDED_LABELS,
+} from "@/app/lib/constants";
 
 // Define interface for connection object
 interface Connection {
@@ -20,13 +24,17 @@ interface Connection {
   state: string;
   createdAt: string;
   updatedAt: string;
+  connectionTypes?: string[];
   // Add other properties as needed
 }
 
 export default function FAQTabs() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [connectionCount, setConnectionCount] = useState<number>(0);
-  const excludedLabels = ["Revocation", "Revocation SP", "RSP"];
+  const excludedLabels: string | string[] = Object.values(
+    REVOCATION_EXCLUDED_LABELS
+  );
+  const revocationCred = CONNECTION_TYPES.REVOCATION_CREDENTIAL;
 
   useEffect(() => {
     const getConnections = async () => {
@@ -34,7 +42,10 @@ export default function FAQTabs() {
         const response = await getConnectionsAPI();
         const connectionList = response?.data?.filter(
           (connection: Connection) =>
-            !excludedLabels.includes(connection.theirLabel)
+            !(
+              excludedLabels.includes(connection.theirLabel) ||
+              connection.connectionTypes?.includes(revocationCred)
+            )
         );
         setConnections(connectionList || []);
         setConnectionCount(connectionList?.length || 0);
@@ -51,7 +62,7 @@ export default function FAQTabs() {
         Connections
       </Typography>
       <Typography variant="subtitle2" mb={3}>
-        {connectionCount} connections
+        {connectionCount} Connections
       </Typography>
       <Grid2 container spacing={2}>
         {connections.map((connection: Connection) => (

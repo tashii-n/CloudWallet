@@ -167,10 +167,7 @@ export default function SignupForm() {
           const acceptResponse = await retryAPI(acceptCredentialAPI, {
             invitationUrl: credential.url,
           });
-          console.log(
-            `✅ Credential ${credential.name} Accepted:`
-            
-          );
+          console.log(`✅ Credential ${credential.name} Accepted:`);
         } catch (error) {
           console.error(`❌ Error Accepting ${credential.name}:`, error);
         }
@@ -202,10 +199,7 @@ export default function SignupForm() {
         take: 10,
         skip: 0,
       });
-      console.log(
-        "🚀 ~ getCredentialList ~ credentialList:"
-        
-      );
+      console.log("🚀 ~ getCredentialList ~ credentialList:");
       if (credentialListResponse?.length) {
         console.log("✅ Credential List Found:");
         // setCurrentStep(ONBOARDING_STEPS.ACCEPT_REVOCATION_CREDENTIALS); // Move to the next step
@@ -237,15 +231,14 @@ export default function SignupForm() {
               }
             );
 
-            console.log(
-              `✅ Revocation Credential for ${credential.name}:`
-            );
+            console.log(`✅ Revocation Credential for ${credential.name}:`);
 
             const invitationUrl = revocationResponse?.credInviteURL;
             if (invitationUrl) {
-              const acceptResponse = await retryAPI(acceptCredentialAPI, {
-                invitationUrl,
-              });
+              const acceptResponse = await retryAPI(
+                (data: Record<string, any>) => acceptCredentialAPI(data, true), // or your isRevocation value
+                { invitationUrl }
+              );
               console.log(
                 `✅ Revocation Credential Accepted: ${credential.name}`
               );

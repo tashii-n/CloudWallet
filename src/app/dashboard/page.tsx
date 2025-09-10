@@ -159,9 +159,12 @@ export default function DashboardPage() {
 
                 const invitationUrl = revocationResponse?.credInviteURL;
                 if (invitationUrl) {
-                  const acceptResponse = await acceptCredentialAPI({
-                    invitationUrl,
-                  });
+                  const acceptResponse = await acceptCredentialAPI(
+                    {
+                      invitationUrl,
+                    },
+                    true
+                  ); // true indicates it's for revocation
                   console.log(
                     `✅ Revocation Credential Accepted: ${credential.name}`
                   );
@@ -180,6 +183,10 @@ export default function DashboardPage() {
               );
             }
           }
+        }
+
+        if (newCredentials.length > 0) {
+          await fetchCredentials(); // Refresh the credentials list
         }
       }
     };
@@ -255,9 +262,12 @@ export default function DashboardPage() {
           revocationId,
         });
         const invitationUrl = issuanceRevocationResponse?.credInviteURL;
-        const acceptInviteResponse = await acceptCredentialAPI({
-          invitationUrl,
-        });
+        const acceptInviteResponse = await acceptCredentialAPI(
+          {
+            invitationUrl,
+          },
+          true
+        ); // true indicates it's for revocation
         console.log("🚀 ~ handlePostProofVerification ~ acceptInviteResponse:");
       }
       setProofModalOpen(false);
