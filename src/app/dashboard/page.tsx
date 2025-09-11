@@ -272,6 +272,8 @@ export default function DashboardPage() {
       }
       setProofModalOpen(false);
       setIssuanceModalOpen(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // wait a bit for backend to send correct revocation response message
       await fetchCredentials();
     } catch (error) {
       console.error("❌ Error calling post-proof verification API:", error);
