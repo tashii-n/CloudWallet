@@ -319,7 +319,6 @@ export const onboardingInitialCredentialsAPI = async (
       credentialType: "jsonld",
       holderDID: jsonData["holderDID"],
     };
-    console.log("🚀 ~ onboardingInitialCredentialsAPI ~ transformedData:", transformedData)
 
     // Encrypt the payload using the secret key
     const encryptedData = await encryptPayload(
