@@ -268,12 +268,13 @@ export default function DashboardPage() {
           },
           true
         ); // true indicates it's for revocation
+
         console.log("🚀 ~ handlePostProofVerification ~ acceptInviteResponse:");
       }
       setProofModalOpen(false);
       setIssuanceModalOpen(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // wait a bit for backend to send correct revocation response message
+      // await new Promise((resolve) => setTimeout(resolve, 1500)); // wait a bit for backend to send correct revocation response message
       await fetchCredentials();
     } catch (error) {
       console.error("❌ Error calling post-proof verification API:", error);
@@ -669,9 +670,23 @@ export default function DashboardPage() {
                       : selectedCredential?.credential?.jsonld
                           ?.credentialSubject || {}
                   )
-                    .filter(
-                      (field) => field !== "revocation_id" && field !== "id"
-                    )
+                    .filter((field) => {
+                      // Skip revocation_id and id fields
+                      if (field === "revocation_id" || field === "id") {
+                        return false;
+                      }
+
+                      // Get the field value
+                      const value = isSelfAttested
+                        ? selectedCredential?.credential?.credentialSubject?.[
+                            field
+                          ]
+                        : selectedCredential?.credential?.jsonld
+                            ?.credentialSubject?.[field];
+
+                      // Hide fields with empty strings, "NA", null, or undefined values
+                      return value !== "" && value !== "NA" && value != null;
+                    })
                     .map((field) => (
                       <Grid2 key={field} size={6}>
                         <TextField

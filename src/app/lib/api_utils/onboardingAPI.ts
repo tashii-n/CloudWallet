@@ -25,7 +25,6 @@ export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
     const transformedData = {
       fullName: jsonData.fullName,
       gender: jsonData.gender,
-      bloodType: "A+",
       isBhutanese: jsonData.citizenship === "Bhutanese",
       gewogName: jsonData.gewogName,
       dzongkhagName: jsonData.dzongkhagName,
@@ -320,6 +319,7 @@ export const onboardingInitialCredentialsAPI = async (
       credentialType: "jsonld",
       holderDID: jsonData["holderDID"],
     };
+    console.log("🚀 ~ onboardingInitialCredentialsAPI ~ transformedData:", transformedData)
 
     // Encrypt the payload using the secret key
     const encryptedData = await encryptPayload(
