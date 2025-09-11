@@ -375,6 +375,7 @@ export const acceptCredentialAPI = async (
     // Add connectionType with data if isRevocation is provided
     if (isRevocation === true) {
       transformedData.connectionType = CONNECTION_TYPES.REVOCATION_CREDENTIAL;
+      console.log("🚀 ~ acceptCredentialAPI ~ Revocation Credential Flow");
     }
 
     // console.log("🚀 ~ acceptCredentialAPI ~ transformedData:", transformedData)
