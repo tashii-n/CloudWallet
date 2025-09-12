@@ -1,5 +1,3 @@
-"use server";
-
 import { Buffer } from "buffer";
 import * as CryptoJS from "crypto-js";
 import { Encrypt768, keyGen768 } from "./crystal-kyber";
