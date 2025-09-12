@@ -59,9 +59,9 @@ export default function Home() {
           </Grid2>
           <Grid2 size={{ md: 6 }}>
             <Image
-              src="/images/landingpage1.svg"
+              src="/images/landingpage1.png"
               alt="Landing Page Image"
-              width={500}
+              width={450}
               height={350}
               priority
             />

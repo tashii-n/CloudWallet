@@ -60,10 +60,10 @@ export default function LoginPage() {
           </Typography>
 
           <Image
-            src="/images/loginimage.svg"
+            src="/images/loginimage.png"
             alt="Login Image"
             width={400}
-            height={450}
+            height={420}
             priority
           />
         </Box>
