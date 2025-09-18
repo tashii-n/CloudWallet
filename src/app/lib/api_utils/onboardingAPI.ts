@@ -8,175 +8,87 @@ import "./axiosInterceptor"; // Adjust path as needed
 
 export const onboardingValidateAPI = async (jsonData: Record<string, any>) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId"); // tab-specific
+
+    if (!sessionId) {
+      throw new Error("No sessionId found for this tab");
     }
 
-    // Get authentication data
-    const authData = await getAuthData();
-    const { accessToken, secretKey } = authData;
+    const response = await fetch("/api/onboarding/validate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId, // pass session ID to server
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    // Ensure secretKey is valid
-    if (!secretKey) {
-      throw new Error("Secret key is missing");
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
     }
 
-    const transformedData = {
-      fullName: jsonData.fullName,
-      gender: jsonData.gender,
-      isBhutanese: jsonData.citizenship === "Bhutanese",
-      gewogName: jsonData.gewogName,
-      dzongkhagName: jsonData.dzongkhagName,
-      villageName: "",
-      idType: jsonData.idType,
-      idNumber: jsonData.idNumber,
-      biometric: false,
-    };
-    // console.log("🚀 ~ onboardingValidateAPI ~ transformedData:", transformedData)
-
-    // Encrypt JSON data using the secret key
-    const data = await encryptPayload(
-      secretKey,
-      JSON.stringify(transformedData)
-    );
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/onboarding/validate`,
-      headers: headers,
-      data: { data: data },
-    };
-
-    // console.log(config);
-
-    // Make the API call
-    const response = await axios(config);
-
-    const responsePayload = response?.data.data;
-    const decryptedResponse = await decryptPayload(secretKey, responsePayload);
-    const decryptedData = JSON.parse(decryptedResponse);
-
-    return decryptedData;
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    throw new Error("Unable to call onboarding API");
   }
 };
 
 export const onboardingBiometricAPI = async (jsonData: Record<string, any>) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No session ID found for this tab");
     }
 
-    // Get authentication data
-    const authData = await getAuthData();
-    const { accessToken, secretKey } = authData;
+    const response = await fetch("/api/onboarding/biometric", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId, // pass per-tab session ID
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    // Ensure secretKey is valid
-    if (!secretKey) {
-      throw new Error("Secret key is missing");
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody.error || "Server-side API failed");
     }
 
-    const deviceId = uuidv4();
-
-    // Construct the required JSON structure
-    const transformedData = {
-      "ID Number": jsonData.idNumber,
-      "ID Type": jsonData.idType,
-      onboardingUniqueId: jsonData.onboardingUniqueId || "",
-      deviceId: deviceId,
-      Image: jsonData.image || "",
-    };
-    // console.log("🚀 ~ onboardingBiometricAPI ~ transformedData:", transformedData)
-
-    // Encrypt JSON data using the secret key
-    const encryptedData = await encryptPayload(
-      secretKey,
-      JSON.stringify(transformedData)
-    );
-    // console.log("🚀 ~ onboardingBiometricAPI ~ encryptedData:", encryptedData)
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/onboarding/validate-biometric`,
-      headers: headers,
-      data: { data: encryptedData },
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Decrypt the API response
-    const responsePayload = response?.data.data;
-    const decryptedResponse = await decryptPayload(secretKey, responsePayload);
-    const decryptedData = JSON.parse(decryptedResponse);
-
-    return decryptedData;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    console.error("Client API call failed:", error);
+    throw new Error("Unable to call server-side onboarding API");
   }
 };
 
 export const onboardingRegisterAPI = async (jsonData: Record<string, any>) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No session ID found for this tab");
     }
 
-    // Get authentication data
-    const authData = await getAuthData();
-    const { accessToken } = authData;
+    const response = await fetch("/api/onboarding/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    // Ensure secretKey is valid
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody.error || "Server-side API failed");
+    }
 
-    // Construct the required JSON structure
-    const transformedData = {
-      onboardingUniqueId: jsonData.onboardingUniqueId || "",
-    };
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/register`,
-      headers: headers,
-      data: transformedData,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Decrypt the API response
-    const responsePayload = response?.data.data;
-
-    return responsePayload;
+    return await response.json();
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    console.error("Client API call failed:", error);
+    throw new Error("Unable to call server-side register API");
   }
 };
 
@@ -185,104 +97,79 @@ export const onboardingWalletCreationAPI = async (
   jsonData: Record<string, any>
 ) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No session ID found for this tab");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/onboarding/wallet-creation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    // Construct the required JSON structure
-    const transformedData = {
-      label: jsonData.label ?? "Credential Wallet",
-      connectionImageUrl:
-        jsonData.connectionImageUrl ?? "https://picsum.photos/200",
-    };
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody.error || "Server-side API failed");
+    }
 
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/create-wallet`,
-      headers: headers,
-      data: transformedData,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Decrypt the API response
-    const responsePayload = response?.data.data;
-
-    return responsePayload;
+    return await response.json();
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    console.error("Client API call failed:", error);
+    throw new Error("Unable to call server-side create-wallet API");
   }
 };
 
 export const onboardingDIDAPI = async () => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/onboarding/did", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+    });
 
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody.error || "Server-side API failed");
+    }
 
-    // API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/did`,
-      headers,
-    };
-
-    // Make the API call
-    const { data } = await axios(config);
-
-    return data?.data;
+    return await response.json();
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    console.error("Client DID API call failed:", error);
+    throw new Error("Unable to call server-side DID API");
   }
 };
 
 export const onboardingGetDIDAPI = async () => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/get-did", {
+      method: "GET",
+      headers: {
+        "x-session-id": sessionId,
+        "Content-Type": "application/json",
+      },
+    });
 
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(errorBody.error || "Server-side API failed");
+    }
 
-    // API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/did`,
-      headers,
-    };
-
-    // Make the API call
-    const { data } = await axios(config);
-
-    return data?.data;
+    return await response.json();
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    console.error("Client Get DID API call failed:", error);
+    throw new Error("Unable to call server-side Get DID API");
   }
 };
 
@@ -290,62 +177,27 @@ export const onboardingInitialCredentialsAPI = async (
   jsonData: Record<string, any>
 ) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    // Get authentication data
-    const authData = await getAuthData();
-    const { accessToken, secretKey } = authData;
+    const response = await fetch("/api/onboarding/initial-credentials", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    if (!accessToken) throw new Error("Access Token is missing!");
-    if (!secretKey) throw new Error("Secret key is missing");
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Server returned ${response.status}`);
+    }
 
-    // Transform the payload
-    const transformedData = {
-      "Blood Type": jsonData["Blood Type"],
-      Citizenship: jsonData["Citizenship"],
-      "Date of Birth": jsonData["Date of Birth"],
-      "Dzongkhag Name": jsonData["Dzongkhag Name"],
-      "Full Name": jsonData["Full Name"],
-      Gender: jsonData["Gender"],
-      "Gewog Name": jsonData["Gewog Name"],
-      "ID Number": jsonData["ID Number"],
-      "ID Type": jsonData["ID Type"],
-      isBhutanese: jsonData["isBhutanese"],
-      onboardingUniqueId: jsonData["onboardingUniqueId"],
-      "Permanent Household Number": jsonData["Permanent Household Number"],
-      "Thram No": jsonData["Thram No"],
-      "Village Name": jsonData["Village Name"],
-      credentialType: "jsonld",
-      holderDID: jsonData["holderDID"],
-    };
-
-    // Encrypt the payload using the secret key
-    const encryptedData = await encryptPayload(
-      secretKey,
-      JSON.stringify(transformedData)
-    );
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/onboarding-credentials`,
-      headers,
-      data: { data: encryptedData },
-    };
-
-    // Make the API call
-    const { data } = await axios(config);
-    return data?.data;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    return await response.json();
+  } catch (err) {
+    console.error("Client onboardingInitialCredentialsAPI failed:", err);
+    throw err;
   }
 };
 
@@ -354,103 +206,53 @@ export const acceptCredentialAPI = async (
   isRevocation?: boolean
 ) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
+
+    const response = await fetch("/api/receive-invitation-url", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify({ jsonData, isRevocation }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Server returned ${response.status}`);
     }
 
-    // Get authentication data
-    const cloudAccessToken = await getValidCloudAccessToken();
-
-    // Construct the required JSON structure
-    const transformedData: Record<string, any> = {
-      autoAcceptConnection: true,
-      autoAcceptInvitation: true,
-      reuseConnection: true,
-      invitationUrl: jsonData.invitationUrl || "",
-      isShortenURL: jsonData.isShortenUrl || false,
-    };
-
-    // Add connectionType with data if isRevocation is provided
-    if (isRevocation === true) {
-      transformedData.connectionType = CONNECTION_TYPES.REVOCATION_CREDENTIAL;
-      console.log("🚀 ~ acceptCredentialAPI ~ Revocation Credential Flow");
-    }
-
-    // console.log("🚀 ~ acceptCredentialAPI ~ transformedData:", transformedData)
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/receive-invitation-url`,
-      headers: headers,
-      data: transformedData,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Extract the API response data
-    const responsePayload = response?.data?.data;
-
-    return responsePayload;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    return await response.json();
+  } catch (err) {
+    console.error("Client acceptCredentialAPI failed:", err);
+    throw err;
   }
 };
 
 export const loginAPI = async (jsonData: Record<string, any>) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const authData = await getAuthData();
-    const { accessToken, secretKey } = authData;
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(jsonData),
+    });
 
-    // Prepare data for encryption
-    const transformedData = {
-      "ID Number": jsonData.idNumber,
-      "ID Type": "Citizenship",
-      Image: jsonData.image, // Base64 encoded image
-    };
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Server returned ${res.status}`);
+    }
 
-    // Encrypt the transformed data
-    const encryptedData = await encryptPayload(
-      secretKey,
-      JSON.stringify(transformedData)
-    );
-
-    // console.log("🚀 ~ loginAPI ~ encryptedData:", encryptedData)
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/login`,
-      headers,
-      data: { data: encryptedData }, // Required format
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    const responsePayload = response?.data.data;
-
-    return responsePayload;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to make API call");
+    return await res.json();
+  } catch (err) {
+    console.error("Client loginAPI failed:", err);
+    throw err;
   }
 };
 
@@ -461,46 +263,27 @@ export const getCredentialListAPI = async (params: {
   skip: number;
 }) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const authData = await getAuthData();
-    const { accessToken } = authData;
-
-    if (!accessToken) throw new Error("Access token is missing");
-
-    // Construct headers
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Create URL query params
-    const queryParams = new URLSearchParams({
-      tenantId: params.tenantId,
-      take: params.take.toString(),
-      skip: params.skip.toString(),
+    const response = await fetch("/api/get-credential-list", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(params),
     });
 
-    if (params.status) {
-      queryParams.append("status", params.status);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Server returned ${response.status}`);
     }
 
-    // API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/user/credential?${queryParams.toString()}`,
-      headers,
-    };
-
-    // Make API call
-    const response = await axios(config);
-
-    // Return only the data array from response
-    return response.data?.data || [];
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to fetch credential list");
+    return await response.json();
+  } catch (err) {
+    console.error("Client getCredentialListAPI failed:", err);
+    throw err;
   }
 };
 
@@ -508,41 +291,26 @@ export const getCredentialDetailsAPI = async (
   credentialRecordId: string,
   selfAttested?: boolean
 ) => {
-  try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
-    }
+  const sessionId = sessionStorage.getItem("sessionId");
+  if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+  const query = new URLSearchParams({ credentialRecordId });
+  if (selfAttested !== undefined)
+    query.append("selfAttested", String(selfAttested));
 
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+  const res = await fetch(`/api/credential-details?${query.toString()}`, {
+    method: "GET",
+    headers: {
+      "x-session-id": sessionId || "",
+    },
+  });
 
-    // Start constructing the URL
-    let url = `${apiUrl}/cloud-wallet/v1/credential?credentialRecordId=${credentialRecordId}`;
-
-    // Append selfAttested only if it is defined
-    if (typeof selfAttested !== "undefined") {
-      url += `&selfAttested=${selfAttested}`;
-    }
-
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url,
-      headers,
-    };
-
-    const response = await axios(config);
-    const responsePayload = response?.data?.data;
-
-    return responsePayload;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to get credential details");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Server returned ${res.status}`);
   }
+
+  return res.json();
 };
 
 export const getRevocationCredentialAPI = async (params: {
@@ -550,89 +318,54 @@ export const getRevocationCredentialAPI = async (params: {
   revocationId: string;
 }) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const authData = await getAuthData();
-    const { accessToken } = authData;
+    const response = await fetch("/api/get-revocation-credential", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(params),
+    });
 
-    if (!accessToken) throw new Error("Access Token is missing!");
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Server returned ${response.status}`);
+    }
 
-    // Prepare request payload
-    const queryParams = new URLSearchParams({
-      holderDID: params.holderDID,
-      revocationId: params.revocationId,
-    }).toString();
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/issue_revocation_cred?${queryParams}`,
-      headers,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    return response.data;
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to fetch revocation credential");
+    return await response.json();
+  } catch (err) {
+    console.error("Client getRevocationCredentialAPI failed:", err);
+    throw err;
   }
 };
 
-export const refreshToken = async (refreshToken: string | any) => {
+export const refreshToken = async (refreshToken: string) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No sessionId found");
+
+    const response = await fetch("/api/refresh-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || "Failed to refresh token");
     }
 
-    // Get accessToken and refreshToken from secure storage
-    const authData = await getAuthData();
-    const { accessToken } = authData;
-    const refreshTokenData = refreshToken;
-
-    if (!accessToken) {
-      throw new Error("Access token is missing");
-    }
-    if (!refreshTokenData) {
-      throw new Error("Refresh token is missing");
-    }
-
-    // Construct headers with access token
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare request body
-    const requestData = {
-      refreshToken: refreshTokenData,
-    };
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url: `${apiUrl}/cloud-wallet/v1/user/refresh-token`,
-      headers: headers,
-      data: requestData,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Return the refreshed token data
-    return response?.data.data;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Refresh token API call failed:", error);
-    throw new Error("Unable to refresh token");
+    console.error("Client refresh token failed:", error);
+    throw error;
   }
 };
 
@@ -643,267 +376,205 @@ export const getProofRequestListAPI = async (params: {
   skip: number;
 }) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No sessionId found");
 
-    const authData = await getAuthData();
-    const { accessToken } = authData;
-
-    if (!accessToken) throw new Error("Access token is missing");
-
-    // Construct headers
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Create URL query params
     const queryParams = new URLSearchParams({
       tenantId: params.tenantId,
-      status: params.status.toString(),
+      status: params.status,
       take: params.take.toString(),
       skip: params.skip.toString(),
-      order: "desc",
     });
 
-    // API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/user/proof-requests?${queryParams.toString()}`,
-      headers,
-    };
+    const response = await fetch(
+      `/api/proof-request-list?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: { "x-session-id": sessionId },
+      }
+    );
 
-    // Make API call
-    const response = await axios(config);
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || "Failed to fetch proof requests");
+    }
 
-    // Return only the data array from response
-    return response.data?.data || [];
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to fetch proof request list");
+    console.error("getProofRequestListAPI failed:", error);
+    throw error;
   }
 };
 
 export const getProofPresentationAPI = async (proofRecordId: string) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No sessionId found");
+
+    const queryParams = new URLSearchParams({ proofRecordId });
+
+    const response = await fetch(
+      `/api/proof-presentation?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: { "x-session-id": sessionId },
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(
+        errData.error || "Failed to fetch proof presentation details"
+      );
     }
 
-    // Get authentication data
-    const cloudAccessToken = await getValidCloudAccessToken();
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare the API request URL
-    const url = `${apiUrl}/cloud-wallet/v1/proof-presentation?proofRecordId=${proofRecordId}`;
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: url,
-      headers: headers,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Extract the API response data
-    const responsePayload = response?.data?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to get proof presentation details");
+    console.error("getProofPresentationAPI failed:", error);
+    throw error;
   }
 };
 
 export const getCredentialsForRequestAPI = async (proofRecordId: string) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No sessionId found");
+
+    const response = await fetch(
+      `/api/credentials-for-request/${proofRecordId}`,
+      {
+        method: "GET",
+        headers: { "x-session-id": sessionId },
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(
+        errData.error || "Failed to fetch credentials for request"
+      );
     }
 
-    // Get authentication data
-    const cloudAccessToken = await getValidCloudAccessToken();
-
-    // Construct headers with bearer token
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Prepare the API request URL
-    const url = `${apiUrl}/cloud-wallet/v1/credentialsForRequest/${proofRecordId}`;
-
-    // Prepare API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: url,
-      headers: headers,
-    };
-
-    // Make the API call
-    const response = await axios(config);
-
-    // Extract the API response data
-    const responsePayload = response?.data?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to get credentials for request");
+    console.error("getCredentialsForRequestAPI failed:", error);
+    throw error;
   }
 };
 
 export const acceptProofRequestAPI = async (payload: Record<string, any>) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No sessionId found");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/accept-proof-request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify(payload),
+    });
 
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to accept proof request");
+    }
 
-    const url = `${apiUrl}/cloud-wallet/v1/proofs/accept-request`;
-
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url,
-      headers,
-      data: payload,
-    };
-
-    const response = await axios(config);
-
-    const responsePayload = response?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Accept Proof Request API call failed:", error);
-    throw new Error("Unable to accept proof request");
+    console.error("Client acceptProofRequestAPI failed:", error);
+    throw error;
   }
 };
 
 export const declineProofRequestAPI = async (proofRecordId: string) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No sessionId found");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/decline-proof-request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify({ proofRecordId }),
+    });
 
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to reject proof request");
+    }
 
-    const url = `${apiUrl}/cloud-wallet/v1/proofs/decline-request`;
-
-    const payload = {
-      sendProblemReport: true,
-      proofRecordId: proofRecordId,
-    };
-
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url,
-      headers,
-      data: payload,
-    };
-
-    const response = await axios(config);
-
-    const responsePayload = response?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Reject Proof Request API call failed:", error);
-    throw new Error("Unable to reject proof request");
+    console.error("Client declineProofRequestAPI failed:", error);
+    throw error;
   }
 };
 
 export const getConnectionsAPI = async () => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No sessionId found");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
+    const response = await fetch("/api/get-connections", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+    });
 
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to get connections");
+    }
 
-    const url = `${apiUrl}/cloud-wallet/v1/connections`;
-
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url,
-      headers,
-    };
-
-    const response = await axios(config);
-
-    const responsePayload = response?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Get Connections API call failed:", error);
-    throw new Error("Unable to get connections");
+    console.error("Client getConnectionsAPI failed:", error);
+    throw error;
   }
 };
 
 export const getPermanentAddressAPI = async () => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
-
-    const authData = await getAuthData();
-    const { accessToken } = authData;
-
-    if (!accessToken) throw new Error("Access token is missing");
-
-    // Construct headers
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    // Create URL query params
-    const queryParams = new URLSearchParams({
-      requestType: "PERMANENT_ADDRESS",
+    const sessionId = sessionStorage.getItem("sessionId"); // Add sessionId
+    if (!sessionId) {
+      throw new Error("No sessionId found");
+    }
+    const response = await fetch("/api/get-permanent-address", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
     });
 
-    // API request configuration
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/user/proof-request?${queryParams.toString()}`,
-      headers,
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to issue permanent address");
+    }
 
-    // Make API call
-    const response = await axios(config);
-
-    // Return only the data array from response
-    return response.data;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to issue permanent address");
+    console.error("Client getPermanentAddressAPI failed:", error);
+    throw error;
   }
 };
 
@@ -912,36 +583,29 @@ export const addSelfAttestedAPI = async (
   credentialType: string
 ) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No sessionId found");
+    }
+    const response = await fetch("/api/add-self-attested", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify({ payload, credentialType }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to add credential");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
-
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    const encodedCredentialType = encodeURIComponent(credentialType);
-    const url = `${apiUrl}/cloud-wallet/v1/self-attested-credential?credentialType=${encodedCredentialType}`;
-
-    const config: AxiosRequestConfig = {
-      method: "post",
-      url,
-      headers,
-      data: payload,
-    };
-
-    const response = await axios(config);
-
-    const responsePayload = response?.data;
-
-    return responsePayload;
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Self Attested API call failed:", error);
-    throw new Error("Unable to add credential");
+    console.error("Client addSelfAttestedAPI failed:", error);
+    throw error;
   }
 };
 
@@ -950,414 +614,51 @@ export const deleteCredential = async (
   isSelfAttested: boolean
 ) => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) {
-      throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      throw new Error("No sessionId found");
+    }
+    const response = await fetch("/api/delete-credential", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-session-id": sessionId,
+      },
+      body: JSON.stringify({ credentialRecordId, isSelfAttested }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Unable to delete credential");
     }
 
-    const cloudAccessToken = await getValidCloudAccessToken();
-
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    const endpoint = isSelfAttested
-      ? `/cloud-wallet/v1/credential/{credentialRecordId}?credentialRecordId=${credentialRecordId}&selfAttested=${isSelfAttested}`
-      : `/cloud-wallet/v1/credential/{credentialRecordId}?credentialRecordId=${credentialRecordId}`;
-
-    const url = `${apiUrl}${endpoint}`;
-
-    const config: AxiosRequestConfig = {
-      method: "delete",
-      url,
-      headers,
-    };
-
-    const response = await axios(config);
-
-    return response.data;
+    return await response.json();
   } catch (error) {
-    console.error("Delete Credential API call failed:", error);
-    throw new Error("Unable to delete credential");
+    console.error("Client deleteCredential failed:", error);
+    throw error;
   }
 };
 
 export const getCloudWalletStatus = async () => {
   try {
-    const apiUrl = CONFIG.BASE_API_URL;
-    if (!apiUrl) throw new Error("API URL is missing in environment variables");
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) throw new Error("No session ID found for this tab");
 
-    const cloudAccessToken = await getValidCloudAccessToken();
-    if (!cloudAccessToken) throw new Error("Access token is missing");
+    const res = await fetch("/api/wallet-status", {
+      method: "GET",
+      headers: {
+        "x-session-id": sessionId,
+      },
+    });
 
-    const headers = {
-      Authorization: `Bearer ${cloudAccessToken}`,
-      "Content-Type": "application/json",
-    };
-
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${apiUrl}/cloud-wallet/v1/check-cloud-wallet-status`,
-      headers,
-    };
-
-    const response = await axios(config);
-
-    return response; // ✅ Return the full response
-  } catch (error: any) {
-    console.error("API call failed:", error);
-
-    // ✅ If server responded with an error, return that response
-    if (error.response) {
-      return error.response;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Server returned ${res.status}`);
     }
 
-    // Otherwise throw the error
-    throw error;
-  }
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// TEST API Functions
-export const getProofPresentationTest = async () => {
-  try {
-    return {
-      request: {
-        presentationExchange: {
-          presentation_definition: {
-            id: "bd0190de-0569-4c36-acb6-684b51c5897e",
-            name: "WALLET_BACKUP",
-            purpose: "auth_standard",
-            input_descriptors: [
-              {
-                id: "input_0",
-                schema: [
-                  {
-                    uri: "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                  },
-                ],
-                constraints: {
-                  fields: [
-                    {
-                      path: ["$.credentialSubject['ID Type']"],
-                    },
-                  ],
-                },
-              },
-              {
-                id: "input_1",
-                schema: [
-                  {
-                    uri: "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                  },
-                ],
-                constraints: {
-                  fields: [
-                    {
-                      path: ["$.credentialSubject['ID Number']"],
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-          options: {
-            challenge: "400154574282395709577071",
-          },
-        },
-      },
-    };
-  } catch (error) {
-    console.error("API call failed:", error);
-    throw new Error("Unable to fetch proof request list");
-  }
-};
-
-export const getProofCredentialMatchTest = async () => {
-  try {
-    return {
-      proofFormats: {
-        presentationExchange: {
-          requirements: [
-            {
-              rule: "pick",
-              needsCount: 1,
-              submissionEntry: [
-                {
-                  inputDescriptorId: "input_0",
-                  verifiableCredentials: [
-                    {
-                      type: "ldp_vc",
-                      credentialRecord: {
-                        _tags: {
-                          claimFormat: "ldp_vc",
-                          contexts: [
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                            "https://www.w3.org/2018/credentials/v1",
-                          ],
-                          expandedTypes: [
-                            "Foundational ID",
-                            "https://www.w3.org/2018/credentials#VerifiableCredential",
-                          ],
-                          issuerId:
-                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          proofTypes: ["EcdsaSecp256k1Signature2019"],
-                          subjectIds: [
-                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          ],
-                          types: ["Foundational ID", "VerifiableCredential"],
-                        },
-                        metadata: {},
-                        id: "d848ad67-99f5-49bf-bf15-number1 dark",
-                        createdAt: "2025-04-14T14:29:27.444Z",
-                        credential: {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                          ],
-                          type: ["VerifiableCredential", "Foundational ID"],
-                          issuer: {
-                            id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          },
-                          issuanceDate: "2025-04-14T14:29:21.802Z",
-                          credentialSubject: {
-                            "Full Name": "Tashi  Namgay",
-                            "Blood Type": "A+",
-                            "Date of Birth": "05/06/2001",
-                            Gender: "Male",
-                            "ID Type": "Citizenship",
-                            "ID Number": "Number 1 Dark",
-                            Citizenship: "Bhutanese",
-                            revocation_id:
-                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
-                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          },
-                          proof: {
-                            verificationMethod:
-                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
-                            type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-14T14:29:25Z",
-                            proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
-                          },
-                        },
-                        updatedAt: "2025-04-14T14:29:27.444Z",
-                      },
-                      orgLogo: "/images/ndilogodark.svg",
-                      label: "CW Foundation Issuer",
-                      revocationstatus: "NEW",
-                    },
-                    {
-                      type: "ldp_vc",
-                      credentialRecord: {
-                        _tags: {
-                          claimFormat: "ldp_vc",
-                          contexts: [
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                            "https://www.w3.org/2018/credentials/v1",
-                          ],
-                          expandedTypes: [
-                            "Foundational ID",
-                            "https://www.w3.org/2018/credentials#VerifiableCredential",
-                          ],
-                          issuerId:
-                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          proofTypes: ["EcdsaSecp256k1Signature2019"],
-                          subjectIds: [
-                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          ],
-                          types: ["Foundational ID", "VerifiableCredential"],
-                        },
-                        metadata: {},
-                        id: "d848ad67-99f5-49bf-bf15-number2 light",
-                        createdAt: "2025-04-14T14:29:27.444Z",
-                        credential: {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                          ],
-                          type: ["VerifiableCredential", "Foundational ID"],
-                          issuer: {
-                            id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          },
-                          issuanceDate: "2025-04-14T14:29:21.802Z",
-                          credentialSubject: {
-                            "Full Name": "Tashi  Namgay",
-                            "Blood Type": "A+",
-                            "Date of Birth": "05/06/2001",
-                            Gender: "Male",
-                            "ID Type": "Citizenship",
-                            "ID Number": "Number 2 Lightt",
-                            Citizenship: "Bhutanese",
-                            revocation_id:
-                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
-                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          },
-                          proof: {
-                            verificationMethod:
-                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
-                            type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-14T14:29:25Z",
-                            proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
-                          },
-                        },
-                        updatedAt: "2025-04-14T14:29:27.444Z",
-                      },
-                      orgLogo: "/images/ndilogo.svg",
-                      label: "CW Foundation Issuer",
-                      revocationstatus: "NEW",
-                    },
-                    {
-                      type: "ldp_vc",
-                      credentialRecord: {
-                        _tags: {
-                          claimFormat: "ldp_vc",
-                          contexts: [
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                            "https://www.w3.org/2018/credentials/v1",
-                          ],
-                          expandedTypes: [
-                            "Foundational ID",
-                            "https://www.w3.org/2018/credentials#VerifiableCredential",
-                          ],
-                          issuerId:
-                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          proofTypes: ["EcdsaSecp256k1Signature2019"],
-                          subjectIds: [
-                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          ],
-                          types: ["Foundational ID", "VerifiableCredential"],
-                        },
-                        metadata: {},
-                        id: "d848ad67-99f5-49bf-bf15-efcbb2eb0ce1",
-                        createdAt: "2025-04-14T14:29:27.444Z",
-                        credential: {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                          ],
-                          type: ["VerifiableCredential", "Foundational ID"],
-                          issuer: {
-                            id: "did:polygon:testnet:number 3 default",
-                          },
-                          issuanceDate: "2025-04-14T14:29:21.802Z",
-                          credentialSubject: {
-                            "Full Name": "Tashi  Namgay",
-                            "Blood Type": "A+",
-                            "Date of Birth": "05/06/2001",
-                            Gender: "Male",
-                            "ID Type": "Citizenship",
-                            "ID Number": "number 3 default",
-                            Citizenship: "Bhutanese",
-                            revocation_id:
-                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
-                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          },
-                          proof: {
-                            verificationMethod:
-                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
-                            type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-14T14:29:25Z",
-                            proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
-                          },
-                        },
-                        updatedAt: "2025-04-14T14:29:27.444Z",
-                      },
-                      orgLogo: null,
-                      label: "CW Foundation Issuer",
-                      revocationstatus: "NEW",
-                    },
-                  ],
-                },
-              ],
-              isRequirementSatisfied: true,
-            },
-            {
-              rule: "pick",
-              needsCount: 1,
-              submissionEntry: [
-                {
-                  inputDescriptorId: "input_1",
-                  verifiableCredentials: [
-                    {
-                      type: "ldp_vc",
-                      credentialRecord: {
-                        _tags: {
-                          claimFormat: "ldp_vc",
-                          contexts: [
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                            "https://www.w3.org/2018/credentials/v1",
-                          ],
-                          expandedTypes: [
-                            "Foundational ID",
-                            "https://www.w3.org/2018/credentials#VerifiableCredential",
-                          ],
-                          issuerId:
-                            "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          proofTypes: ["EcdsaSecp256k1Signature2019"],
-                          subjectIds: [
-                            "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          ],
-                          types: ["Foundational ID", "VerifiableCredential"],
-                        },
-                        metadata: {},
-                        id: "d848ad67-99f5-49bf-bf15-efcbb2eb0ce1",
-                        createdAt: "2025-04-14T14:29:27.444Z",
-                        credential: {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://dev-schema.ngotag.com/schemas/c7952a0a-e9b5-4a4b-a714-1e5d0a1ae076",
-                          ],
-                          type: ["VerifiableCredential", "Foundational ID"],
-                          issuer: {
-                            id: "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6",
-                          },
-                          issuanceDate: "2025-04-14T14:29:21.802Z",
-                          credentialSubject: {
-                            "Full Name": "Tashi  Namgay",
-                            "Blood Type": "A+",
-                            "Date of Birth": "05/06/2001",
-                            Gender: "Male",
-                            "ID Type": "Citizenship",
-                            "ID Number": "11503000205",
-                            Citizenship: "Bhutanese",
-                            revocation_id:
-                              "7221f4aa-a38b-4e8e-8613-f4ac6eec110e",
-                            id: "did:key:z6MkfXrL2iiTweAvyqwY6Ri8a4vrbiHQVYnvdFbXDsdEHZ6e",
-                          },
-                          proof: {
-                            verificationMethod:
-                              "did:polygon:testnet:0xEc2141225C72193473DA7ca23223c2163828efC6#key-1",
-                            type: "EcdsaSecp256k1Signature2019",
-                            created: "2025-04-14T14:29:25Z",
-                            proofPurpose: "assertionMethod",
-                            jws: "eyJhbGciOiJFY0RTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..YmGIT31omCVeh_F2MYOvvwUAbQ0ujM5Pm-vg7yAxVa9ZlRBcDLLP0P1TigNqN9IIDe7xzmhITCjWGCImmNUP-w",
-                          },
-                        },
-                        updatedAt: "2025-04-14T14:29:27.444Z",
-                      },
-                      orgLogo: null,
-                      label: "CW Foundation Issuer",
-                      revocationstatus: "NEW",
-                    },
-                  ],
-                },
-              ],
-              isRequirementSatisfied: true,
-            },
-          ],
-          areRequirementsSatisfied: true,
-          name: "Foundational ID",
-          purpose: "auth_standard",
-        },
-      },
-    };
-  } catch (error) {
-    console.error("Mock response error:", error);
-    throw new Error("Unable to generate mock credential match data");
+    return await res.json();
+  } catch (err) {
+    console.error("Client getCloudWalletStatusAPI failed:", err);
+    throw err;
   }
 };
