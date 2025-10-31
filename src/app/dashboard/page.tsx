@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [selectedCredential, setSelectedCredential] = useState<any | null>(
     null
   );
+  const [selectedCredentialStatus, setSelectedCredentialStatus] = useState("");
   const [selectedID, setSelectedID] = useState<any | null>(null);
   const [selectedLogo, setSelectedLogo] = useState("");
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
@@ -442,6 +443,7 @@ export default function DashboardPage() {
 
   const handleCardClick = async (
     credentialId: string,
+    status: string,
     selfAttested: boolean
   ): Promise<void> => {
     try {
@@ -457,6 +459,7 @@ export default function DashboardPage() {
       setSelectedCredential(credentialDetails);
       setIsSelfAttested(selfAttested); // Store the flag
       setSelectedID(credentialId);
+      setSelectedCredentialStatus(status);
     } catch (error) {
       console.error("Error fetching credential details:", error);
     }
@@ -629,6 +632,7 @@ export default function DashboardPage() {
                       iconUrl: isSelfAttested
                         ? "/images/ndilogodark.svg"
                         : selectedLogo,
+                      status: selectedCredentialStatus,
                     }}
                   />
                 </Grid2>
@@ -732,6 +736,7 @@ export default function DashboardPage() {
                   onClick={() => {
                     handleCardClick(
                       credential.credentialsId,
+                      credential.status,
                       credential.selfAttested
                     );
                     setSelectedLogo(credential.connection?.imageUrl);
