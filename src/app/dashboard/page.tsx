@@ -54,6 +54,7 @@ export default function DashboardPage() {
   );
   const [selectedID, setSelectedID] = useState<any | null>(null);
   const [selectedLogo, setSelectedLogo] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>(
     []
   );
@@ -442,7 +443,8 @@ export default function DashboardPage() {
 
   const handleCardClick = async (
     credentialId: string,
-    selfAttested: boolean
+    selfAttested: boolean,
+    status: string
   ): Promise<void> => {
     try {
       let credentialDetails;
@@ -457,6 +459,7 @@ export default function DashboardPage() {
       setSelectedCredential(credentialDetails);
       setIsSelfAttested(selfAttested); // Store the flag
       setSelectedID(credentialId);
+      setSelectedStatus(status);
     } catch (error) {
       console.error("Error fetching credential details:", error);
     }
@@ -728,11 +731,13 @@ export default function DashboardPage() {
             filteredCredentials.map((credential) => (
               <Grid2 size={4} key={credential.id}>
                 <CredentialCard
+                  status={selectedStatus}
                   credential={credential}
                   onClick={() => {
                     handleCardClick(
                       credential.credentialsId,
-                      credential.selfAttested
+                      credential.selfAttested,
+                      credential.status
                     );
                     setSelectedLogo(credential.connection?.imageUrl);
                   }}
