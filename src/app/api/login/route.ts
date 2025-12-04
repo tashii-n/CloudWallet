@@ -72,7 +72,8 @@ export async function POST(req: Request) {
     // return NextResponse.json(JSON.parse(decrypted));
 
     // Otherwise return the payload as your original client did:
-    return NextResponse.json(responsePayload);
+    // return NextResponse.json(responsePayload);
+    return NextResponse.json({ success: true });
   } catch (err) {
     return handleApiError(err);
   }

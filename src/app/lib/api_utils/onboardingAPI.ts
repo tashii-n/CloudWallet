@@ -662,3 +662,21 @@ export const getCloudWalletStatus = async () => {
     throw err;
   }
 };
+
+export const isUserAuthenticated = async () => {
+  const sessionId = sessionStorage.getItem("sessionId");
+  if (!sessionId) throw new Error("No session ID found for this tab");
+
+  const res = await fetch("/api/auth/check-session", {
+    method: "GET",
+    headers: {
+      "x-session-id": sessionId,
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) return false;
+
+  const json = await res.json();
+  return json.authenticated === true;
+};
