@@ -456,10 +456,10 @@ export default function DashboardPage() {
       } else {
         credentialDetails = await getCredentialDetailsAPI(credentialId);
       }
+      setSelectedStatus(status);
       setSelectedCredential(credentialDetails);
       setIsSelfAttested(selfAttested); // Store the flag
       setSelectedID(credentialId);
-      setSelectedStatus(status);
     } catch (error) {
       console.error("Error fetching credential details:", error);
     }
@@ -508,10 +508,12 @@ export default function DashboardPage() {
       }
       setSelectedCredential(null);
       setSelectedLogo("");
+      setSelectedStatus(status)
       setFilteredCredentials(filtered);
     } else {
       setSelectedCredential(null);
       setSelectedLogo("");
+      setSelectedStatus("")
       setFilteredCredentials(credentials); // Show all credentials if no status
     }
   };
@@ -632,6 +634,7 @@ export default function DashboardPage() {
                       iconUrl: isSelfAttested
                         ? "/images/ndilogodark.svg"
                         : selectedLogo,
+                        status: selectedStatus,
                     }}
                   />
                 </Grid2>
@@ -731,7 +734,6 @@ export default function DashboardPage() {
             filteredCredentials.map((credential) => (
               <Grid2 size={4} key={credential.id}>
                 <CredentialCard
-                  status={selectedStatus}
                   credential={credential}
                   onClick={() => {
                     handleCardClick(

@@ -2,13 +2,13 @@ import { Card, CardContent, Typography, Grid2, Stack } from "@mui/material";
 import Image from "next/image";
 
 interface CredentialCardProps {
-  status?: string;
 
   credential: {
     connection?: any;
     credentialsId?: string;
     name: string;
     iconUrl?: string;
+    status?: string;
     // selfAttested?: boolean
   };
   onClick?: () => void;
@@ -28,11 +28,12 @@ const getStatusIcon = (status?: string) => {
   }
 };
 
+
 export default function CredentialCard({
   credential,
-  status,
   onClick,
 }: CredentialCardProps) {
+  
   return (
     <Card
       onClick={onClick ? onClick : undefined}
@@ -73,7 +74,7 @@ export default function CredentialCard({
           >
             <Stack direction="column" spacing={1}>
               <Image
-                src={getStatusIcon(status)}
+                src={getStatusIcon(credential.status)}
                 width={30}
                 height={30}
                 alt={`${status ?? "unknown"} credential status icon`}
