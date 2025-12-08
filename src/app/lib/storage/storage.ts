@@ -125,9 +125,32 @@ const decryptData = async (
 };
 
 // Clear all session data
-const clearAllData = (): void => {
+const clearAllData = async (): Promise<void> => {
+  const sessionId = sessionStorage.getItem("sessionId"); // Save sessionId
+
+  // Clear everything in sessionStorage
   sessionStorage.clear();
-  console.log("All session data cleared");
+
+  // Restore sessionId
+  if (sessionId) {
+    sessionStorage.setItem("sessionId", sessionId);
+
+    try {
+      // Call server to clear server-side session
+      await fetch(`/api/session-clear`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": sessionId || "",
+        },
+      });
+      console.log("Server-side session cleared");
+    } catch (error) {
+      console.error("Failed to clear server-side session:", error);
+    }
+  }
+
+  console.log("All intermediate session data cleared, sessionId preserved");
 };
 
 // Store auth data in sessionStorage only

@@ -3,8 +3,6 @@ import {
   getProofPresentationAPI,
   getCredentialsForRequestAPI,
   acceptProofRequestAPI,
-  getProofCredentialMatchTest,
-  getProofPresentationTest,
   declineProofRequestAPI,
 } from "@/app/lib/api_utils/onboardingAPI";
 import {

@@ -197,12 +197,8 @@ export default function BiometricPage() {
       const jsonData = { idNumber, image: imageData };
       const response = await loginAPI(jsonData);
 
-      await storeCloudAuth(
-        response.access_token,
-        response.expires_in,
-        response.refresh_token,
-        response.refresh_expires_in
-      );
+      // Nothing else to store
+      console.log("Login successful", response);
 
       let responseTenantId, holderDID;
 
